@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
         const searchResults = await search(q, 10, offset);
         return new NextResponse(JSON.stringify({success: true, data: searchResults}), { status: 200 });
     } catch (error: any) {
-        console.log(error)
         return new NextResponse(JSON.stringify({ success: false, error: error?.errors || error.message || "An error occurred parsing the request." }), { status: 400 });
     }
 }
