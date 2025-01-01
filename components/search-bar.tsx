@@ -22,7 +22,7 @@ const SearchBar = ({ onSearch, icon, searching, setSearching }: { onSearch: (que
                     }
                 } onChange={(event) => setSearchInput(event.currentTarget.value)} />
             </div>
-            <Button size="icon" className="w-10 h-10" onClick={() => { onSearch(""); setSearching(false) }} disabled={searching || !(searchInput.trim().length > 0)}>
+            <Button size="icon" className="w-10 h-10 disabled:bg-muted-foreground disabled:opacity-100 " onClick={() => { onSearch(""); setSearching(false) }} disabled={searching || !(searchInput.trim().length > 0)}>
                 <ArrowRightIcon />
             </Button>
         </div>
