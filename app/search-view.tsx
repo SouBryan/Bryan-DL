@@ -58,7 +58,10 @@ const SearchView = () => {
     }
 
     useEffect(() => {
-        if (results === null) return;
+        if (results === null) {
+            return;
+        }
+
         if (results![searchField].total > results![searchField].items.length) {
             fetchMore();
         }
@@ -76,7 +79,9 @@ const SearchView = () => {
     useEffect(() => {
         const element = finalItemRef.current;
 
-        if (!element) return;
+        if (!element) {
+            return;
+        }
 
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -123,9 +128,13 @@ const SearchView = () => {
     return (
         <>
             <div className="space-y-4">
-                <Link
-                    href='/'
-                    className="flex flex-col select-none"
+                <div
+                    className="flex flex-col select-none cursor-pointer"
+                    onClick={() => {
+                        setQuery('');
+                        setResults(null);
+                        setSearchField('albums');
+                    }}
                 >
                     {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === "qobuz-dl" ? (
                         <Image src='/logo/qobuz-web.png' priority={true} width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='mx-auto' />
@@ -135,7 +144,7 @@ const SearchView = () => {
                             <p className='text-md text-center font-medium text-muted-foreground'>The simplest music downloader</p>
                         </>
                     )}
-                </Link>
+                </div>
                 <div className="flex flex-col items-start justify-center">
                     <SearchBar
                         onSearch={async (query: string) => {
@@ -156,11 +165,12 @@ const SearchView = () => {
                         setSearching={setSearching}
                         setSearchField={setSearchField}
                         setQuery={setQuery}
+                        query={query}
                     />
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant='outline' className='my-2 flex gap-2 focus-visible:outline-none focus-visible:ring-transparent select-none shadow-none outline-none'>
+                            <Button variant='outline' className='my-2 flex gap-2 focus-visible:outline-none focus-visible:ring-transparent select-none shadow-none outline-none !z-[99]'>
                                 <FilterIcon />
                                 <span className='capitalize'>{searchField}</span>
                             </Button>

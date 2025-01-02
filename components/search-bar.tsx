@@ -12,8 +12,8 @@ import { formatTitle, QobuzAlbum, QobuzSearchResults, QobuzTrack } from "@/lib/q
 import { Skeleton } from "./ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 
-const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery }: { onSearch: (query: string) => void; searching: boolean; setSearching: React.Dispatch<React.SetStateAction<boolean>>, setSearchField: React.Dispatch<React.SetStateAction<"albums" | "tracks">>, setQuery: React.Dispatch<React.SetStateAction<string>> }) => {
-    const [searchInput, setSearchInput] = useState("");
+const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery, query }: { onSearch: (query: string) => void; searching: boolean; setSearching: React.Dispatch<React.SetStateAction<boolean>>, setSearchField: React.Dispatch<React.SetStateAction<"albums" | "tracks">>, setQuery: React.Dispatch<React.SetStateAction<string>>, query: string }) => {
+    const [searchInput, setSearchInput] = useState(query);
     const [results, setResults] = useState<QobuzSearchResults | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [showCard, setShowCard] = useState(false);
@@ -23,6 +23,10 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
     const cardRef = useRef<HTMLDivElement>(null);
 
     const limit = 10;
+
+    useEffect(() => {
+        setSearchInput(query);
+    }, [query])
 
     useEffect(() => {
         if (inputRef.current) setSearchInput(inputRef.current.value);
@@ -82,6 +86,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
         };
 
         document.addEventListener("mousedown", handleClickOutside);
+
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };

@@ -26,9 +26,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
     const { settings } = useSettings();
 
     const [openTracklist, setOpenTracklist] = useState(false);
-
     const [fetchedAlbumData, setFetchedAlbumData] = useState<FetchedQobuzAlbum | null>(null);
-
     const [loadedImage, setLoadedImage] = useState<boolean | string>(false);
 
     useEffect(() => {
@@ -113,22 +111,34 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
             <Dialog open={openTracklist} onOpenChange={setOpenTracklist}>
                 <DialogContent className='w-[600px] max-w-[90%] md:max-w-[80%] overflow-hidden'>
                     <div className="flex gap-3 overflow-hidden">
-                        <div className="relative aspect-square min-w-[100px] min-h-[100px] rounded-sm overflow-hidden">
+                        <div className="relative shrink-0 aspect-square min-w-[100px] min-h-[100px] rounded-sm overflow-hidden">
                             <Skeleton className='absolute aspect-square w-full h-full' />
                             {typeof loadedImage === "string" && <Image fill src={loadedImage} alt={formatTitle(result)} crossOrigin='anonymous' className='absolute aspect-square w-full h-full' />}
                         </div>
 
-                        <div className="flex flex-col justify-between overflow-hidden">
+                        <div className="flex w-full flex-col justify-between overflow-hidden">
                             <div className="space-y-1.5 overflow-visible">
                                 <DialogTitle title={formatTitle(getAlbum(result))} className='truncate overflow-visible py-0.5'>{formatTitle(getAlbum(result))}</DialogTitle>
                                 <DialogDescription title={formatArtists(result)} className='truncate overflow-visible '>{formatArtists(result)}</DialogDescription>
                             </div>
-                            <div className="space-y-1.5 w-fit">
-                                <DialogDescription
-                                    className='truncate'
+                            <div className="flex items-center w-full justify-between gap-2">
+                                <div className="space-y-1.5 w-fit">
+                                    <DialogDescription
+                                        className='truncate'
+                                    >
+                                        {getAlbum(result).tracks_count} {getAlbum(result).tracks_count > 1 ? "tracks" : "track"} - {formatDuration(getAlbum(result).duration)}
+                                    </DialogDescription>
+                                </div>
+                                <Button
+                                    size='icon'
+                                    variant='ghost'
+                                    onClick={async () => {
+                                        setOpenTracklist(false);
+                                        await createDownloadJob(result, setStatusBar, ffmpegState, settings, fetchedAlbumData, setFetchedAlbumData);
+                                    }}
                                 >
-                                    {getAlbum(result).tracks_count} {getAlbum(result).tracks_count > 1 ? "tracks" : "track"} - {formatDuration(getAlbum(result).duration)}
-                                </DialogDescription>
+                                    <DownloadIcon className='!size-4' />
+                                </Button>
                             </div>
                         </div>
                     </div>
