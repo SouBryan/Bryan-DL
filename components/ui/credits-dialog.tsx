@@ -52,7 +52,7 @@ const CreditsDialog = () => {
                     <DialogDescription>Special thanks to our contributors!</DialogDescription>
                 </div>
                 <div className="flex justify-start items-center gap-2 w-full">
-                    <img src="https://cdn.discordapp.com/avatars/1093113069149880330/a899d1378cfe1e951fc29e4fc4162f55.webp" alt="Farmz" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
+                    <img src="/contributors/FarmzDev.webp" alt="Farmz" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
                     <div className="h-full pl-1">
                         <p className="font-bold text-xl">Farmz</p>
                         <a href="https://discord.com/users/1093113069149880330" rel="noopener noreferrer" target="_blank">
@@ -69,7 +69,7 @@ const CreditsDialog = () => {
                     </div>
                 </div>
                 <div className="flex justify-start items-center gap-2 w-full">
-                    <img src="https://cdn.discordapp.com/avatars/662243382378233866/f5d56c6a86eb57a2cfb1f11be1c0f9de.webp" alt="Jkable" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
+                    <img src="/contributors/Jkable.webp" alt="Jkable" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
                     <div className="h-full pl-1">
                         <p className="font-bold text-xl">Jkable</p>
                         <a href="https://discord.com/users/662243382378233866" rel="noopener noreferrer" target="_blank">
@@ -86,7 +86,7 @@ const CreditsDialog = () => {
                     </div>
                 </div>
                 <div className="flex justify-start items-center gap-2 w-full">
-                    <img src="https://cdn.discordapp.com/avatars/742554193700847627/5b2cf3105c90784d94230347e54a421b.webp" alt="Joel15" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
+                    <img src="/contributors/Joel15.webp" alt="Joel15" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
                     <div className="h-full pl-1">
                         <p className="font-bold text-xl">Joel15</p>
                         <a href="https://discord.com/users/742554193700847627" rel="noopener noreferrer" target="_blank">
@@ -108,7 +108,7 @@ const CreditsDialog = () => {
                     </div>
                 </div>
                 <div className="flex justify-start items-center gap-2 w-full">
-                    <img src="https://cdn.discordapp.com/avatars/135210155418714112/4d648a65c805583a27b4aa5a06b7b541.webp" alt="Kobayashi" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
+                    <img src="/contributors/Kobayashi.webp" alt="Kobayashi" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
                     <div className="h-full pl-1">
                         <p className="font-bold text-xl">Kobayashi</p>
                         <a href="https://discord.com/users/742554193700847627" rel="noopener noreferrer" target="_blank">
