@@ -21,7 +21,12 @@ export const metadata: Metadata = {
         default: process.env.NEXT_PUBLIC_APPLICATION_NAME + " - A frontend browser client for downloading music for Qobuz.",
         template: process.env.NEXT_PUBLIC_APPLICATION_NAME!
     },
-    description: "A frontend browser client for downloading music for Qobuz."
+    description: "A frontend browser client for downloading music for Qobuz.",
+    openGraph: {
+        images: [
+            '/logo/qobuz-web.png'
+        ]
+    }
 };
 
 export default function RootLayout({
