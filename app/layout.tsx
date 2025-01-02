@@ -17,6 +17,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://www.qobuz-dl.com/'),
     title: {
         default: process.env.NEXT_PUBLIC_APPLICATION_NAME + " - A frontend browser client for downloading music for Qobuz.",
         template: process.env.NEXT_PUBLIC_APPLICATION_NAME!
@@ -36,11 +37,7 @@ export const metadata: Metadata = {
     ]
 };
 
-export default function RootLayout({
-    children,
-}: Readonly<{
-    children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${inter.className} antialiased`}>
