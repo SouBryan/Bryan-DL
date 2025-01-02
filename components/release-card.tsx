@@ -76,7 +76,8 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                             {(result as QobuzTrack).album ? null : 
                                     <Button size='icon' variant='ghost' onClick={async () => {
                                         setOpenTracklist(!openTracklist);
-                                        if (!fetchedAlbumData) {
+                                        if (!fetchedAlbumData || fetchedAlbumData.id !== (result as QobuzAlbum).id) {
+                                            setFetchedAlbumData(null);
                                             const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id } });
                                             setFetchedAlbumData(albumDataResponse.data.data);
                                         }
