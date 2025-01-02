@@ -13,6 +13,7 @@ import { Disc3Icon, DiscAlbumIcon } from 'lucide-react';
 import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
+import Image from 'next/image';
 
 const SearchView = () => {
     const { resolvedTheme } = useTheme();
@@ -121,9 +122,8 @@ const SearchView = () => {
     return (
         <>
             <div className="space-y-4">
-                <div className="flex flex-col">
-                    <h1 className="text-4xl font-bold text-center">{process.env.NEXT_PUBLIC_APPLICATION_NAME}</h1>
-                    <p className='text-md text-center font-medium text-muted-foreground'>The simplest music downloader</p>
+                <div className="flex flex-col select-none">
+                    <Image src='/logo/qobuz-web.png' alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} width={180} height={100} className='mx-auto'/>
                 </div>
                 <div className="flex flex-col items-start justify-center">
                     <SearchBar onSearch={async (query: string) => {

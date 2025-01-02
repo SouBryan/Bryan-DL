@@ -121,7 +121,7 @@ const CreditsDialog = () => {
                                     alt={contributor.name}
                                     width={80}
                                     height={80}
-                                    className="rounded-full"
+                                    className="rounded-full shrink-0"
                                     quality={50}
                                 />
                                 <div className="h-full pl-1">
