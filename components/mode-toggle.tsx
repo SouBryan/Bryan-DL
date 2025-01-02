@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronDownIcon } from "lucide-react"
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 
 export const getHex = (themeValue: string, resolvedTheme: string | undefined): string => {
     if (themeValue === "auto") {
@@ -87,7 +86,7 @@ export const themes = [
 ]
 
 export function ModeToggle() {
-    const { setTheme, theme, resolvedTheme } = useTheme()
+    const { setTheme, theme } = useTheme()
     const [position, setPosition] = useState<string>(theme!);
 
     useEffect(() => {
