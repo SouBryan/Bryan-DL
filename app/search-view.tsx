@@ -14,6 +14,7 @@ import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/li
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const SearchView = () => {
     const { resolvedTheme } = useTheme();
@@ -122,7 +123,10 @@ const SearchView = () => {
     return (
         <>
             <div className="space-y-4">
-                <div className="flex flex-col select-none">
+                <Link
+                    href='/'
+                    className="flex flex-col select-none"
+                >
                     {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === "qobuz-dl" ? (
                         <Image src='/logo/qobuz-web.png' priority={true} width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='mx-auto' />
                     ) : (
@@ -131,8 +135,7 @@ const SearchView = () => {
                             <p className='text-md text-center font-medium text-muted-foreground'>The simplest music downloader</p>
                         </>
                     )}
-
-                </div >
+                </Link>
                 <div className="flex flex-col items-start justify-center">
                     <SearchBar
                         onSearch={async (query: string) => {

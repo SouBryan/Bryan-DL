@@ -8,7 +8,7 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { cn } from "@/lib/utils";
 import axios from "axios";
-import { formatTitle, QobuzSearchResults } from "@/lib/qobuz-dl";
+import { formatTitle, QobuzAlbum, QobuzSearchResults, QobuzTrack } from "@/lib/qobuz-dl";
 import { Skeleton } from "./ui/skeleton";
 
 const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery }: { onSearch: (query: string) => void; searching: boolean; setSearching: React.Dispatch<React.SetStateAction<boolean>>, setSearchField: React.Dispatch<React.SetStateAction<"albums" | "tracks">>, setQuery: React.Dispatch<React.SetStateAction<string>> }) => {
@@ -16,9 +16,12 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
     const [results, setResults] = useState<QobuzSearchResults | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [showCard, setShowCard] = useState(false);
+    const [controller, setController] = useState<AbortController>(new AbortController());
+    
     const inputRef = useRef<HTMLInputElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
-    const [controller, setController] = useState<AbortController>(new AbortController());
+
+    const limit = 10;
 
     useEffect(() => {
         if (inputRef.current) setSearchInput(inputRef.current.value);
@@ -35,10 +38,6 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
             window.removeEventListener("keydown", handleKeydown);
         };
     }, []);
-
-    useEffect(() => {
-        console.log(controller.signal)
-    }, [controller]);
 
     useEffect(() => {
         controller.abort();
@@ -143,16 +142,25 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                     )}
                 >
                     <CardHeader>
-                        <CardTitle className="text-sm">Quick Search</CardTitle>
+                        <CardTitle className="text-base flex md:flex-row flex-col md:items-center md:gap-2 gap-0.5">
+                            Quick Search
+                            <span className="text-xs text-muted-foreground">
+                                Showing {(results?.tracks.items.slice(0, (limit / 2)).length|| 0) + (results?.albums.items.slice(0, (limit / 2)).length || 0)} of {limit}
+                            </span>
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-col gap-2 select-none">
-                            <div className="grid md:grid-cols-2 gap-6">
+                            <div className="md:grid flex flex-col md:max-h-[unset] max-h-[15vh] md:pr-0 pr-2 overflow-y-auto md:grid-cols-2 gap-6">
                                 {["albums", "tracks"].map((key, index) => (
                                     <div key={index} className="flex flex-col gap-1">
-                                        <span className="text-sm font-semibold mb-1 capitalize">{key}</span>
-                                        {results?.[key as "albums" | "tracks"].items.slice(0, 5).map((result, index) => {
-                                            const title = formatTitle(result);
+                                        <p className="text-sm font-semibold mb-1 capitalize">{key}</p>
+                                        {results?.[key as "albums" | "tracks"].items.slice(0, (limit / 2)).map((result: QobuzAlbum | QobuzTrack, index) => {
+                                            const value = key === "albums"
+                                                ? `${formatTitle(result as QobuzAlbum)} - ${(result as QobuzAlbum).artist.name}`
+                                                : `${formatTitle(result as QobuzTrack)} - ${(result as QobuzTrack).album.artist.name}`;
+
+                                            const title = formatTitle(result as QobuzAlbum | QobuzTrack);
 
                                             return loading ? (
                                                 <Skeleton
@@ -163,12 +171,12 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                                 <p
                                                     key={index}
                                                     onClick={() => {
-                                                        setSearchInput(title);
-                                                        setQuery(title);
+                                                        setSearchInput(value);
+                                                        setQuery(value);
                                                         setShowCard(false);
                                                         setSearchField(key as "albums" | "tracks");
                                                         setSearching(true);
-                                                        onSearch(title);
+                                                        onSearch(value);
                                                     }}
                                                     className="text-sm hover:underline underline-offset-2 decoration-1 h-fit w-full truncate cursor-pointer justify-start text-muted-foreground"
                                                     title={title}
@@ -177,7 +185,11 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                                 </p>
                                             )
                                         })}
-                                        {results?.[key as "albums" | "tracks"].items.length! <= 0 && <p className="w-full h-full flex capitalize items-center justify-center text-xs text-muted-foreground p-4 border-2 border-dashed rounded-md">No results found</p>}
+                                        {results?.[key as "albums" | "tracks"]?.items.length === 0 && (
+                                            <p className="w-full h-full flex capitalize items-center justify-center text-xs text-muted-foreground p-4 border-2 border-dashed rounded-md">
+                                                No Results Found
+                                            </p>
+                                        )}
                                     </div>
                                 ))}
                             </div>

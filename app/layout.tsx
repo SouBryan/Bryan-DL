@@ -62,7 +62,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                                         <CreditsDialog />
                                     </div>
                                     <div className="flex flex-col min-h-screen">
-                                        <main className="px-6 pb-12 pt-32 md:pt-60 min-h-full flex-1 flex flex-col items-center justify-center gap-2 z-[2] overflow-x-hidden max-w-screen overflow-y-hidden">
+                                        <main className="px-6 pb-12 pt-32 md:pt-12 2xl:pt-60 min-h-full flex-1 flex flex-col items-center justify-center gap-2 z-[2] overflow-x-hidden max-w-screen overflow-y-hidden">
                                             {children}
                                         </main>
                                         <StatusBarContainer />
