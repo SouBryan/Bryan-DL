@@ -176,7 +176,7 @@ const SearchView = () => {
                                 <ReleaseCard
                                     key={index}
                                     result={result}
-                                    resolvedTheme={resolvedTheme as "dark" | "light" || "dark" as const}
+                                    resolvedTheme={String(resolvedTheme)}
                                     ref={index === filterExplicit(results, settings.explicitContent)[searchField].items.length - 1 ? finalItemRef : null}
                                 />
                             );

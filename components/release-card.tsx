@@ -19,7 +19,7 @@ import { createDownloadJob } from '@/lib/download-job'
 import { useSettings } from '@/lib/settings-provider'
 import { Skeleton } from './ui/skeleton'
 
-const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | QobuzTrack, resolvedTheme: "dark" | "light", ref?: React.Ref<HTMLDivElement> }) => {
+const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | QobuzTrack, resolvedTheme: string, ref?: React.Ref<HTMLDivElement> }) => {
     const { ffmpegState } = useFFmpeg();
     const { setStatusBar } = useStatusBar();
     const { settings } = useSettings();
@@ -49,9 +49,9 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
         >
             <div className='relative w-full aspect-square group select-none rounded-sm overflow-hidden'>
                 <div className={cn("w-full z-[3] backdrop-blur-md top-0 left-0 absolute transition-all aspect-square opacity-0 group-hover:opacity-100",
-                    resolvedTheme === 'dark'
-                        ? 'group-hover:bg-black/30'
-                        : 'group-hover:bg-white/50',
+                    resolvedTheme != 'light'
+                        ? 'group-hover:bg-black/40'
+                        : 'group-hover:bg-white/20',
                 )}>
                     <div className="flex flex-col h-full justify-between">
                         <div className="space-y-0.5 p-4">
