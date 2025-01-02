@@ -55,16 +55,18 @@ const CreditsDialog = () => {
                     <img src="/contributors/FarmzDev.webp" alt="Farmz" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
                     <div className="h-full pl-1">
                         <p className="font-bold text-xl">Farmz</p>
-                        <a href="https://discord.com/users/1093113069149880330" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <FaDiscord />
-                            </Button>
-                        </a>
-                        <a href="https://github.com/FarmzDev/" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <FaGithub />
-                            </Button>
-                        </a>
+                        <div className="flex gap-2">
+                            <a href="https://discord.com/users/1093113069149880330" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <FaDiscord />
+                                </Button>
+                            </a>
+                            <a href="https://github.com/FarmzDev/" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <FaGithub />
+                                </Button>
+                            </a>
+                        </div>
                         <p className="text-sm text-muted-foreground">Main Developer</p>
                     </div>
                 </div>
@@ -72,16 +74,18 @@ const CreditsDialog = () => {
                     <img src="/contributors/Jkable.webp" alt="Jkable" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
                     <div className="h-full pl-1">
                         <p className="font-bold text-xl">Jkable</p>
-                        <a href="https://discord.com/users/662243382378233866" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <FaDiscord />
-                            </Button>
-                        </a>
-                        <a href="https://github.com/Jkablez/" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <FaGithub />
-                            </Button>
-                        </a>
+                        <div className="flex gap-2">
+                            <a href="https://discord.com/users/662243382378233866" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <FaDiscord />
+                                </Button>
+                            </a>
+                            <a href="https://github.com/Jkablez/" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <FaGithub />
+                                </Button>
+                            </a>
+                        </div>
                         <p className="text-sm text-muted-foreground">Helped with development</p>
                     </div>
                 </div>
@@ -89,21 +93,23 @@ const CreditsDialog = () => {
                     <img src="/contributors/Joel15.webp" alt="Joel15" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
                     <div className="h-full pl-1">
                         <p className="font-bold text-xl">Joel15</p>
-                        <a href="https://discord.com/users/742554193700847627" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <FaDiscord />
-                            </Button>
-                        </a>
-                        <a href="https://steamcommunity.com/profiles/76561198317104390" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <FaSteam />
-                            </Button>
-                        </a>
-                        <a href="https://open.spotify.com/user/315reccubycoatin2rv5gjhostxe" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <FaSpotify />
-                            </Button>
-                        </a>
+                        <div className="flex gap-2">
+                            <a href="https://discord.com/users/742554193700847627" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <FaDiscord />
+                                </Button>
+                            </a>
+                            <a href="https://steamcommunity.com/profiles/76561198317104390" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <FaSteam />
+                                </Button>
+                            </a>
+                            <a href="https://open.spotify.com/user/315reccubycoatin2rv5gjhostxe" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <FaSpotify />
+                                </Button>
+                            </a>
+                        </div>
                         <p className="text-sm text-muted-foreground">Helped to purchase <a href="https://qobuz-dl.com" target="_blank" rel="noopener noreferrer" className="underline">https://qobuz-dl.com</a></p>
                     </div>
                 </div>
@@ -111,16 +117,18 @@ const CreditsDialog = () => {
                     <img src="/contributors/Kobayashi.webp" alt="Kobayashi" crossOrigin="anonymous" className="w-20 h-20 rounded-full" />
                     <div className="h-full pl-1">
                         <p className="font-bold text-xl">Kobayashi</p>
-                        <a href="https://discord.com/users/742554193700847627" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <FaDiscord />
-                            </Button>
-                        </a>
-                        <a href="https://ryuko.space/" rel="noopener noreferrer" target="_blank">
-                            <Button variant="outline" size="icon">
-                                <LinkIcon />
-                            </Button>
-                        </a>
+                        <div className="flex gap-2">
+                            <a href="https://discord.com/users/742554193700847627" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <FaDiscord />
+                                </Button>
+                            </a>
+                            <a href="https://ryuko.space/" rel="noopener noreferrer" target="_blank">
+                                <Button variant="outline" size="icon">
+                                    <LinkIcon />
+                                </Button>
+                            </a>
+                        </div>
                         <p className="text-sm text-muted-foreground">Runs an instance of Qobuz-DL at <a href="https://squid.wtf" target="_blank" rel="noopener noreferrer" className="underline">https://squid.wtf</a></p>
                     </div>
                 </div>

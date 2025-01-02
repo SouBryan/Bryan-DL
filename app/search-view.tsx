@@ -21,7 +21,6 @@ import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
 
 const SearchView = () => {
-    const [searchIcon, setSearchIcon] = useState<JSX.Element>(<SearchIcon className='!size-5' />);
     const { resolvedTheme } = useTheme();
     const [results, setResults] = useState<QobuzSearchResults | null>(null);
     const [searchField, setSearchField] = useState<"albums" | "tracks">('albums');
@@ -133,8 +132,7 @@ const SearchView = () => {
                     <p className='text-md text-center font-medium text-muted-foreground'>The simplest music downloader</p>
                 </div>
                 <div className="flex flex-col items-start justify-center">
-                    <SearchBar icon={searchIcon} onSearch={async (query: string) => {
-                        setSearchIcon(<Loader2Icon className='animate-spin !size-5' />);
+                    <SearchBar onSearch={async (query: string) => {
                         setQuery(query);
                         setSearchError('');
                         try {
@@ -146,7 +144,6 @@ const SearchView = () => {
                         } catch (error: any) {
                             setSearchError(error?.response.data?.error || error.message || 'An error occurred.');
                         }
-                        setSearchIcon(<SearchIcon className='!size-5' />);
                         setSearching(false);
                     }} searching={searching} setSearching={setSearching} />
 
