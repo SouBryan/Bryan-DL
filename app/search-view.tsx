@@ -134,20 +134,26 @@ const SearchView = () => {
 
                 </div >
                 <div className="flex flex-col items-start justify-center">
-                    <SearchBar onSearch={async (query: string) => {
-                        setQuery(query);
-                        setSearchError('');
-                        try {
-                            const response = await axios.get(`/api/get-music?q=${query}&offset=0`);
-                            if (response.status === 200) {
-                                setLoading(false);
-                                setResults(response.data.data);
+                    <SearchBar
+                        onSearch={async (query: string) => {
+                            setQuery(query);
+                            setSearchError('');
+                            try {
+                                const response = await axios.get(`/api/get-music?q=${query}&offset=0`);
+                                if (response.status === 200) {
+                                    setLoading(false);
+                                    setResults(response.data.data);
+                                }
+                            } catch (error: any) {
+                                setSearchError(error?.response.data?.error || error.message || 'An error occurred.');
                             }
-                        } catch (error: any) {
-                            setSearchError(error?.response.data?.error || error.message || 'An error occurred.');
-                        }
-                        setSearching(false);
-                    }} searching={searching} setSearching={setSearching} />
+                            setSearching(false);
+                        }}
+                        searching={searching}
+                        setSearching={setSearching}
+                        setSearchField={setSearchField}
+                        setQuery={setQuery}
+                    />
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

@@ -80,6 +80,11 @@ export const themes = [
                 value: "orange",
                 label: "Orange",
                 hex: "#f97316",
+            },
+            {
+                value: "yellow",
+                label: "Yellow",
+                hex: "#fbbf24",
             }
         ],
     },

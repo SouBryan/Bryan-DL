@@ -29,11 +29,17 @@ export const metadata: Metadata = {
             : [],
     },
     keywords: [
-        `${process.env.NEXT_PUBLIC_APPLICATION_NAME!}-dl`,
         `${process.env.NEXT_PUBLIC_APPLICATION_NAME!}`,
         "music",
         "downloader",
         "hi-res",
+        "qobuz",
+        "flac",
+        "alac",
+        "mp3",
+        "aac",
+        "ogg",
+        "wav"
     ]
 };
 

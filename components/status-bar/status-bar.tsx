@@ -50,7 +50,7 @@ const StatusBar = () => {
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => setQueueOpen(true)}
-                                        className="size-6 bg-background/80"
+                                        className="size-6"
                                         disabled={statusBar.queue ? statusBar.queue.length === 0 : true}
                                     >
                                         <QueueIcon className='w-4 h-4' />
