@@ -14,7 +14,6 @@ import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/li
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
 import Image from 'next/image';
-import Link from 'next/link';
 
 const SearchView = () => {
     const { resolvedTheme } = useTheme();
