@@ -176,12 +176,33 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex flex-col gap-2 select-none">
+                                <motion.div
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="hidden"
+                                    variants={{
+                                        hidden: { opacity: 0 },
+                                        visible: {
+                                            opacity: 1,
+                                            transition: {
+                                                staggerChildren: 0.125,
+                                            },
+                                        },
+                                    }}
+                                    className="flex flex-col gap-2 select-none"
+                                >
                                     <div className="md:grid flex flex-col md:max-h-[unset] max-h-[15vh] md:pr-0 pr-2 overflow-y-auto md:grid-cols-2 gap-6">
                                         {["albums", "tracks"].map((key, index) => (
-                                            <div key={index} className="flex flex-col gap-1">
+                                            <motion.div
+                                                key={index}
+                                                variants={{
+                                                    hidden: { opacity: 0, y: 10 },
+                                                    visible: { opacity: 1, y: 0 },
+                                                }}
+                                                className="flex flex-col gap-1"
+                                            >
                                                 <p className="text-sm font-semibold mb-1 capitalize">{key}</p>
-                                                {results?.[key as "albums" | "tracks"].items.slice(0, (limit / 2)).map((result: QobuzAlbum | QobuzTrack, index) => {
+                                                {results?.[key as "albums" | "tracks"].items.slice(0, limit / 2).map((result: QobuzAlbum | QobuzTrack, index) => {
                                                     const value = key === "albums"
                                                         ? `${formatTitle(result as QobuzAlbum)} - ${(result as QobuzAlbum).artist.name}`
                                                         : `${formatTitle(result as QobuzTrack)} - ${(result as QobuzTrack).album.artist.name}`;
@@ -194,7 +215,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                                             className="h-4"
                                                         />
                                                     ) : (
-                                                        <p
+                                                        <motion.p
                                                             key={index}
                                                             onClick={() => {
                                                                 setSearchInput(value);
@@ -204,22 +225,26 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                                                 setSearching(true);
                                                                 onSearch(value);
                                                             }}
+                                                            variants={{
+                                                                hidden: { opacity: 0, y: 5 },
+                                                                visible: { opacity: 1, y: 0 },
+                                                            }}
                                                             className="text-sm hover:underline underline-offset-2 decoration-1 h-fit w-full truncate cursor-pointer justify-start text-muted-foreground"
                                                             title={title}
                                                         >
                                                             {title}
-                                                        </p>
-                                                    )
+                                                        </motion.p>
+                                                    );
                                                 })}
                                                 {results?.[key as "albums" | "tracks"]?.items.length === 0 && (
                                                     <p className="w-full h-full flex capitalize items-center justify-center text-xs text-muted-foreground p-4 border-2 border-dashed rounded-md">
                                                         No Results Found
                                                     </p>
                                                 )}
-                                            </div>
+                                            </motion.div>
                                         ))}
                                     </div>
-                                </div>
+                                </motion.div>
                             </CardContent>
                         </Card>
                     </motion.div>
