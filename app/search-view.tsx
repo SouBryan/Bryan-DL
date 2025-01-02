@@ -14,6 +14,7 @@ import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/li
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const SearchView = () => {
     const { resolvedTheme } = useTheme();
@@ -122,32 +123,40 @@ const SearchView = () => {
     return (
         <>
             <div className="space-y-4">
-                <div className="flex flex-col select-none">
+                <Link
+                    href='/'
+                    className="flex flex-col select-none"
+                >
                     {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === "qobuz-dl" ? (
-                        <Image src='/logo/qobuz-web.png' width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='mx-auto' />
+                        <Image src='/logo/qobuz-web.png' priority={true} width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='mx-auto' />
                     ) : (
                         <>
                             <h1 className="text-4xl font-bold text-center">{process.env.NEXT_PUBLIC_APPLICATION_NAME}</h1>
                             <p className='text-md text-center font-medium text-muted-foreground'>The simplest music downloader</p>
                         </>
                     )}
-
-                </div >
+                </Link>
                 <div className="flex flex-col items-start justify-center">
-                    <SearchBar onSearch={async (query: string) => {
-                        setQuery(query);
-                        setSearchError('');
-                        try {
-                            const response = await axios.get(`/api/get-music?q=${query}&offset=0`);
-                            if (response.status === 200) {
-                                setLoading(false);
-                                setResults(response.data.data);
+                    <SearchBar
+                        onSearch={async (query: string) => {
+                            setQuery(query);
+                            setSearchError('');
+                            try {
+                                const response = await axios.get(`/api/get-music?q=${query}&offset=0`);
+                                if (response.status === 200) {
+                                    setLoading(false);
+                                    setResults(response.data.data);
+                                }
+                            } catch (error: any) {
+                                setSearchError(error?.response.data?.error || error.message || 'An error occurred.');
                             }
-                        } catch (error: any) {
-                            setSearchError(error?.response.data?.error || error.message || 'An error occurred.');
-                        }
-                        setSearching(false);
-                    }} searching={searching} setSearching={setSearching} />
+                            setSearching(false);
+                        }}
+                        searching={searching}
+                        setSearching={setSearching}
+                        setSearchField={setSearchField}
+                        setQuery={setQuery}
+                    />
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
