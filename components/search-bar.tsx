@@ -18,7 +18,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
     const [showCard, setShowCard] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
-    const controller = new AbortController();
+    const [controller, setController] = useState<AbortController>(new AbortController());
 
     useEffect(() => {
         if (inputRef.current) setSearchInput(inputRef.current.value);
@@ -37,10 +37,11 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
     }, []);
 
     useEffect(() => {
-        controller.abort();
-    }, [searchInput]);
+        console.log(controller.signal)
+    }, [controller]);
 
     useEffect(() => {
+        controller.abort();
         const fetchResults = async () => {
             if (searchInput.trim().length === 0) {
                 return;
@@ -48,10 +49,19 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
 
             setLoading(true);
 
-            const response = await axios.get(`/api/get-music?q=${searchInput}&offset=0`, { signal: controller.signal });
-            if (response.status === 200) {
-                setResults(response.data.data);
-            }
+            const newController = new AbortController();
+            setController(newController);
+
+            try {
+                setTimeout(async () => {
+                    try {
+                        const response = await axios.get(`/api/get-music?q=${searchInput}&offset=0`, { signal: newController.signal });
+                        if (response.status === 200) {
+                            setResults(response.data.data);
+                        }
+                    } catch { }
+                }, 200);
+            } catch { }
 
             setLoading(false);
         };
@@ -128,7 +138,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                 <Card
                     ref={cardRef}
                     className={cn(
-                        "absolute top-12 left-0 right-0 mx-auto mt-0.5 transition-all !z-[100]",
+                        "absolute top-12 left-0 right-0 mx-auto mt-0.5 w-full transition-all !z-[100]",
                         searchInput.trim().length > 0 && !searching ? "opacity-100" : "opacity-0"
                     )}
                 >
@@ -136,7 +146,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                         <CardTitle className="text-sm">Quick Search</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 select-none">
                             <div className="grid md:grid-cols-2 gap-6">
                                 {["albums", "tracks"].map((key, index) => (
                                     <div key={index} className="flex flex-col gap-1">
@@ -167,6 +177,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                                 </p>
                                             )
                                         })}
+                                        {results?.[key as "albums" | "tracks"].items.length! <= 0 && <p className="w-full h-full flex capitalize items-center justify-center text-xs text-muted-foreground p-4 border-2 border-dashed rounded-md">No results found</p>}
                                     </div>
                                 ))}
                             </div>

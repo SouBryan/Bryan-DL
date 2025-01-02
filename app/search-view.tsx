@@ -124,7 +124,7 @@ const SearchView = () => {
             <div className="space-y-4">
                 <div className="flex flex-col select-none">
                     {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === "qobuz-dl" ? (
-                        <Image src='/logo/qobuz-web.png' width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='mx-auto' />
+                        <Image src='/logo/qobuz-web.png' priority={true} width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='mx-auto' />
                     ) : (
                         <>
                             <h1 className="text-4xl font-bold text-center">{process.env.NEXT_PUBLIC_APPLICATION_NAME}</h1>
