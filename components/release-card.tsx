@@ -18,6 +18,7 @@ import { motion } from 'motion/react'
 import { createDownloadJob } from '@/lib/download-job'
 import { useSettings } from '@/lib/settings-provider'
 import { Skeleton } from './ui/skeleton'
+import Image from 'next/image'
 
 const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | QobuzTrack, resolvedTheme: string, ref?: React.Ref<HTMLDivElement> }) => {
     const { ffmpegState } = useFFmpeg();
@@ -114,16 +115,20 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                     <div className="flex gap-3 overflow-hidden">
                         <div className="relative aspect-square min-w-[100px] min-h-[100px] rounded-sm overflow-hidden">
                             <Skeleton className='absolute aspect-square w-full h-full' />
-                            {typeof loadedImage === "string" && <img src={loadedImage} alt={formatTitle(result)} crossOrigin='anonymous' className='absolute aspect-square w-full h-full' />}
+                            {typeof loadedImage === "string" && <Image fill src={loadedImage} alt={formatTitle(result)} crossOrigin='anonymous' className='absolute aspect-square w-full h-full' />}
                         </div>
 
                         <div className="flex flex-col justify-between overflow-hidden">
                             <div className="space-y-1.5 overflow-visible">
-                                <DialogTitle className='truncate overflow-visible py-0.5'>{formatTitle(getAlbum(result))}</DialogTitle>
-                                <DialogDescription className='truncate overflow-visible '>{formatArtists(result)}</DialogDescription>
+                                <DialogTitle title={formatTitle(getAlbum(result))} className='truncate overflow-visible py-0.5'>{formatTitle(getAlbum(result))}</DialogTitle>
+                                <DialogDescription title={formatArtists(result)} className='truncate overflow-visible '>{formatArtists(result)}</DialogDescription>
                             </div>
                             <div className="space-y-1.5 w-fit">
-                                <DialogDescription className='truncate'>{getAlbum(result).tracks_count} {getAlbum(result).tracks_count > 1 ? "tracks" : "track"} - {formatDuration(getAlbum(result).duration)}</DialogDescription>
+                                <DialogDescription
+                                    className='truncate'
+                                >
+                                    {getAlbum(result).tracks_count} {getAlbum(result).tracks_count > 1 ? "tracks" : "track"} - {formatDuration(getAlbum(result).duration)}
+                                </DialogDescription>
                             </div>
                         </div>
                     </div>
@@ -144,11 +149,17 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                                                     {track.parental_warning && <p className='text-[10px] bg-primary text-primary-foreground p-1 rounded-sm aspect-square w-[18px] h-[18px] text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
                                                     <p className='truncate font-medium'>{formatTitle(track)}</p>
                                                 </div>
-                                                <Button className='md:group-hover:flex md:hidden justify-center aspect-square h-6 w-6 [&_svg]:size-5 hover:bg-transparent' size="icon" variant='ghost' onClick={async () => {
-                                                    await createDownloadJob(track, setStatusBar, ffmpegState, settings);
-                                                    setOpenTracklist(false);
-                                                }}>
-                                                    <DownloadIcon />
+                                                <Button
+                                                    title={`Download '${formatTitle(track)}'`}
+                                                    className='md:group-hover:flex md:hidden justify-center aspect-square h-6 w-6 [&_svg]:size-5 hover:bg-transparent'
+                                                    size="icon"
+                                                    variant='ghost'
+                                                    onClick={async () => {
+                                                        await createDownloadJob(track, setStatusBar, ffmpegState, settings);
+                                                        setOpenTracklist(false);
+                                                    }}
+                                                >
+                                                    <DownloadIcon className='!size-4' />
                                                 </Button>
                                             </div>
                                             {index < fetchedAlbumData.tracks.items.length - 1 && <Separator />}

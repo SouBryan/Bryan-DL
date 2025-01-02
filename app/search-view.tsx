@@ -13,7 +13,6 @@ import { Disc3Icon, DiscAlbumIcon } from 'lucide-react';
 import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
-import Image from 'next/image';
 
 const SearchView = () => {
     const { resolvedTheme } = useTheme();
