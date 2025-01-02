@@ -59,7 +59,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                             <p className='text-xs truncate capitalize font-medium'>{new Date(getAlbum(result).released_at * 1000).getFullYear()}</p>
                             <div className="flex text-[10px] truncate font-semibold items-center justify-start">
                                 <p>{result.maximum_bit_depth}-bit</p>
-                                <DotIcon size={16}/>
+                                <DotIcon size={16} />
                                 <p>{result.maximum_sampling_rate} kHz</p>
                             </div>
                         </div>
@@ -73,17 +73,17 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                             >
                                 <DownloadIcon />
                             </Button>
-                            {(result as QobuzTrack).album ? null : 
-                                    <Button size='icon' variant='ghost' onClick={async () => {
-                                        setOpenTracklist(!openTracklist);
-                                        if (!fetchedAlbumData || fetchedAlbumData.id !== (result as QobuzAlbum).id) {
-                                            setFetchedAlbumData(null);
-                                            const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id } });
-                                            setFetchedAlbumData(albumDataResponse.data.data);
-                                        }
-                                    }}>
-                                        <AlignJustifyIcon />
-                                    </Button>
+                            {(result as QobuzTrack).album ? null :
+                                <Button size='icon' variant='ghost' onClick={async () => {
+                                    setOpenTracklist(!openTracklist);
+                                    if (!fetchedAlbumData || fetchedAlbumData.id !== (result as QobuzAlbum).id) {
+                                        setFetchedAlbumData(null);
+                                        const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id } });
+                                        setFetchedAlbumData(albumDataResponse.data.data);
+                                    }
+                                }}>
+                                    <AlignJustifyIcon />
+                                </Button>
                             }
                         </div>
                     </div>
@@ -94,13 +94,13 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                     transition={{ duration: 0.1 }}
                     className={cn('absolute left-0 top-0 z-[2] w-full aspect-square transition-all')}
                 >
-                    <img src={loadedImage as string} alt={formatTitle(result)} className='group-hover:scale-105 transition-all w-full h-full'/>
-                    </motion.div>}
-                <Skeleton className='absolute left-0 top-0 z-[1] w-full aspect-square'/>
+                    <img src={loadedImage as string} alt={formatTitle(result)} className='group-hover:scale-105 transition-all w-full h-full' />
+                </motion.div>}
+                <Skeleton className='absolute left-0 top-0 z-[1] w-full aspect-square' />
             </div>
             <div className="space-y-1">
-                <div className="flex gap-1 items-center">
-                    {result.parental_warning && <p className='text-[10px] bg-accent-background p-1 rounded-sm aspect-square w-[20px] h-[20px] text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
+                <div className="flex gap-1.5 items-center">
+                    {result.parental_warning && <p className='text-[10px] bg-primary text-primary-foreground p-1 rounded-sm aspect-square w-[18px] h-[18px] text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
                     <h1 className='text-sm truncate font-bold group-hover:underline'>
                         {formatTitle(result)}
                     </h1>
@@ -113,10 +113,10 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                 <DialogContent className='w-[600px] max-w-[90%] md:max-w-[80%] overflow-hidden'>
                     <div className="flex gap-3 overflow-hidden">
                         <div className="relative aspect-square min-w-[100px] min-h-[100px] rounded-sm overflow-hidden">
-                            <Skeleton className='absolute aspect-square w-full h-full'/>
+                            <Skeleton className='absolute aspect-square w-full h-full' />
                             {typeof loadedImage === "string" && <img src={loadedImage} alt={formatTitle(result)} crossOrigin='anonymous' className='absolute aspect-square w-full h-full' />}
                         </div>
-                        
+
                         <div className="flex flex-col justify-between overflow-hidden">
                             <div className="space-y-1.5 overflow-visible">
                                 <DialogTitle className='truncate overflow-visible py-0.5'>{formatTitle(getAlbum(result))}</DialogTitle>
@@ -128,37 +128,37 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                         </div>
                     </div>
                     <Separator />
-                        {fetchedAlbumData && <ScrollArea className='max-h-[40vh]'>
-                            <motion.div
-                                initial={{ maxHeight: "0vh" }}
-                                animate={{ maxHeight: "40vh" }}
-                            >
-                                <div className="flex flex-col overflow-hidden pr-3">
-                                    {fetchedAlbumData.tracks.items.map((track: QobuzTrack, index: number) => {
-                                        track.album = getAlbum(result);
-                                        return (
-                                            <div key={track.id}>                                            
-                                                <div className='flex items-center justify-between gap-2 overflow-hidden hover:bg-primary/5 transition-all p-2 rounded group'>
-                                                    <div className="gap-2 flex items-center overflow-hidden">
-                                                        <span className='text-muted-foreground text-sm'>{index + 1}</span>
-                                                        {track.parental_warning && <p className='text-[10px] bg-accent-background p-1 rounded-sm aspect-square w-[20px] h-[20px] text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
-                                                        <p className='truncate font-medium'>{formatTitle(track)}</p>
-                                                    </div>
-                                                    <Button className='md:group-hover:flex md:hidden justify-center aspect-square h-6 w-6 [&_svg]:size-5 hover:bg-transparent' size="icon" variant='ghost' onClick={async () => {
-                                                        await createDownloadJob(track, setStatusBar, ffmpegState, settings);
-                                                        setOpenTracklist(false);
-                                                    }}>
-                                                        <DownloadIcon />
-                                                    </Button>
+                    {fetchedAlbumData && <ScrollArea className='max-h-[40vh]'>
+                        <motion.div
+                            initial={{ maxHeight: "0vh" }}
+                            animate={{ maxHeight: "40vh" }}
+                        >
+                            <div className="flex flex-col overflow-hidden pr-3">
+                                {fetchedAlbumData.tracks.items.map((track: QobuzTrack, index: number) => {
+                                    track.album = getAlbum(result);
+                                    return (
+                                        <div key={track.id}>
+                                            <div className='flex items-center justify-between gap-2 overflow-hidden hover:bg-primary/5 transition-all p-2 rounded group'>
+                                                <div className="gap-2 flex items-center overflow-hidden">
+                                                    <span className='text-muted-foreground text-sm'>{index + 1}</span>
+                                                    {track.parental_warning && <p className='text-[10px] bg-primary text-primary-foreground p-1 rounded-sm aspect-square w-[18px] h-[18px] text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
+                                                    <p className='truncate font-medium'>{formatTitle(track)}</p>
                                                 </div>
-                                                {index < fetchedAlbumData.tracks.items.length - 1 && <Separator />}
-                                            <div/>
+                                                <Button className='md:group-hover:flex md:hidden justify-center aspect-square h-6 w-6 [&_svg]:size-5 hover:bg-transparent' size="icon" variant='ghost' onClick={async () => {
+                                                    await createDownloadJob(track, setStatusBar, ffmpegState, settings);
+                                                    setOpenTracklist(false);
+                                                }}>
+                                                    <DownloadIcon />
+                                                </Button>
+                                            </div>
+                                            {index < fetchedAlbumData.tracks.items.length - 1 && <Separator />}
+                                            <div />
                                         </div>
-                                        )
-                                    })}
-                                </div>
-                            </motion.div>
-                        </ScrollArea>}
+                                    )
+                                })}
+                            </div>
+                        </motion.div>
+                    </ScrollArea>}
                 </DialogContent>
             </Dialog>
         </div>
