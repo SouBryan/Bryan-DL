@@ -123,7 +123,8 @@ const SearchView = () => {
         <>
             <div className="space-y-4">
                 <div className="flex flex-col select-none">
-                    <Image src='/logo/qobuz-web.png' alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} width={210} height={100} className='mx-auto'/>
+                    <h1 className="text-4xl font-bold text-center">{process.env.NEXT_PUBLIC_APPLICATION_NAME}</h1>
+                    <p className='text-md text-center font-medium text-muted-foreground'>The simplest music downloader</p>
                 </div>
                 <div className="flex flex-col items-start justify-center">
                     <SearchBar onSearch={async (query: string) => {
