@@ -15,7 +15,7 @@ const contributors = [
     {
         name: "Farmz",
         image: "/contributors/FarmzDev.webp",
-        role: "Main Developer",
+        role: "Lead Developer",
         links: [
             { href: "https://discord.com/users/1093113069149880330", icon: <FaDiscord /> },
             { href: "https://github.com/FarmzDev/", icon: <FaGithub /> }
@@ -24,7 +24,7 @@ const contributors = [
     {
         name: "Jkable",
         image: "/contributors/Jkable.webp",
-        role: "Helped with development",
+        role: "Lead Developer",
         links: [
             { href: "https://discord.com/users/662243382378233866", icon: <FaDiscord /> },
             { href: "https://github.com/Jkablez/", icon: <FaGithub /> }
