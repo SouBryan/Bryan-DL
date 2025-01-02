@@ -90,44 +90,46 @@ const SettingsForm = () => {
                     </DropdownMenu>
                 </SheetHeader>
                 <Separator />
-                <SheetHeader>
+                <SheetHeader className='space-y-4'>
                     <div className="flex flex-col my-1">
                         <SheetTitle>Output Settings</SheetTitle>
                         <SheetDescription>
                             Change the way your music is saved
                         </SheetDescription>
                     </div>
-                    <p className='font-medium text-sm'>Output Codec</p>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="flex gap-2 items-center">
-                                <p>{settings.outputCodec}</p>
-                                <ChevronDownIcon />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                            <DropdownMenuRadioGroup value={settings.outputCodec} onValueChange={(codec: string) => {
-                                setSettings(settings => ({ ...settings, outputCodec: codec as SettingsProps['outputCodec'] }));
-                                if (!losslessCodecs.includes(codec)) {
-                                    setSettings(settings => ({ ...settings, outputQuality: "5" as const, bitrate: settings.bitrate || 320 }));
-                                } else {
-                                    setSettings(settings => {
-                                        if (settings.outputQuality === "5") return { ...settings, outputQuality: "27" as const, bitrate: undefined };
-                                        else return { ...settings, bitrate: undefined };
-                                    });
-                                }
-                            }}>
-                                <DropdownMenuRadioItem value="FLAC">FLAC (recommended)</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="WAV">WAV</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="ALAC">ALAC</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="MP3">MP3</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="AAC">AAC</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="OPUS">OPUS</DropdownMenuRadioItem>
-                            </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="space-y-2">
+                        <p className='font-medium text-sm'>Output Codec</p>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="flex gap-2 items-center">
+                                    <p>{settings.outputCodec}</p>
+                                    <ChevronDownIcon />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuRadioGroup value={settings.outputCodec} onValueChange={(codec: string) => {
+                                    setSettings(settings => ({ ...settings, outputCodec: codec as SettingsProps['outputCodec'] }));
+                                    if (!losslessCodecs.includes(codec)) {
+                                        setSettings(settings => ({ ...settings, outputQuality: "5" as const, bitrate: settings.bitrate || 320 }));
+                                    } else {
+                                        setSettings(settings => {
+                                            if (settings.outputQuality === "5") return { ...settings, outputQuality: "27" as const, bitrate: undefined };
+                                            else return { ...settings, bitrate: undefined };
+                                        });
+                                    }
+                                }}>
+                                    <DropdownMenuRadioItem value="FLAC">FLAC (recommended)</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="WAV">WAV</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="ALAC">ALAC</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="MP3">MP3</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="AAC">AAC</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="OPUS">OPUS</DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                     {losslessCodecs.includes(settings.outputCodec) ? (
-                        <>
+                        <div className='space-y-2'>
                             <p className='font-medium text-sm'>Max Download Quality</p>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -158,7 +160,7 @@ const SettingsForm = () => {
                                     </DropdownMenuRadioGroup>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        </>
+                        </div>
                     ) : (
                         <>
                             <p className='text-xs text-muted-foreground text-center'>Lossy codec selected. All music will be downloaded at 320kbps. You can specify a bitrate to rencode to below.</p>
