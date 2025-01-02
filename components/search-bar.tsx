@@ -1,5 +1,5 @@
 "use client"
-import React, { JSX, useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Input } from "@/components/ui/input";
 import { Button } from './ui/button';
 import { ArrowRightIcon, Loader2Icon, SearchIcon } from 'lucide-react';

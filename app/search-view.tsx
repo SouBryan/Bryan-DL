@@ -1,9 +1,9 @@
 "use client"
 
 import SearchBar from '@/components/search-bar';
-import React, { JSX, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import axios from 'axios';
-import { SearchIcon, Loader2Icon, Disc3Icon, DiscAlbumIcon } from 'lucide-react';
+import { Disc3Icon, DiscAlbumIcon } from 'lucide-react';
 import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
 import {
     DropdownMenu,
