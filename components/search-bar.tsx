@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import axios from "axios";
 import { formatTitle, QobuzAlbum, QobuzSearchResults, QobuzTrack } from "@/lib/qobuz-dl";
 import { Skeleton } from "./ui/skeleton";
+import { AnimatePresence, motion } from "framer-motion";
 
 const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery }: { onSearch: (query: string) => void; searching: boolean; setSearching: React.Dispatch<React.SetStateAction<boolean>>, setSearchField: React.Dispatch<React.SetStateAction<"albums" | "tracks">>, setQuery: React.Dispatch<React.SetStateAction<string>> }) => {
     const [searchInput, setSearchInput] = useState("");
@@ -17,7 +18,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
     const [loading, setLoading] = useState<boolean>(false);
     const [showCard, setShowCard] = useState(false);
     const [controller, setController] = useState<AbortController>(new AbortController());
-    
+
     const inputRef = useRef<HTMLInputElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -133,70 +134,97 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                 {searching ? <Loader2Icon className="animate-spin" /> : <ArrowRightIcon />}
             </Button>
 
-            {showCard && (
-                <Card
-                    ref={cardRef}
-                    className={cn(
-                        "absolute top-12 left-0 right-0 mx-auto mt-0.5 w-full transition-all !z-[100]",
-                        searchInput.trim().length > 0 && !searching ? "opacity-100" : "opacity-0"
-                    )}
-                >
-                    <CardHeader>
-                        <CardTitle className="text-base flex md:flex-row flex-col md:items-center md:gap-2 gap-0.5">
-                            Quick Search
-                            <span className="text-xs text-muted-foreground">
-                                Showing {(results?.tracks.items.slice(0, (limit / 2)).length|| 0) + (results?.albums.items.slice(0, (limit / 2)).length || 0)} of {limit}
-                            </span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-col gap-2 select-none">
-                            <div className="md:grid flex flex-col md:max-h-[unset] max-h-[15vh] md:pr-0 pr-2 overflow-y-auto md:grid-cols-2 gap-6">
-                                {["albums", "tracks"].map((key, index) => (
-                                    <div key={index} className="flex flex-col gap-1">
-                                        <p className="text-sm font-semibold mb-1 capitalize">{key}</p>
-                                        {results?.[key as "albums" | "tracks"].items.slice(0, (limit / 2)).map((result: QobuzAlbum | QobuzTrack, index) => {
-                                            const value = key === "albums"
-                                                ? `${formatTitle(result as QobuzAlbum)} - ${(result as QobuzAlbum).artist.name}`
-                                                : `${formatTitle(result as QobuzTrack)} - ${(result as QobuzTrack).album.artist.name}`;
+            <AnimatePresence>
+                {showCard && (
+                    <motion.div
+                        initial={{ opacity: 0, translateY: -10, zIndex: 1000 }}
+                        animate={{
+                            opacity: 1,
+                            translateY: 0,
+                            transition: {
+                                type: "spring",
+                                stiffness: 150,
+                                damping: 10,
+                                duration: 0.5,
+                            },
+                        }}
+                        exit={{
+                            opacity: 0,
+                            translateY: -10,
+                            transition: {
+                                type: "spring",
+                                stiffness: 150,
+                                damping: 10,
+                                duration: 0.4,
+                            },
+                        }}
+                        className="absolute top-0 left-0 right-0 mx-auto mt-0 w-full !z-[100]"
+                    >
+                        <Card
+                            ref={cardRef}
+                            className={cn(
+                                "absolute top-12 left-0 right-0 mx-auto mt-0.5 w-full transition-all !z-[100]",
+                                searchInput.trim().length > 0 && !searching ? "opacity-100" : "opacity-0"
+                            )}
+                        >
+                            <CardHeader>
+                                <CardTitle className="text-base flex md:flex-row flex-col md:items-center md:gap-2 gap-0.5">
+                                    Quick Search
+                                    <span className="text-xs text-muted-foreground">
+                                        Showing {(results?.tracks.items.slice(0, (limit / 2)).length || 0) + (results?.albums.items.slice(0, (limit / 2)).length || 0)} of {limit}
+                                    </span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col gap-2 select-none">
+                                    <div className="md:grid flex flex-col md:max-h-[unset] max-h-[15vh] md:pr-0 pr-2 overflow-y-auto md:grid-cols-2 gap-6">
+                                        {["albums", "tracks"].map((key, index) => (
+                                            <div key={index} className="flex flex-col gap-1">
+                                                <p className="text-sm font-semibold mb-1 capitalize">{key}</p>
+                                                {results?.[key as "albums" | "tracks"].items.slice(0, (limit / 2)).map((result: QobuzAlbum | QobuzTrack, index) => {
+                                                    const value = key === "albums"
+                                                        ? `${formatTitle(result as QobuzAlbum)} - ${(result as QobuzAlbum).artist.name}`
+                                                        : `${formatTitle(result as QobuzTrack)} - ${(result as QobuzTrack).album.artist.name}`;
 
-                                            const title = formatTitle(result as QobuzAlbum | QobuzTrack);
+                                                    const title = formatTitle(result as QobuzAlbum | QobuzTrack);
 
-                                            return loading ? (
-                                                <Skeleton
-                                                    key={index}
-                                                    className="h-4"
-                                                />
-                                            ) : (
-                                                <p
-                                                    key={index}
-                                                    onClick={() => {
-                                                        setSearchInput(value);
-                                                        setQuery(value);
-                                                        setShowCard(false);
-                                                        setSearchField(key as "albums" | "tracks");
-                                                        setSearching(true);
-                                                        onSearch(value);
-                                                    }}
-                                                    className="text-sm hover:underline underline-offset-2 decoration-1 h-fit w-full truncate cursor-pointer justify-start text-muted-foreground"
-                                                    title={title}
-                                                >
-                                                    {title}
-                                                </p>
-                                            )
-                                        })}
-                                        {results?.[key as "albums" | "tracks"]?.items.length === 0 && (
-                                            <p className="w-full h-full flex capitalize items-center justify-center text-xs text-muted-foreground p-4 border-2 border-dashed rounded-md">
-                                                No Results Found
-                                            </p>
-                                        )}
+                                                    return loading ? (
+                                                        <Skeleton
+                                                            key={index}
+                                                            className="h-4"
+                                                        />
+                                                    ) : (
+                                                        <p
+                                                            key={index}
+                                                            onClick={() => {
+                                                                setSearchInput(value);
+                                                                setQuery(value);
+                                                                setShowCard(false);
+                                                                setSearchField(key as "albums" | "tracks");
+                                                                setSearching(true);
+                                                                onSearch(value);
+                                                            }}
+                                                            className="text-sm hover:underline underline-offset-2 decoration-1 h-fit w-full truncate cursor-pointer justify-start text-muted-foreground"
+                                                            title={title}
+                                                        >
+                                                            {title}
+                                                        </p>
+                                                    )
+                                                })}
+                                                {results?.[key as "albums" | "tracks"]?.items.length === 0 && (
+                                                    <p className="w-full h-full flex capitalize items-center justify-center text-xs text-muted-foreground p-4 border-2 border-dashed rounded-md">
+                                                        No Results Found
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
