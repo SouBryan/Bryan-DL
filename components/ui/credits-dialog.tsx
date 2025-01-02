@@ -61,7 +61,7 @@ const CreditsDialog = () => {
                     <InfoIcon />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[85%] sm:max-w-[425px] overflow-y-auto sm:max-h-[unset] max-h-[90vh] rounded-md">
+            <DialogContent className="max-w-[85%] sm:max-w-[425px] md:max-w-[600px] w-full overflow-y-auto sm:max-h-[unset] max-h-[90vh] rounded-md">
                 <DialogHeader>
                     <DialogTitle className="text-xl">{process.env.NEXT_PUBLIC_APPLICATION_NAME}</DialogTitle>
                     <DialogDescription>
@@ -94,7 +94,6 @@ const CreditsDialog = () => {
                             </Button>
                         </Link>
                     </div>
-                    <p>/</p>
                     <div className="space-x-2">
                         <Link
                             href={process.env.NEXT_PUBLIC_DISCORD!}
@@ -125,7 +124,7 @@ const CreditsDialog = () => {
                                     quality={50}
                                 />
                                 <div className="h-full pl-1">
-                                    <p className="font-bold text-xl">{contributor.name}</p>
+                                    <p title={contributor.name} className="font-bold text-xl">{contributor.name}</p>
                                     <div className="flex gap-2 my-1">
                                         {contributor.links.map((link, idx) => (
                                             <Link

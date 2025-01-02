@@ -43,14 +43,14 @@ const StatusBar = () => {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ type: "spring" }}
                             exit={{ y: 100, opacity: 0 }}
-                        >
+                       > 
                             <Card>
                                 <CardHeader className='flex items-center flex-row justify-between transition-[height] pt-4 overflow-hidden pb-2'>
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => setQueueOpen(true)}
-                                        className="size-6"
+                                        className="size-6 bg-background/80"
                                         disabled={statusBar.queue ? statusBar.queue.length === 0 : true}
                                     >
                                         <QueueIcon className='w-4 h-4' />
