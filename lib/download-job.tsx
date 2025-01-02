@@ -70,7 +70,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                             fetchedAlbumData = albumDataResponse.data.data
                         }
                     }
-                    const albumTracks = fetchedAlbumData!.tracks.items.map((track: QobuzTrack) => ({...track, album: fetchedAlbumData})) as QobuzTrack[];
+                    const albumTracks = fetchedAlbumData!.tracks.items.map((track: QobuzTrack) => ({ ...track, album: fetchedAlbumData })) as QobuzTrack[];
                     let totalAlbumSize = 0;
                     const albumUrls = [] as string[];
                     setStatusBar(prev => ({ ...prev, description: "Fetching album size..." }));
@@ -109,10 +109,10 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     for (const [index, blob] of trackBlobs.entries()) {
                         const fileName = (index + 1).toString().padStart((albumTracks.length - 1).toString().length > 2 ? (albumTracks.length - 1).toString().length : 2, '0') + " " + formatTitle(albumTracks[index]) + "." + codecMap[settings.outputCodec].extension
                         await zipWriter.add(cleanFileName(fileName), new zip.BlobReader(blob), { signal });
-                        setStatusBar(prev => ({...prev, progress: Math.floor((index + 1) / (albumTracks.length + 1) * 100)}));
+                        setStatusBar(prev => ({ ...prev, progress: Math.floor((index + 1) / (albumTracks.length + 1) * 100) }));
                     }
                     await zipWriter.add("cover.jpg", new zip.BlobReader(new Blob([albumArt])), { signal });
-                    setStatusBar(prev => ({...prev, progress: 100}));
+                    setStatusBar(prev => ({ ...prev, progress: 100 }));
                     saveAs(await zipWriter.close(), formattedTitle + ".zip");
                     resolve();
                 } catch {

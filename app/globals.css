@@ -36,6 +36,7 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -64,12 +65,151 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  .purple {
+    --background: 266 50% 5%;
+    --foreground: 266 5% 90%;
+    --card: 266 50% 0%;
+    --card-foreground: 266 5% 90%;
+    --popover: 266 50% 5%;
+    --popover-foreground: 266 5% 90%;
+    --primary: 266 100% 67%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 266 30% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 228 30% 15%;
+    --muted-foreground: 266 5% 60%;
+    --accent: 228 30% 15%;
+    --accent-foreground: 266 5% 90%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 266 5% 90%;
+    --border: 266 30% 18%;
+    --input: 266 30% 18%;
+    --ring: 266 100% 67%;
+    --radius: 0.5rem;
+  }
+
+  .pink {
+    --background: 311 50% 5%;
+    --foreground: 311 5% 90%;
+    --card: 311 50% 0%;
+    --card-foreground: 311 5% 90%;
+    --popover: 311 50% 5%;
+    --popover-foreground: 311 5% 90%;
+    --primary: 311 100% 67%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 311 30% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 273 30% 15%;
+    --muted-foreground: 311 5% 60%;
+    --accent: 273 30% 15%;
+    --accent-foreground: 311 5% 90%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 311 5% 90%;
+    --border: 311 30% 18%;
+    --input: 311 30% 18%;
+    --ring: 311 100% 67%;
+    --radius: 0.5rem;
+  }
+
+  .blue {
+    --background: 212 50% 5%;
+    --foreground: 212 5% 90%;
+    --card: 212 50% 0%;
+    --card-foreground: 212 5% 90%;
+    --popover: 212 50% 5%;
+    --popover-foreground: 212 5% 90%;
+    --primary: 212 100% 67%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 212 30% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 174 30% 15%;
+    --muted-foreground: 212 5% 60%;
+    --accent: 174 30% 15%;
+    --accent-foreground: 212 5% 90%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 212 5% 90%;
+    --border: 212 30% 18%;
+    --input: 212 30% 18%;
+    --ring: 212 100% 67%;
+    --radius: 0.5rem;
+  }
+
+  .green {
+    --background: 142 50% 5%;
+    --foreground: 142 5% 90%;
+    --card: 142 50% 0%;
+    --card-foreground: 142 5% 90%;
+    --popover: 142 50% 5%;
+    --popover-foreground: 142 5% 90%;
+    --primary: 142 100% 67%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 142 30% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 104 30% 15%;
+    --muted-foreground: 142 5% 60%;
+    --accent: 104 30% 15%;
+    --accent-foreground: 142 5% 90%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 142 5% 90%;
+    --border: 142 30% 18%;
+    --input: 142 30% 18%;
+    --ring: 142 100% 67%;
+    --radius: 0.5rem;
+  }
+
+  .red {
+    --background: 0 50% 5%;
+    --foreground: 0 5% 90%;
+    --card: 0 50% 0%;
+    --card-foreground: 0 5% 90%;
+    --popover: 0 50% 5%;
+    --popover-foreground: 0 5% 90%;
+    --primary: 0 100% 67%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 30% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: -38 30% 15%;
+    --muted-foreground: 0 5% 60%;
+    --accent: -38 30% 15%;
+    --accent-foreground: 0 5% 90%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 0 5% 90%;
+    --border: 0 30% 18%;
+    --input: 0 30% 18%;
+    --ring: 0 100% 67%;
+    --radius: 0.5rem;
+  }
+
+  .orange {
+    --background: 31 50% 5%;
+    --foreground: 31 5% 90%;
+    --card: 31 50% 0%;
+    --card-foreground: 31 5% 90%;
+    --popover: 31 50% 5%;
+    --popover-foreground: 31 5% 90%;
+    --primary: 31 100% 67%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 31 30% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: -7 30% 15%;
+    --muted-foreground: 31 5% 60%;
+    --accent: -7 30% 15%;
+    --accent-foreground: 31 5% 90%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 31 5% 90%;
+    --border: 31 30% 18%;
+    --input: 31 30% 18%;
+    --ring: 31 100% 67%;
+    --radius: 0.5rem;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }

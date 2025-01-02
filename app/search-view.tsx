@@ -1,22 +1,16 @@
 "use client"
 
-import SearchBar from '@/components/search-bar';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { useInView } from "react-intersection-observer";
+import { useTheme } from 'next-themes';
+import SearchBar from '@/components/search-bar';
+import ReleaseCard from '@/components/release-card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
 import { Disc3Icon, DiscAlbumIcon } from 'lucide-react';
 import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem
-} from "@/components/ui/dropdown-menu"
-import { Button } from '@/components/ui/button';
-import { useTheme } from 'next-themes';
-import ReleaseCard from '@/components/release-card';
-import { useInView } from "react-intersection-observer";
-import { Skeleton } from '@/components/ui/skeleton';
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
 
@@ -75,7 +69,7 @@ const SearchView = () => {
     }, [isInView, results]);
 
     const finalItemRef = useRef<HTMLDivElement | null>(null);
-    const [cardHeight, setCardHeight] = useState<number>(0); 
+    const [cardHeight, setCardHeight] = useState<number>(0);
 
     useEffect(() => {
         const element = finalItemRef.current;
@@ -103,11 +97,11 @@ const SearchView = () => {
                 setNumRows(rowsMap[getTailwindBreakpoint(window.innerWidth)]);
             }
         };
-    
+
         handleResize();
-    
+
         window.addEventListener('resize', handleResize);
-    
+
         return () => {
             window.removeEventListener('resize', handleResize);
         };
@@ -172,7 +166,7 @@ const SearchView = () => {
             </div>
 
             <div>
-            {results && <div className="my-6 w-screen mx-auto max-w-[1600px] pb-20">
+                {results && <div className="my-6 w-screen mx-auto max-w-[1600px] pb-20">
                     <div
                         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 w-full px-6 overflow-visible"
                         style={{ maxHeight: `${(Math.ceil(filterExplicit(results, settings.explicitContent)[searchField].items.length / numRows) + 2) * (cardHeight + 16)}px` }}
@@ -190,7 +184,7 @@ const SearchView = () => {
                         {results![searchField].items.length < results![searchField].total && [...Array(results![searchField].total > results![searchField].items.length + 30 ? 30 : results![searchField].total - results![searchField].items.length)].map((_, index) => {
                             return (
                                 <div key={index} className="relative w-full">
-                                    <Skeleton className="relative w-full aspect-square group select-none rounded-sm overflow-hidden" ref={index === 0 ? scrollTrigger : null}/>
+                                    <Skeleton className="relative w-full aspect-square group select-none rounded-sm overflow-hidden" ref={index === 0 ? scrollTrigger : null} />
                                     <div className="h-[40px]"></div>
                                 </div>
                             );

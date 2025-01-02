@@ -53,7 +53,7 @@ const SettingsForm = () => {
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-            <Button variant="outline" size="icon" onClick={() => {setOpen(true)}}>
+            <Button variant="outline" size="icon" onClick={() => { setOpen(true) }}>
                 <SettingsIcon />
             </Button>
             <SheetContent className="flex flex-col gap-4">
@@ -97,7 +97,7 @@ const SettingsForm = () => {
                             Change the way your music is saved
                         </SheetDescription>
                     </div>
-                    <p className='font-medium'>Output Codec</p>
+                    <p className='font-medium text-sm'>Output Codec</p>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="flex gap-2 items-center">
@@ -113,7 +113,7 @@ const SettingsForm = () => {
                                 } else {
                                     setSettings(settings => {
                                         if (settings.outputQuality === "5") return { ...settings, outputQuality: "27" as const, bitrate: undefined };
-                                        else return {...settings, bitrate: undefined};
+                                        else return { ...settings, bitrate: undefined };
                                     });
                                 }
                             }}>
@@ -128,7 +128,7 @@ const SettingsForm = () => {
                     </DropdownMenu>
                     {losslessCodecs.includes(settings.outputCodec) ? (
                         <>
-                            <p className='font-medium'>Max Download Quality</p>
+                            <p className='font-medium text-sm'>Max Download Quality</p>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="flex gap-2 items-center">
@@ -168,12 +168,12 @@ const SettingsForm = () => {
                             </div>
                         </>
                     )}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-2">
                         <div className="flex flex-col">
                             <p className={cn('font-medium', settings.outputCodec === "WAV" && "text-muted-foreground")}>Apply metadata</p>
                             <p className={cn("text-xs", settings.outputCodec === "WAV" ? "text-muted-background" : "text-muted-foreground")}>If enabled (default), songs will be tagged with cover art, album information, etc.</p>
                         </div>
-                        <Checkbox checked={settings.applyMetadata && settings.outputCodec !== "WAV"} onCheckedChange={(checked: boolean) => setSettings(settings => ({ ...settings, applyMetadata: checked }))} disabled={settings.outputCodec === "WAV"}/>
+                        <Checkbox checked={settings.applyMetadata && settings.outputCodec !== "WAV"} onCheckedChange={(checked: boolean) => setSettings(settings => ({ ...settings, applyMetadata: checked }))} disabled={settings.outputCodec === "WAV"} />
                     </div>
                     {settings.outputCodec === "OPUS" && <p className='text-xs text-destructive font-semibold text-center'>WARNING: OGG (OPUS) files do not support album art.</p>}
                     {settings.outputCodec === "WAV" && <p className='text-xs text-destructive font-semibold text-center'>WAV files do not support metadata / tags.</p>}
