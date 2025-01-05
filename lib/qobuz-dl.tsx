@@ -23,6 +23,8 @@ export type QobuzArtist = {
 }
 
 export type QobuzTrack = {
+    isrc: string | null,
+    copyright: string,
     maximum_bit_depth: number,
     maximum_sampling_rate: number,
     performer: {
@@ -76,6 +78,7 @@ export type QobuzAlbum = {
     maximum_sampling_rate: number,
     release_date_original: string,
     hires: boolean,
+    upc: string
 }
 
 export type QobuzSearchResults = {
@@ -206,8 +209,9 @@ export function formatDuration(seconds: number) {
     const totalMinutes = Math.floor(seconds / 60);
     const hours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
+    const remainingSeconds = seconds % 60;
 
-    return `${hours > 0 ? hours + "h " : ""} ${remainingMinutes}m`;
+    return `${hours > 0 ? hours + "h " : ""} ${remainingMinutes > 0 ? remainingMinutes + "m " : ""} ${remainingSeconds > 0 && hours <= 0 ? remainingSeconds + "s" : ""}`.trim();
 }
 
 export function testForRequirements() {

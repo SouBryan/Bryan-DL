@@ -61,6 +61,14 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                                 <DotIcon size={16} />
                                 <p>{result.maximum_sampling_rate} kHz</p>
                             </div>
+                            <div className="flex text-[10px] truncate font-semibold items-center justify-start">
+                                {(result as QobuzAlbum).tracks_count ? (
+                                    <>
+                                        <p>{(result as QobuzAlbum).tracks_count} {(result as QobuzAlbum).tracks_count > 1 ? "tracks" : "track"}</p>
+                                        <DotIcon size={16} />
+                                    </>) : null}
+                                <p>{formatDuration(result.duration)}</p>
+                            </div>
                         </div>
                         <div className="flex items-center justify-between gap-4 p-2">
                             <Button
@@ -118,7 +126,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
 
                         <div className="flex w-full flex-col justify-between overflow-hidden">
                             <div className="space-y-1.5 overflow-visible">
-                                <DialogTitle title={formatTitle(getAlbum(result))} className='truncate overflow-visible py-0.5'>{formatTitle(getAlbum(result))}</DialogTitle>
+                                <DialogTitle title={formatTitle(getAlbum(result))} className='truncate overflow-visible py-0.5 pr-2'>{formatTitle(getAlbum(result))}</DialogTitle>
                                 <DialogDescription title={formatArtists(result)} className='truncate overflow-visible '>{formatArtists(result)}</DialogDescription>
                             </div>
                             <div className="flex items-center w-full justify-between gap-2">

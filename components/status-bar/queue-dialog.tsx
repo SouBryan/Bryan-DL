@@ -11,7 +11,7 @@ const QueueDialog = ({ open, setOpen, queueItems }: { open: boolean, setOpen: (o
                     <DialogTitle>Queue</DialogTitle>
                     <DialogDescription>
                         {queueItems.length > 0
-                            ? `${queueItems.length} item(s) in queue`
+                            ? `${queueItems.length} ${queueItems.length > 1 ? 'items' : 'item'} in queue`
                             : 'No items in the queue'
                         }
                     </DialogDescription>

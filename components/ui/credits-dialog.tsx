@@ -3,7 +3,6 @@ import React from 'react';
 import { Button } from './button';
 import { InfoIcon, LinkIcon } from 'lucide-react';
 import { FaDiscord } from '@react-icons/all-files/fa/FaDiscord'
-import { FaSpotify } from '@react-icons/all-files/fa/FaSpotify'
 import { FaSteam } from '@react-icons/all-files/fa/FaSteam'
 import { FaGithub } from '@react-icons/all-files/fa/FaGithub'
 import { Separator } from "./separator";
@@ -33,12 +32,12 @@ const contributors = [
     {
         name: "Joel15",
         image: "/contributors/Joel15.webp",
-        role: "Helped to purchase",
+        role: "Runs the domain at",
         roleAdditional: <a href="https://qobuz-dl.com" target="_blank" rel="noopener noreferrer" className="underline">https://qobuz-dl.com</a>,
         links: [
             { href: "https://discord.com/users/742554193700847627", icon: <FaDiscord /> },
             { href: "https://steamcommunity.com/profiles/76561198317104390", icon: <FaSteam /> },
-            { href: "https://open.spotify.com/user/315reccubycoatin2rv5gjhostxe", icon: <FaSpotify /> }
+            { href: "https://github.com/joelrosales123", icon: <FaGithub /> }
         ]
     },
     {

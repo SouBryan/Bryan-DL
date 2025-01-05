@@ -1,4 +1,4 @@
-import { formatArtists, formatTitle, getFullResImage, QobuzTrack } from "./qobuz-dl";
+import { formatArtists, formatTitle, getAlbum, getFullResImage, QobuzTrack } from "./qobuz-dl";
 import axios from "axios";
 import { SettingsProps } from "./settings-provider";
 import { StatusBarProps } from "@/components/status-bar/status-bar";
@@ -39,7 +39,7 @@ export const codecMap = {
     }
 }
 
-export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzTrack, ffmpeg: FFmpegType, settings: SettingsProps, setStatusBar?: React.Dispatch<React.SetStateAction<StatusBarProps>>, albumArt?: ArrayBuffer) {
+export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzTrack, ffmpeg: FFmpegType, settings: SettingsProps, setStatusBar?: React.Dispatch<React.SetStateAction<StatusBarProps>>, albumArt?: ArrayBuffer, upc?: string) {
     const skipRencode = (settings.outputQuality != "5" && settings.outputCodec === "FLAC") || (settings.outputQuality === "5" && settings.outputCodec === "MP3" && settings.bitrate === 320);
     if (skipRencode && !settings.applyMetadata) return trackBuffer;
     const extension = codecMap[settings.outputCodec].extension;
@@ -74,9 +74,11 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
     metadata += `\ngenre=${resultData.album.genre.name}`
     metadata += `\ndate=${resultData.album.release_date_original}`
     metadata += `\nyear=${new Date(resultData.album.release_date_original).getFullYear()}`
-    if (resultData.track_number) {
-        metadata += `\ntrack=${resultData.track_number}`;
-    }
+    metadata += `\nlabel=${getAlbum(resultData).label.name}`
+    metadata += `\ncopyright=${resultData.copyright}`
+    if (resultData.isrc) metadata += `\nisrc=${resultData.isrc}`;
+    if (upc) metadata += `\nbarcode=${upc}`;
+    if (resultData.track_number) metadata += `\ntrack=${resultData.track_number}`;
     await ffmpeg.FS("writeFile", "input." + extension, new Uint8Array(trackBuffer));
     const encoder = new TextEncoder();
     await ffmpeg.FS("writeFile", "metadata.txt", encoder.encode(metadata));
@@ -116,7 +118,7 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
 export function createFFmpeg() {
     if (typeof FFmpeg === 'undefined') return null;
     const { createFFmpeg } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: true });
+    const ffmpeg = createFFmpeg({ log: false });
     return ffmpeg;
 }
 

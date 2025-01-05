@@ -14,6 +14,7 @@ import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/li
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
 import Image from 'next/image';
+import { motion, useAnimation } from 'motion/react';
 
 const SearchView = () => {
     const { resolvedTheme } = useTheme();
@@ -42,6 +43,7 @@ const SearchView = () => {
     const [scrollTrigger, isInView] = useInView();
 
     const fetchMore = () => {
+        if (loading) return;
         setLoading(true);
         axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`)
             .then((response) => {
@@ -51,15 +53,15 @@ const SearchView = () => {
                         newResults = { ...newResults, [filter.value]: { ...results![filter.value as "albums" | "tracks"], items: [...results![filter.value as "albums" | "tracks"].items, ...response.data.data[filter.value].items] } }
                     })
                     setLoading(false);
-                    setResults(newResults);
+                    if (query === response.data.data.query) setResults(newResults);
                 }
             });
     }
 
     useEffect(() => {
-        if (results === null) {
-            return;
-        }
+        if (results === null) return;
+
+        if (searching) return;
 
         if (results![searchField].total > results![searchField].items.length) {
             fetchMore();
@@ -67,16 +69,15 @@ const SearchView = () => {
     }, [searchField])
 
     useEffect(() => {
-        if (isInView && results![searchField].total > results![searchField].items.length && !loading) {
-            fetchMore();
-        }
+        if (searching) return;
+        if (isInView && results![searchField].total > results![searchField].items.length && !loading) fetchMore();
     }, [isInView, results]);
 
-    const finalItemRef = useRef<HTMLDivElement | null>(null);
+    const cardRef = useRef<HTMLDivElement | null>(null);
     const [cardHeight, setCardHeight] = useState<number>(0);
 
     useEffect(() => {
-        const element = finalItemRef.current;
+        const element = cardRef.current;
 
         if (!element) {
             return;
@@ -95,7 +96,7 @@ const SearchView = () => {
         return () => {
             resizeObserver.disconnect();
         };
-    }, [results, settings.explicitContent]);
+    }, [results, settings.explicitContent, searchField]);
 
     useLayoutEffect(() => {
         const handleResize = () => {
@@ -124,35 +125,52 @@ const SearchView = () => {
 
     const [numRows, setNumRows] = useState(0);
 
+    const logoAnimationControls = useAnimation();
+    useEffect(() => {
+        logoAnimationControls.start({
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.5, type: "spring" },
+        });
+      }, [logoAnimationControls]);
+
     return (
         <>
             <div className="space-y-4">
-                <div
+                <motion.div
                     className="flex flex-col select-none cursor-pointer"
                     onClick={() => {
+                        logoAnimationControls.start({
+                            scale: [1, 1.1, 1],
+                            transition: { duration: 0.4, ease: "easeInOut" },
+                          });
                         setQuery('');
                         setResults(null);
                         setSearchField('albums');
                     }}
+                    initial={{ opacity: 0, y: -25 }}
+                    animate={logoAnimationControls}
+                    transition={{ duration: 0.5 }}
                 >
                     {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === "qobuz-dl" ? (
-                        <Image src='/logo/qobuz-web.png' priority={true} width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='mx-auto' />
+                        <Image src={resolvedTheme === "light" ? '/logo/qobuz-web-light.png' : '/logo/qobuz-web-dark.png'} priority={true} width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='w-auto mx-auto' />
                     ) : (
                         <>
                             <h1 className="text-4xl font-bold text-center">{process.env.NEXT_PUBLIC_APPLICATION_NAME}</h1>
                             <p className='text-md text-center font-medium text-muted-foreground'>The simplest music downloader</p>
                         </>
                     )}
-                </div>
+                </motion.div>
                 <div className="flex flex-col items-start justify-center">
                     <SearchBar
-                        onSearch={async (query: string) => {
+                        onSearch={async (query: string, searchFieldInput: string = searchField) => {
                             setQuery(query);
                             setSearchError('');
                             try {
                                 const response = await axios.get(`/api/get-music?q=${query}&offset=0`);
                                 if (response.status === 200) {
                                     setLoading(false);
+                                    if (searchField !== searchFieldInput) setSearchField(searchFieldInput as "albums" | "tracks");
                                     setResults(response.data.data);
                                 }
                             } catch (error: any) {
@@ -162,8 +180,6 @@ const SearchView = () => {
                         }}
                         searching={searching}
                         setSearching={setSearching}
-                        setSearchField={setSearchField}
-                        setQuery={setQuery}
                         query={query}
                     />
 
@@ -200,10 +216,10 @@ const SearchView = () => {
                         {filterExplicit(results, settings.explicitContent)[searchField].items.map((result: QobuzAlbum | QobuzTrack, index: number) => {
                             return (
                                 <ReleaseCard
-                                    key={index}
+                                    key={`${index}-${result.id}-${searchField}`}
                                     result={result}
                                     resolvedTheme={String(resolvedTheme)}
-                                    ref={index === filterExplicit(results, settings.explicitContent)[searchField].items.length - 1 ? finalItemRef : null}
+                                    ref={index === 0 ? cardRef : null}
                                 />
                             );
                         })}

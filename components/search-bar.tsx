@@ -6,13 +6,12 @@ import { Button } from "./ui/button";
 import { ArrowRightIcon, Loader2Icon, SearchIcon } from "lucide-react";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { cn } from "@/lib/utils";
 import axios from "axios";
-import { formatTitle, QobuzAlbum, QobuzSearchResults, QobuzTrack } from "@/lib/qobuz-dl";
+import { getAlbum, QobuzAlbum, QobuzSearchResults, QobuzTrack } from "@/lib/qobuz-dl";
 import { Skeleton } from "./ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 
-const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery, query }: { onSearch: (query: string) => void; searching: boolean; setSearching: React.Dispatch<React.SetStateAction<boolean>>, setSearchField: React.Dispatch<React.SetStateAction<"albums" | "tracks">>, setQuery: React.Dispatch<React.SetStateAction<string>>, query: string }) => {
+const SearchBar = ({ onSearch, searching, setSearching, query }: { onSearch: (query: string, searchFieldInput?: "albums" | "tracks") => void; searching: boolean; setSearching: React.Dispatch<React.SetStateAction<boolean>>, query: string }) => {
     const [searchInput, setSearchInput] = useState(query);
     const [results, setResults] = useState<QobuzSearchResults | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -22,7 +21,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
     const inputRef = useRef<HTMLInputElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
 
-    const limit = 10;
+    const limit = 5;
 
     useEffect(() => {
         setSearchInput(query);
@@ -45,60 +44,40 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
     }, []);
 
     useEffect(() => {
+        if (searching) controller.abort();
+    }, [searching]);
+
+    const fetchResults = async () => {
         controller.abort();
-        const fetchResults = async () => {
-            if (searchInput.trim().length === 0) {
-                return;
-            };
-
-            setLoading(true);
-
-            const newController = new AbortController();
-            setController(newController);
-
-            try {
-                setTimeout(async () => {
-                    try {
-                        const response = await axios.get(`/api/get-music?q=${searchInput}&offset=0`, { signal: newController.signal });
-                        if (response.status === 200) {
-                            setResults(response.data.data);
-                        }
-                    } catch { }
-                }, 200);
-            } catch { }
-
-            setLoading(false);
+        if (searchInput.trim().length === 0) {
+            return;
         };
 
-        fetchResults();
-    }, [searchInput]);
+        setLoading(true);
+
+        const newController = new AbortController();
+        setController(newController);
+
+        try {
+            setTimeout(async () => {
+                try {
+                    const response = await axios.get(`/api/get-music?q=${searchInput}&offset=0`, { signal: newController.signal });
+                    if (response.status === 200) setResults(response.data.data);
+                } catch { }
+            }, 200);
+        } catch { }
+
+        setLoading(false);
+    };
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                cardRef.current &&
-                !cardRef.current.contains(event.target as Node) &&
-                inputRef.current &&
-                !inputRef.current.contains(event.target as Node)
-            ) {
-                setShowCard(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
+        fetchResults();
+    }, [searchInput]);
 
     return (
         <div className="flex items-center gap-2 relative">
             <div
-                onClick={() => {
-                    inputRef.current?.focus();
-                    setShowCard(true);
-                }}
+                onClick={() => inputRef.current?.focus()}
                 className="bg-background border relative sm:w-[600px] w-full tracking-wide font-semibold rounded-md flex gap-0.5 items-center py-1 px-3"
             >
                 <Label htmlFor="search">
@@ -110,9 +89,16 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                     ref={inputRef}
                     placeholder="Search for anything..."
                     value={searchInput}
+                    autoComplete="off"
+                    onFocus={(event: React.FocusEvent<HTMLInputElement>) => {
+                        setShowCard(true)
+                        if (event.currentTarget.value.trim().length > 0) fetchResults();
+                    }}
+                    onBlur={() => setTimeout(() => setShowCard(false), 50)}
                     onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
                         const target = event.currentTarget as HTMLInputElement;
                         if (event.key === "Enter") {
+                            setShowCard(false);
                             if (target.value.trim().length > 0 && !searching) {
                                 setSearching(true);
                                 onSearch(target.value.trim());
@@ -140,14 +126,14 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
             </Button>
 
             <AnimatePresence>
-                {showCard && (
+                {(showCard && searchInput.trim().length > 0 && !searching && results && searchInput.trim() === results.query.trim()) && (
                     <motion.div
                         initial={{ opacity: 0, translateY: -10, zIndex: 1000 }}
                         animate={{
                             opacity: 1,
                             translateY: 0,
                             transition: {
-                                type: "spring",
+                                type: "easeInOut",
                                 stiffness: 150,
                                 damping: 10,
                                 duration: 0.5,
@@ -157,7 +143,7 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                             opacity: 0,
                             translateY: -10,
                             transition: {
-                                type: "spring",
+                                type: "easeInOut",
                                 stiffness: 150,
                                 damping: 10,
                                 duration: 0.4,
@@ -167,17 +153,11 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                     >
                         <Card
                             ref={cardRef}
-                            className={cn(
-                                "absolute top-12 left-0 right-0 mx-auto mt-0.5 w-full transition-all !z-[100]",
-                                searchInput.trim().length > 0 && !searching ? "opacity-100" : "opacity-0"
-                            )}
+                            className="absolute top-12 left-0 right-0 mx-auto mt-0.5 w-full transition-all !z-[100]"
                         >
                             <CardHeader>
                                 <CardTitle className="text-base flex md:flex-row flex-col md:items-center md:gap-2 gap-0.5">
                                     Quick Search
-                                    <span className="text-xs text-muted-foreground">
-                                        Showing {(results?.tracks.items.slice(0, (limit / 2)).length || 0) + (results?.albums.items.slice(0, (limit / 2)).length || 0)} of {limit}
-                                    </span>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -194,9 +174,9 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                             },
                                         },
                                     }}
-                                    className="flex flex-col gap-2 select-none"
+                                    className="flex flex-col gap-2 select-none overflow-hidden"
                                 >
-                                    <div className="md:grid flex flex-col md:max-h-[unset] max-h-[15vh] md:pr-0 pr-2 overflow-y-auto md:grid-cols-2 gap-6">
+                                    <div className="md:grid flex md:max-h-[unset] max-h-[15vh] md:pr-0 pr-2 md:grid-cols-2 gap-6 overflow-hidden">
                                         {["albums", "tracks"].map((key, index) => (
                                             <motion.div
                                                 key={index}
@@ -204,16 +184,15 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                                     hidden: { opacity: 0, y: 10 },
                                                     visible: { opacity: 1, y: 0 },
                                                 }}
-                                                className="flex flex-col gap-1"
+                                                className="flex flex-col gap-1 w-[50%] md:w-full overflow-hidden"
                                             >
-                                                <p className="text-sm font-semibold mb-1 capitalize">{key}</p>
-                                                {results?.[key as "albums" | "tracks"].items.slice(0, limit / 2).map((result: QobuzAlbum | QobuzTrack, index) => {
-                                                    const value = key === "albums"
-                                                        ? `${formatTitle(result as QobuzAlbum)} - ${(result as QobuzAlbum).artist.name}`
-                                                        : `${formatTitle(result as QobuzTrack)} - ${(result as QobuzTrack).album.artist.name}`;
-
-                                                    const title = formatTitle(result as QobuzAlbum | QobuzTrack);
-
+                                                <div className="mb-1 capitalize flex items-center md:flex-row flex-col md:items-center md:gap-2 gap-0.5 w-full">
+                                                    <p className="text-sm font-semibold capitalize">{key}</p>
+                                                    <p className="text-xs font-semibold text-muted-foreground capitalize">Showing {results?.[key as "albums" | "tracks"].items.slice(0, limit).length} of {results?.[key as "albums" | "tracks"].total}</p>
+                                                </div>
+                                                {results?.[key as "albums" | "tracks"].items.slice(0, limit).map((result: QobuzAlbum | QobuzTrack, index) => {
+                                                    const value = `${result.title} - ${getAlbum(result).artist.name}`;
+                                                    
                                                     return loading ? (
                                                         <Skeleton
                                                             key={index}
@@ -223,21 +202,17 @@ const SearchBar = ({ onSearch, searching, setSearching, setSearchField, setQuery
                                                         <motion.p
                                                             key={index}
                                                             onClick={() => {
-                                                                setSearchInput(value);
-                                                                setQuery(value);
-                                                                setShowCard(false);
-                                                                setSearchField(key as "albums" | "tracks");
                                                                 setSearching(true);
-                                                                onSearch(value);
+                                                                onSearch(value, key as "albums" | "tracks");
                                                             }}
                                                             variants={{
                                                                 hidden: { opacity: 0, y: 5 },
                                                                 visible: { opacity: 1, y: 0 },
                                                             }}
-                                                            className="text-sm hover:underline underline-offset-2 decoration-1 h-fit w-full truncate cursor-pointer justify-start text-muted-foreground"
-                                                            title={title}
+                                                            className="text-sm hover:underline underline-offset-2 decoration-1 h-fit w-full truncate cursor-pointer justify-start text-muted-foreground overflow-hidden"
+                                                            title={result.title}
                                                         >
-                                                            {title}
+                                                            {result.title}
                                                         </motion.p>
                                                     );
                                                 })}

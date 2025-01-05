@@ -43,8 +43,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     const outputFile = await applyMetadata(inputFile, result as QobuzTrack, ffmpegState, settings, setStatusBar);
                     saveAs(new Blob([outputFile]), formattedTitle + "." + codecMap[settings.outputCodec].extension);
                     resolve();
-                } catch (e) {
-                    console.log(e)
+                } catch {
                     resolve()
                 }
             })
@@ -101,7 +100,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                         await new Promise(resolve => setTimeout(resolve, 100));
                         totalBytesDownloaded += response.data.byteLength;
                         const inputFile = response.data;
-                        const outputFile = await applyMetadata(inputFile, albumTracks[index], ffmpegState, settings, undefined, albumArt);
+                        const outputFile = await applyMetadata(inputFile, albumTracks[index], ffmpegState, settings, undefined, albumArt, fetchedAlbumData!.upc);
                         trackBlobs.push(new Blob([outputFile]));
                     }
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Zipping album...` }));
