@@ -176,7 +176,7 @@ const SearchBar = ({ onSearch, searching, setSearching, query }: { onSearch: (qu
                                     }}
                                     className="flex flex-col gap-2 select-none overflow-hidden"
                                 >
-                                    <div className="md:grid flex md:max-h-[unset] max-h-[15vh] md:pr-0 pr-2 md:grid-cols-2 gap-6 overflow-hidden">
+                                    <div className="md:grid flex md:max-h-[unset] max-h-[100%] md:pr-0 pr-2 md:grid-cols-2 gap-6 overflow-hidden">
                                         {["albums", "tracks"].map((key, index) => (
                                             <motion.div
                                                 key={index}
@@ -184,7 +184,7 @@ const SearchBar = ({ onSearch, searching, setSearching, query }: { onSearch: (qu
                                                     hidden: { opacity: 0, y: 10 },
                                                     visible: { opacity: 1, y: 0 },
                                                 }}
-                                                className="flex flex-col gap-1 w-[50%] md:w-full overflow-hidden"
+                                                className="flex flex-col gap-1 w-[50%] md:w-full overflow-hidden h-full"
                                             >
                                                 <div className="mb-1 capitalize flex items-center md:flex-row flex-col md:items-center md:gap-2 gap-0.5 w-full">
                                                     <p className="text-sm font-semibold capitalize">{key}</p>
@@ -209,7 +209,7 @@ const SearchBar = ({ onSearch, searching, setSearching, query }: { onSearch: (qu
                                                                 hidden: { opacity: 0, y: 5 },
                                                                 visible: { opacity: 1, y: 0 },
                                                             }}
-                                                            className="text-sm hover:underline underline-offset-2 decoration-1 h-fit w-full truncate cursor-pointer justify-start text-muted-foreground overflow-hidden"
+                                                            className="text-xs sm:text-sm hover:underline underline-offset-2 decoration-1 h-fit w-full truncate cursor-pointer justify-start text-muted-foreground"
                                                             title={result.title}
                                                         >
                                                             {result.title}

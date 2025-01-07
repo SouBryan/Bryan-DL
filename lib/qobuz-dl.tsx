@@ -165,6 +165,7 @@ export async function getDownloadURL(trackID: number, quality: string) {
             "x-user-auth-token": getRandomToken()
         }
     })
+    console.log(response.data);
     return response.data.url;
 }
 
