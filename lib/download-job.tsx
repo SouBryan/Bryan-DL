@@ -104,7 +104,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                         trackBlobs.push(new Blob([outputFile]));
                     }
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Zipping album...` }));
-                    const zipWriter = new zip.ZipWriter(new zip.BlobWriter("application/zip"), { bufferedWrite: true, compressionMethod: 0 });
+                    const zipWriter = new zip.ZipWriter(new zip.BlobWriter("application/zip"), { bufferedWrite: true, level: 0 });
                     for (const [index, blob] of trackBlobs.entries()) {
                         const fileName = (index + 1).toString().padStart((albumTracks.length - 1).toString().length > 2 ? (albumTracks.length - 1).toString().length : 2, '0') + " " + formatTitle(albumTracks[index]) + "." + codecMap[settings.outputCodec].extension
                         await zipWriter.add(cleanFileName(fileName), new zip.BlobReader(blob), { signal });
