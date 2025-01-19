@@ -49,7 +49,7 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
                         <DropdownMenuItem onClick={async () => {
                             const albumData = await getFullAlbumInfo(fetchedAlbumData, setFetchedAlbumData, result);
                             for (const track of albumData.tracks.items) {
-                                if (track.downloadable) {
+                                if (track.streamable) {
                                     await createDownloadJob({...track, album: albumData}, setStatusBar, ffmpegState, settings, albumData, setFetchedAlbumData);
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                 }

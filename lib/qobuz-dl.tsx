@@ -43,7 +43,8 @@ export type QobuzTrack = {
     parental_warning: boolean,
     id: number,
     hires: boolean,
-    downloadable: boolean
+    streamable: boolean,
+    media_number: number
 }
 
 export type FetchedQobuzAlbum = QobuzAlbum & {
@@ -83,7 +84,7 @@ export type QobuzAlbum = {
     release_date_original: string,
     hires: boolean,
     upc: string,
-    downloadable: boolean
+    streamable: boolean
 }
 
 export type QobuzSearchResults = {

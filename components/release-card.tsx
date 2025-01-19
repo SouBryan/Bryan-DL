@@ -153,13 +153,13 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                                     track.album = getAlbum(result);
                                     return (
                                         <div key={track.id}>
-                                            <div className={cn('flex items-center justify-between gap-2 overflow-hidden hover:bg-primary/5 transition-all p-2 rounded group', !track.downloadable && 'opacity-50')}>
+                                            <div className={cn('flex items-center justify-between gap-2 overflow-hidden hover:bg-primary/5 transition-all p-2 rounded group', !track.streamable && 'opacity-50')}>
                                                 <div className="gap-2 flex items-center overflow-hidden">
                                                     <span className='text-muted-foreground text-sm'>{index + 1}</span>
                                                     {track.parental_warning && <p className='text-[10px] bg-primary text-primary-foreground p-1 rounded-sm aspect-square w-[18px] h-[18px] text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
                                                     <p className='truncate font-medium'>{formatTitle(track)}</p>
                                                 </div>
-                                                {track.downloadable && <Button
+                                                {track.streamable && <Button
                                                     title={`Download '${formatTitle(track)}'`}
                                                     className='md:group-hover:flex md:hidden justify-center aspect-square h-6 w-6 [&_svg]:size-5 hover:bg-transparent'
                                                     size="icon"

@@ -6,7 +6,6 @@ import { StatusBarProps } from "@/components/status-bar/status-bar";
 import saveAs from "file-saver";
 import { cleanFileName, formatBytes } from "./utils";
 import { Disc3Icon, DiscAlbumIcon } from "lucide-react";
-import * as zip from "@zip.js/zip.js";
 import { SettingsProps } from "./settings-provider";
 
 export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStatusBar: React.Dispatch<React.SetStateAction<StatusBarProps>>, ffmpegState: FFmpegType, settings: SettingsProps, fetchedAlbumData?: FetchedQobuzAlbum | null, setFetchedAlbumData?: React.Dispatch<React.SetStateAction<FetchedQobuzAlbum | null>>) => {
@@ -81,18 +80,24 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     let totalAlbumSize = 0;
                     const albumUrls = [] as string[];
                     setStatusBar(prev => ({ ...prev, description: "Fetching album size..." }));
+                    let currentDisk = 1;
+                    let trackOffset = 0;
                     for (const [index, track] of albumTracks.entries()) {
-                        if (track.downloadable) {
+                        if (track.streamable) {
                             const fileURLResponse = await axios.get("/api/download-music", { params: { track_id: track.id, quality: settings.outputQuality }, signal });
                             const trackURL = fileURLResponse.data.data.url;
-                            albumUrls[track.track_number - 1] = trackURL;
+                            if (!(currentDisk === track.media_number)) {
+                                trackOffset = albumUrls.length;
+                                currentDisk = track.media_number;
+                                albumUrls.push(trackURL);
+                            } else albumUrls[track.track_number + trackOffset - 1] = trackURL;
                             const fileSizeResponse = await axios.head(trackURL, { signal });
                             setStatusBar(statusBar => ({ ...statusBar, progress: (100 / albumTracks.length) * (index + 1) }));
                             const fileSize = parseInt(fileSizeResponse.headers["content-length"]);
                             totalAlbumSize += fileSize;
                         }
                     }
-                    const trackBlobs = [] as Blob[];
+                    const trackBuffers = [] as ArrayBuffer[];
                     let totalBytesDownloaded = 0;
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Fetching album art...` }));
                     const albumArt = (await axios.get(await getFullResImage(fetchedAlbumData!), { responseType: 'arraybuffer' })).data;
@@ -112,28 +117,57 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                             totalBytesDownloaded += response.data.byteLength;
                             const inputFile = response.data;
                             const outputFile = await applyMetadata(inputFile, albumTracks[index], ffmpegState, settings, undefined, albumArt, fetchedAlbumData!.upc);
-                            trackBlobs[index] = new Blob([outputFile]);
+                            trackBuffers[index] = outputFile;
                         }
                     }
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Zipping album...` }));
-                    const zipWriter = new zip.ZipWriter(new zip.BlobWriter("application/zip"), { bufferedWrite: true, level: 0 });
-                    for (const [index, blob] of trackBlobs.entries()) {
-                        if (blob) {
-                            const fileName = (index + 1).toString().padStart((albumTracks.length - 1).toString().length > 2 ? (albumTracks.length - 1).toString().length : 2, '0') + " " + formatTitle(albumTracks[index]) + "." + codecMap[settings.outputCodec].extension
-                            await zipWriter.add(cleanFileName(fileName), new zip.BlobReader(blob), { signal });
-                            setStatusBar(prev => ({ ...prev, progress: Math.floor((index + 1) / (albumTracks.length + 1) * 100) }));
-                        }
-                    }
-                    await zipWriter.add("cover.jpg", new zip.BlobReader(new Blob([albumArt])), { signal });
+
+                    const zipFiles = {
+                        "cover.jpg": new Uint8Array(albumArt),
+                        ...trackBuffers.reduce((acc, buffer, index) => {
+                            if (buffer) {
+                                const fileName = `${(index + 1).toString().padStart(String(albumTracks.length - 1).length, '0')} ${formatTitle(albumTracks[index])}.${codecMap[settings.outputCodec].extension}`;
+                                acc[cleanFileName(fileName)] = new Uint8Array(buffer);
+                            }
+                            return acc;
+                        }, {} as { [key: string]: Uint8Array })
+                    };
+
+                    const zippedFile = await new Promise((resolve, reject) => {
+                        const workerBlob = new Blob([`
+                            onmessage = function(e) {
+                                const { zipFiles } = e.data;
+                                importScripts('https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js');
+                
+                                fflate.zip(zipFiles, { level: 0 }, (err, data) => {
+                                    if (err) postMessage({ error: err });
+                                    else postMessage({ data });
+                                });
+                            }
+                        `], { type: 'application/javascript' });
+                        const worker = new Worker(URL.createObjectURL(workerBlob));
+                        worker.postMessage({ zipFiles });
+                        worker.onmessage = function (e) {
+                            const { error, data } = e.data;
+                            if (error) {
+                                reject(error);
+                            } else {
+                                resolve(data);
+                            }
+                        };
+                        worker.onerror = function (error) {
+                            reject(error);
+                        };
+                    })
+                    const zipBlob = new Blob([zippedFile as Blob], { type: 'application/zip' });
                     setStatusBar(prev => ({ ...prev, progress: 100 }));
-                    const objectURL = URL.createObjectURL(await zipWriter.close());
+                    const objectURL = URL.createObjectURL(zipBlob);
                     saveAs(objectURL, formattedTitle + ".zip");
                     setTimeout(() => {
                         URL.revokeObjectURL(objectURL);
-                    }, 100)
+                    }, 100);
                     resolve();
-                } catch (e) {
-                    console.log(e)
+                } catch {
                     resolve()
                 }
             })
