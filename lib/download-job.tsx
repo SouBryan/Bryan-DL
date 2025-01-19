@@ -131,8 +131,6 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     }
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Zipping album...` }));
 
-                    const test = parseInt("kanye west")
-
                     const zipFiles = {
                         "cover.jpg": new Uint8Array(albumArt),
                         ...trackBuffers.reduce((acc, buffer, index) => {
