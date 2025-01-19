@@ -42,7 +42,8 @@ export type QobuzTrack = {
     duration: number,
     parental_warning: boolean,
     id: number,
-    hires: boolean
+    hires: boolean,
+    downloadable: boolean
 }
 
 export type FetchedQobuzAlbum = QobuzAlbum & {
@@ -81,7 +82,8 @@ export type QobuzAlbum = {
     maximum_sampling_rate: number,
     release_date_original: string,
     hires: boolean,
-    upc: string
+    upc: string,
+    downloadable: boolean
 }
 
 export type QobuzSearchResults = {

@@ -49,8 +49,10 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
                         <DropdownMenuItem onClick={async () => {
                             const albumData = await getFullAlbumInfo(fetchedAlbumData, setFetchedAlbumData, result);
                             for (const track of albumData.tracks.items) {
-                                await createDownloadJob({...track, album: albumData}, setStatusBar, ffmpegState, settings, albumData, setFetchedAlbumData);
-                                await new Promise(resolve => setTimeout(resolve, 100));
+                                if (track.downloadable) {
+                                    await createDownloadJob({...track, album: albumData}, setStatusBar, ffmpegState, settings, albumData, setFetchedAlbumData);
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                }
                             }
                         }} className='flex items-center gap-2'>
                             <MusicIcon className='!size-4' />
