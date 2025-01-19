@@ -24,7 +24,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                             controller.abort();
                         }
                     }))
-                    if (settings.applyMetadata || (settings.bitrate === undefined && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3")) await loadFFmpeg(ffmpegState, signal);
+                    if (settings.applyMetadata || (settings.outputQuality === "27" && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3")) await loadFFmpeg(ffmpegState, signal);
                     setStatusBar(prev => ({ ...prev, description: "Fetching track size..." }))
                     const APIResponse = await axios.get("/api/download-music", { params: { track_id: (result as QobuzTrack).id, quality: settings.outputQuality }, signal });
                     const trackURL = APIResponse.data.data.url;
@@ -76,7 +76,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                             controller.abort();
                         }
                     }))
-                    if (settings.applyMetadata && ((settings.bitrate === undefined && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3"))) await loadFFmpeg(ffmpegState, signal);
+                    if (settings.applyMetadata || (settings.outputQuality === "27" && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3")) await loadFFmpeg(ffmpegState, signal);
                     setStatusBar(prev => ({ ...prev, description: "Fetching album data..." }));
                     if (!fetchedAlbumData) {
                         const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id }, signal });
