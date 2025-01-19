@@ -17,12 +17,14 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                 try {
                     const controller = new AbortController();
                     const signal = controller.signal;
+                    let cancelled = false;
                     setStatusBar(prev => ({
                         ...prev, progress: 0, title: `Downloading ${formatTitle(result)}`, description: `Loading FFmpeg`, onCancel: () => {
+                            cancelled = true;
                             controller.abort();
                         }
                     }))
-                    await loadFFmpeg(ffmpegState, signal);
+                    if (settings.applyMetadata || (settings.bitrate === undefined && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3")) await loadFFmpeg(ffmpegState, signal);
                     setStatusBar(prev => ({ ...prev, description: "Fetching track size..." }))
                     const APIResponse = await axios.get("/api/download-music", { params: { track_id: (result as QobuzTrack).id, quality: settings.outputQuality }, signal });
                     const trackURL = APIResponse.data.data.url;
@@ -32,7 +34,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                         responseType: 'arraybuffer',
                         onDownloadProgress: (progressEvent) => {
                             setStatusBar(statusbar => {
-                                if (statusbar.processing) return { ...statusbar, progress: Math.floor(progressEvent.loaded / fileSize * 100), description: `${formatBytes(progressEvent.loaded)} / ${formatBytes(fileSize)}` }
+                                if (statusbar.processing && !cancelled) return { ...statusbar, progress: Math.floor(progressEvent.loaded / fileSize * 100), description: `${formatBytes(progressEvent.loaded)} / ${formatBytes(fileSize)}` }
                                 else return statusbar;
                             })
                         },
@@ -41,7 +43,11 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     setStatusBar(prev => ({ ...prev, description: `Applying metadata...`, progress: 100 }))
                     const inputFile = response.data;
                     const outputFile = await applyMetadata(inputFile, result as QobuzTrack, ffmpegState, settings, setStatusBar);
-                    saveAs(new Blob([outputFile]), formattedTitle + "." + codecMap[settings.outputCodec].extension);
+                    const objectURL = URL.createObjectURL(new Blob([outputFile]));
+                    saveAs(objectURL, formattedTitle + "." + codecMap[settings.outputCodec].extension);
+                    setTimeout(() => {
+                        URL.revokeObjectURL(objectURL);
+                    }, 100)
                     resolve();
                 } catch {
                     resolve()
@@ -55,12 +61,14 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                 try {
                     const controller = new AbortController();
                     const signal = controller.signal;
+                    let cancelled = false;
                     setStatusBar(prev => ({
                         ...prev, progress: 0, title: `Downloading ${formatTitle(result)}`, description: `Loading FFmpeg...`, onCancel: () => {
+                            cancelled = true;
                             controller.abort();
                         }
                     }))
-                    await loadFFmpeg(ffmpegState, signal);
+                    if (settings.applyMetadata && ((settings.bitrate === undefined && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3"))) await loadFFmpeg(ffmpegState, signal);
                     setStatusBar(prev => ({ ...prev, description: "Fetching album data..." }));
                     if (!fetchedAlbumData) {
                         const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id }, signal });
@@ -91,7 +99,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                             responseType: 'arraybuffer',
                             onDownloadProgress: (progressEvent) => {
                                 if (totalBytesDownloaded + progressEvent.loaded < totalAlbumSize) setStatusBar(statusBar => {
-                                    if (statusBar.processing) return { ...statusBar, progress: Math.floor((totalBytesDownloaded + progressEvent.loaded) / totalAlbumSize * 100), description: `${formatBytes(totalBytesDownloaded + progressEvent.loaded)} / ${formatBytes(totalAlbumSize)}` }
+                                    if (statusBar.processing && !cancelled) return { ...statusBar, progress: Math.floor((totalBytesDownloaded + progressEvent.loaded) / totalAlbumSize * 100), description: `${formatBytes(totalBytesDownloaded + progressEvent.loaded)} / ${formatBytes(totalAlbumSize)}` }
                                     else return statusBar;
                                 });
                             },
@@ -112,7 +120,11 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     }
                     await zipWriter.add("cover.jpg", new zip.BlobReader(new Blob([albumArt])), { signal });
                     setStatusBar(prev => ({ ...prev, progress: 100 }));
+                    const objectURL = URL.createObjectURL(await zipWriter.close());
                     saveAs(await zipWriter.close(), formattedTitle + ".zip");
+                    setTimeout(() => {
+                        URL.revokeObjectURL(objectURL);
+                    }, 100)
                     resolve();
                 } catch {
                     resolve()

@@ -1,5 +1,9 @@
 import axios from "axios";
-import crypto from 'node:crypto';
+
+let crypto: any;
+if (typeof window === "undefined") {
+    crypto = await import('node:crypto');
+}
 
 export type QobuzGenre = {
     path: number[],
@@ -164,7 +168,6 @@ export async function getDownloadURL(trackID: number, quality: string) {
             "x-user-auth-token": getRandomToken()
         }
     })
-    console.log(response.data);
     return response.data.url;
 }
 
@@ -220,4 +223,12 @@ export function testForRequirements() {
     if (process.env.QOBUZ_SECRET?.length === 0) throw new Error("Deployment is missing QOBUZ_SECRET environment variable.");
     if (process.env.QOBUZ_API_BASE?.length === 0) throw new Error("Deployment is missing QOBUZ_API_BASE environment variable.");
     return true;
+}
+
+export async function getFullAlbumInfo(fetchedAlbumData: FetchedQobuzAlbum | null, setFetchedAlbumData: React.Dispatch<React.SetStateAction<FetchedQobuzAlbum | null>>, result: QobuzAlbum) {
+    if (fetchedAlbumData && (fetchedAlbumData as FetchedQobuzAlbum).id === (result as QobuzAlbum).id) return fetchedAlbumData;
+    setFetchedAlbumData(null);
+    const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id } });
+    setFetchedAlbumData(albumDataResponse.data.data);
+    return albumDataResponse.data.data;
 }

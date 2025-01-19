@@ -37,10 +37,10 @@ export async function createJob(setStatusBar: React.Dispatch<React.SetStateActio
     if (!running) {
         const interval = setInterval(async () => { 
             if (jobs[0] === job) {
-                setStatusBar(prev => ({ ...prev, processing: false, onCancel: () => {}, queue: prev.queue?.filter(item => item.UUID !== UUID) }))
-                clearInterval(interval); 
+                setStatusBar(prev => ({ ...prev, processing: false, onCancel: () => {}, queue: prev.queue?.filter(item => item.UUID !== UUID), progress: 0 }))
+                clearInterval(interval);
                 await updateJob();
             }
-        }, 100)
+        }, 100);
     }
 }

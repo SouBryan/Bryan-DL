@@ -1,4 +1,4 @@
-import { formatArtists, formatTitle, getAlbum, formatDuration, QobuzAlbum, QobuzTrack, FetchedQobuzAlbum } from '@/lib/qobuz-dl'
+import { formatArtists, formatTitle, getAlbum, formatDuration, QobuzAlbum, QobuzTrack, FetchedQobuzAlbum, getFullAlbumInfo } from '@/lib/qobuz-dl'
 import { cn } from '@/lib/utils'
 import { AlignJustifyIcon, DotIcon, DownloadIcon } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
@@ -20,6 +20,8 @@ import { useSettings } from '@/lib/settings-provider'
 import { Skeleton } from './ui/skeleton'
 import Image from 'next/image'
 
+import DownloadAlbumButton from './download-album-button'
+
 const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | QobuzTrack, resolvedTheme: string, ref?: React.Ref<HTMLDivElement> }) => {
     const { ffmpegState } = useFFmpeg();
     const { setStatusBar } = useStatusBar();
@@ -28,6 +30,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
     const [openTracklist, setOpenTracklist] = useState(false);
     const [fetchedAlbumData, setFetchedAlbumData] = useState<FetchedQobuzAlbum | null>(null);
     const [loadedImage, setLoadedImage] = useState<boolean | string>(false);
+    const [focusCard, setFocusCard] = useState(false);
 
     useEffect(() => {
         if (loadedImage) setLoadedImage(false);
@@ -47,10 +50,10 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
             ref={ref || undefined}
         >
             <div className='relative w-full aspect-square group select-none rounded-sm overflow-hidden'>
-                <div className={cn("w-full z-[3] backdrop-blur-md top-0 left-0 absolute transition-all aspect-square opacity-0 group-hover:opacity-100",
+                <div className={cn(`w-full z-[3] backdrop-blur-md top-0 left-0 absolute transition-all aspect-square opacity-0 group-hover:opacity-100 ${focusCard && 'opacity-100'}`,
                     resolvedTheme != 'light'
-                        ? 'group-hover:bg-black/40'
-                        : 'group-hover:bg-white/20',
+                        ? `group-hover:bg-black/40 ${focusCard && 'bg-black/40'}`
+                        : `group-hover:bg-white/20 ${focusCard && 'bg-white/20'}`,
                 )}>
                     <div className="flex flex-col h-full justify-between">
                         <div className="space-y-0.5 p-4">
@@ -71,7 +74,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                             </div>
                         </div>
                         <div className="flex items-center justify-between gap-4 p-2">
-                            <Button
+                            {(result as QobuzTrack).album ? <Button
                                 size='icon'
                                 variant='ghost'
                                 onClick={async () => {
@@ -79,15 +82,11 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                                 }}
                             >
                                 <DownloadIcon />
-                            </Button>
+                            </Button> : <DownloadAlbumButton variant='ghost' size='icon' result={result as QobuzAlbum} setStatusBar={setStatusBar} ffmpegState={ffmpegState} settings={settings} fetchedAlbumData={fetchedAlbumData} setFetchedAlbumData={setFetchedAlbumData} onOpen={() => setFocusCard(true)} onClose={() => setFocusCard(false)}/>}
                             {(result as QobuzTrack).album ? null :
                                 <Button size='icon' variant='ghost' onClick={async () => {
                                     setOpenTracklist(!openTracklist);
-                                    if (!fetchedAlbumData || fetchedAlbumData.id !== (result as QobuzAlbum).id) {
-                                        setFetchedAlbumData(null);
-                                        const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id } });
-                                        setFetchedAlbumData(albumDataResponse.data.data);
-                                    }
+                                    await getFullAlbumInfo(fetchedAlbumData, setFetchedAlbumData, result as QobuzAlbum);
                                 }}>
                                     <AlignJustifyIcon />
                                 </Button>
@@ -101,7 +100,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                     transition={{ duration: 0.1 }}
                     className={cn('absolute left-0 top-0 z-[2] w-full aspect-square transition-all')}
                 >
-                    <img src={loadedImage as string} alt={formatTitle(result)} className='group-hover:scale-105 transition-all w-full h-full' />
+                    <img src={loadedImage as string} alt={formatTitle(result)} className={`group-hover:scale-105 transition-all w-full h-full ${focusCard && 'scale-105'}`} />
                 </motion.div>}
                 <Skeleton className='absolute left-0 top-0 z-[1] w-full aspect-square' />
             </div>
@@ -137,16 +136,9 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                                         {getAlbum(result).tracks_count} {getAlbum(result).tracks_count > 1 ? "tracks" : "track"} - {formatDuration(getAlbum(result).duration)}
                                     </DialogDescription>
                                 </div>
-                                <Button
-                                    size='icon'
-                                    variant='ghost'
-                                    onClick={async () => {
-                                        setOpenTracklist(false);
-                                        await createDownloadJob(result, setStatusBar, ffmpegState, settings, fetchedAlbumData, setFetchedAlbumData);
-                                    }}
-                                >
-                                    <DownloadIcon className='!size-4' />
-                                </Button>
+                                <DownloadAlbumButton result={result as QobuzAlbum} setStatusBar={setStatusBar} ffmpegState={ffmpegState} settings={settings} fetchedAlbumData={fetchedAlbumData} setFetchedAlbumData={setFetchedAlbumData} variant="ghost" size="icon" onClick={() => {
+                                    setOpenTracklist(false);
+                                }} />
                             </div>
                         </div>
                     </div>
