@@ -17,6 +17,7 @@
     "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-separator": "^1.1.1",
     "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-toast": "^1.2.4",
     "@react-icons/all-files": "^4.1.0",
     "@tsparticles/all": "^3.7.1",
     "@tsparticles/react": "^3.0.0",

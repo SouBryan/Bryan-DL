@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { applyMetadata, codecMap, FFmpegType, loadFFmpeg } from "./ffmpeg-functions";
 import { FetchedQobuzAlbum, formatArtists, formatTitle, getFullResImage, QobuzAlbum, QobuzTrack } from "./qobuz-dl";
 import { createJob } from "./status-bar/jobs";
@@ -7,8 +7,9 @@ import saveAs from "file-saver";
 import { cleanFileName, formatBytes } from "./utils";
 import { Disc3Icon, DiscAlbumIcon } from "lucide-react";
 import { SettingsProps } from "./settings-provider";
+import { ToastAction } from "@/components/ui/toast";
 
-export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStatusBar: React.Dispatch<React.SetStateAction<StatusBarProps>>, ffmpegState: FFmpegType, settings: SettingsProps, fetchedAlbumData?: FetchedQobuzAlbum | null, setFetchedAlbumData?: React.Dispatch<React.SetStateAction<FetchedQobuzAlbum | null>>) => {
+export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStatusBar: React.Dispatch<React.SetStateAction<StatusBarProps>>, ffmpegState: FFmpegType, settings: SettingsProps, toast: (toast: any) => void, fetchedAlbumData?: FetchedQobuzAlbum | null, setFetchedAlbumData?: React.Dispatch<React.SetStateAction<FetchedQobuzAlbum | null>>) => {
     if ((result as QobuzTrack).album) {
         const formattedTitle = formatArtists(result) + " - " + formatTitle(result)
         await createJob(setStatusBar, formattedTitle, Disc3Icon, async () => {
@@ -48,8 +49,16 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                         URL.revokeObjectURL(objectURL);
                     }, 100)
                     resolve();
-                } catch {
-                    resolve()
+                } catch (e) {
+                    if (e instanceof AxiosError && e.code === 'ERR_CANCELED') resolve();
+                    else {
+                        toast({
+                            title: "Error",
+                            description: e instanceof Error ? e.message : 'An unknown error occurred',
+                            action: <ToastAction altText="Copy Stack" onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>Copy Stack</ToastAction>,
+                        })
+                        resolve()
+                    }
                 }
             })
         })
@@ -122,6 +131,8 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     }
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Zipping album...` }));
 
+                    const test = parseInt("kanye west")
+
                     const zipFiles = {
                         "cover.jpg": new Uint8Array(albumArt),
                         ...trackBuffers.reduce((acc, buffer, index) => {
@@ -167,8 +178,16 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                         URL.revokeObjectURL(objectURL);
                     }, 100);
                     resolve();
-                } catch {
-                    resolve()
+                } catch (e) {
+                    if (e instanceof AxiosError && e.code === 'ERR_CANCELED') resolve();
+                    else {
+                        toast({
+                            title: "Error",
+                            description: e instanceof Error ? e.message : 'An unknown error occurred',
+                            action: <ToastAction altText="Copy Stack" onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>Copy Stack</ToastAction>,
+                        })
+                        resolve()
+                    }
                 }
             })
         })

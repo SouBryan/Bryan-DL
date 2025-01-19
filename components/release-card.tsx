@@ -19,6 +19,7 @@ import { createDownloadJob } from '@/lib/download-job'
 import { useSettings } from '@/lib/settings-provider'
 import { Skeleton } from './ui/skeleton'
 import Image from 'next/image'
+import { useToast } from "@/hooks/use-toast"
 
 import DownloadAlbumButton from './download-album-button'
 
@@ -32,6 +33,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
     const [loadedImage, setLoadedImage] = useState<boolean | string>(false);
     const [focusCard, setFocusCard] = useState(false);
 
+    const { toast } = useToast();
     useEffect(() => {
         if (loadedImage) setLoadedImage(false);
         axios.get(getAlbum(result).image.small, { responseType: "blob" }).then((response) => {
@@ -78,11 +80,11 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                                 size='icon'
                                 variant='ghost'
                                 onClick={async () => {
-                                    await createDownloadJob(result, setStatusBar, ffmpegState, settings, fetchedAlbumData, setFetchedAlbumData);
+                                    await createDownloadJob(result, setStatusBar, ffmpegState, settings, toast as any, fetchedAlbumData, setFetchedAlbumData);
                                 }}
                             >
                                 <DownloadIcon />
-                            </Button> : <DownloadAlbumButton variant='ghost' size='icon' result={result as QobuzAlbum} setStatusBar={setStatusBar} ffmpegState={ffmpegState} settings={settings} fetchedAlbumData={fetchedAlbumData} setFetchedAlbumData={setFetchedAlbumData} onOpen={() => setFocusCard(true)} onClose={() => setFocusCard(false)}/>}
+                            </Button> : <DownloadAlbumButton variant='ghost' size='icon' result={result as QobuzAlbum} toast={toast} setStatusBar={setStatusBar} ffmpegState={ffmpegState} settings={settings} fetchedAlbumData={fetchedAlbumData} setFetchedAlbumData={setFetchedAlbumData} onOpen={() => setFocusCard(true)} onClose={() => setFocusCard(false)}/>}
                             {(result as QobuzTrack).album ? null :
                                 <Button size='icon' variant='ghost' onClick={async () => {
                                     setOpenTracklist(!openTracklist);
@@ -136,7 +138,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                                         {getAlbum(result).tracks_count} {getAlbum(result).tracks_count > 1 ? "tracks" : "track"} - {formatDuration(getAlbum(result).duration)}
                                     </DialogDescription>
                                 </div>
-                                <DownloadAlbumButton result={result as QobuzAlbum} setStatusBar={setStatusBar} ffmpegState={ffmpegState} settings={settings} fetchedAlbumData={fetchedAlbumData} setFetchedAlbumData={setFetchedAlbumData} variant="ghost" size="icon" onClick={() => {
+                                <DownloadAlbumButton result={result as QobuzAlbum} toast={toast} setStatusBar={setStatusBar} ffmpegState={ffmpegState} settings={settings} fetchedAlbumData={fetchedAlbumData} setFetchedAlbumData={setFetchedAlbumData} variant="ghost" size="icon" onClick={() => {
                                     setOpenTracklist(false);
                                 }} />
                             </div>
@@ -165,7 +167,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref }: { result: QobuzAlbum | Qobu
                                                     size="icon"
                                                     variant='ghost'
                                                     onClick={async () => {
-                                                        await createDownloadJob(track, setStatusBar, ffmpegState, settings);
+                                                        await createDownloadJob(track, setStatusBar, ffmpegState, settings, toast as any);
                                                         setOpenTracklist(false);
                                                     }}
                                                 >

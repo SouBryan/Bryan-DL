@@ -16,11 +16,12 @@ export interface DownloadAlbumButtonProps extends ButtonProps {
     fetchedAlbumData: FetchedQobuzAlbum | null,
     setFetchedAlbumData: React.Dispatch<React.SetStateAction<FetchedQobuzAlbum | null>>,
     onOpen?: () => void,
-    onClose?: () => void
+    onClose?: () => void,
+    toast: (toast: any) => void,
 }
 
 const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonProps>(
-    ({ className, variant, size, asChild = false, onOpen, onClose, result, setStatusBar, ffmpegState, settings, fetchedAlbumData, setFetchedAlbumData, ...props }, ref) => {
+    ({ className, variant, size, asChild = false, onOpen, onClose, result, setStatusBar, ffmpegState, settings, toast, fetchedAlbumData, setFetchedAlbumData, ...props }, ref) => {
         const [open, setOpen] = useState(false);
         useEffect(() => {
             if (open) onOpen?.()
@@ -42,7 +43,7 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => createDownloadJob(result, setStatusBar, ffmpegState, settings, fetchedAlbumData, setFetchedAlbumData)} className='flex items-center gap-2'>
+                        <DropdownMenuItem onClick={() => createDownloadJob(result, setStatusBar, ffmpegState, settings, toast, fetchedAlbumData, setFetchedAlbumData)} className='flex items-center gap-2'>
                             <FileArchiveIcon className='!size-4' />
                             <p>ZIP Archive</p>
                         </DropdownMenuItem>
@@ -50,7 +51,7 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
                             const albumData = await getFullAlbumInfo(fetchedAlbumData, setFetchedAlbumData, result);
                             for (const track of albumData.tracks.items) {
                                 if (track.streamable) {
-                                    await createDownloadJob({...track, album: albumData}, setStatusBar, ffmpegState, settings, albumData, setFetchedAlbumData);
+                                    await createDownloadJob({...track, album: albumData}, setStatusBar, ffmpegState, settings, toast, albumData, setFetchedAlbumData);
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                 }
                             }
