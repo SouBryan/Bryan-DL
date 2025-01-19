@@ -1,6 +1,5 @@
 import axios from "axios";
-import MD5 from 'crypto-js/md5';
-import Hex from 'crypto-js/enc-hex';
+import crypto from 'node:crypto';
 
 export type QobuzGenre = {
     path: number[],
@@ -149,7 +148,7 @@ export async function getDownloadURL(trackID: number, quality: string) {
     testForRequirements();
     const timestamp = Math.floor(new Date().getTime() / 1000);
     const r_sig = `trackgetFileUrlformat_id${quality}intentstreamtrack_id${trackID}${timestamp}${process.env.QOBUZ_SECRET}`;
-    const r_sig_hashed = MD5(r_sig).toString(Hex);
+    const r_sig_hashed = crypto.createHash('md5').update(r_sig).digest('hex');
     const url = new URL(process.env.QOBUZ_API_BASE + 'track/getFileUrl');
     url.searchParams.append("format_id", quality);
     url.searchParams.append("intent", "stream");
