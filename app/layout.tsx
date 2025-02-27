@@ -9,7 +9,6 @@ import { FFmpegProvider } from "@/lib/ffmpeg-provider";
 import SettingsForm from "@/components/ui/settings-form";
 import { SettingsProvider } from "@/lib/settings-provider";
 import { BackgroundProvider } from "@/lib/background-provider";
-import CreditsDialog from "@/components/ui/credits-dialog";
 import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({
@@ -60,7 +59,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                                     <ParticlesComponent className="z-[-1] h-full w-full fixed" />
                                     <div className="fixed justify-between items-center flex w-full max-w-screen p-4 z-[10]">
                                         <SettingsForm />
-                                        <CreditsDialog />
                                     </div>
                                     <div className="flex flex-col min-h-screen">
                                         <main className="px-6 pb-12 pt-32 md:pt-24 2xl:pt-60 min-h-full flex-1 flex flex-col items-center justify-center gap-2 z-[2] overflow-x-hidden max-w-screen overflow-y-hidden">
