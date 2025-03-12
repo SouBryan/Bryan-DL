@@ -1,8 +1,10 @@
 import axios from "axios";
 
 let crypto: any;
+let SocksProxyAgent: any;
 if (typeof window === "undefined") {
     crypto = await import('node:crypto');
+    SocksProxyAgent = (await import('socks-proxy-agent'))['SocksProxyAgent'];
 }
 
 export type QobuzGenre = {
@@ -142,11 +144,17 @@ export async function search(query: string, limit: number = 10, offset: number =
     url.searchParams.append("query", query)
     url.searchParams.append("limit", limit.toString());
     url.searchParams.append("offset", offset.toString());
+    let proxyAgent= undefined;
+    if (process.env.SOCKS5_PROXY) {
+        proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);
+    }
     const response = await axios.get(url.toString(), {
         headers: {
             "x-app-id": process.env.QOBUZ_APP_ID!,
             "x-user-auth-token": getRandomToken()
-        }
+        },
+        httpAgent: proxyAgent,
+        httpsAgent: proxyAgent
     });
     return response.data as QobuzSearchResults;
 }
@@ -165,11 +173,17 @@ export async function getDownloadURL(trackID: number, quality: string) {
     const headers = new Headers();
     headers.append('X-App-Id', process.env.QOBUZ_APP_ID!);
     headers.append("X-User-Auth-Token", getRandomToken());
+    let proxyAgent= undefined;
+    if (process.env.SOCKS5_PROXY) {
+        proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);
+    }
     const response = await axios.get(url.toString(), {
         headers: {
             "x-app-id": process.env.QOBUZ_APP_ID!,
             "x-user-auth-token": getRandomToken()
-        }
+        },
+        httpAgent: proxyAgent,
+        httpsAgent: proxyAgent
     })
     return response.data.url;
 }
@@ -179,11 +193,17 @@ export async function getAlbumInfo(album_id: string) {
     const url = new URL(process.env.QOBUZ_API_BASE + 'album/get');
     url.searchParams.append("album_id", album_id);
     url.searchParams.append("extra", "track_ids");
+    let proxyAgent= undefined;
+    if (process.env.SOCKS5_PROXY) {
+        proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);
+    }
     const response = await axios.get(url.toString(), {
         headers: {
             "x-app-id": process.env.QOBUZ_APP_ID!,
             "x-user-auth-token": getRandomToken()
-        }
+        },
+        httpAgent: proxyAgent,
+        httpsAgent: proxyAgent
     })
     return response.data;
 }
