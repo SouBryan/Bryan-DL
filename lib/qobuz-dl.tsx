@@ -148,11 +148,11 @@ export async function search(query: string, limit: number = 10, offset: number =
     if (process.env.SOCKS5_PROXY) {
         proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);
     }
-    const response = await axios.get(process.env.USE_CORS_PROXY?.toLowerCase() === "true" ? "https://corsproxy.io/?url=" + encodeURIComponent(url.toString()) : url.toString(), {
+    const response = await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
         headers: {
             "x-app-id": process.env.QOBUZ_APP_ID!,
             "x-user-auth-token": getRandomToken(),
-            "User-Agent": process.env.USE_CORS_PROXY?.toLowerCase() === "true" ? "Qobuz-DL" : undefined
+            "User-Agent": process.env.CORS_PROXY ? "Qobuz-DL" : undefined
         },
         httpAgent: proxyAgent,
         httpsAgent: proxyAgent
@@ -178,11 +178,11 @@ export async function getDownloadURL(trackID: number, quality: string) {
     if (process.env.SOCKS5_PROXY) {
         proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);
     }
-    const response = await axios.get(process.env.USE_CORS_PROXY?.toLowerCase() === "true" ? "https://corsproxy.io/?url=" + encodeURIComponent(url.toString()) : url.toString(), {
+    const response = await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
         headers: {
             "x-app-id": process.env.QOBUZ_APP_ID!,
             "x-user-auth-token": getRandomToken(),
-            "User-Agent": process.env.USE_CORS_PROXY?.toLowerCase() === "true" ? "Qobuz-DL" : undefined
+            "User-Agent": process.env.CORS_PROXY ? "Qobuz-DL" : undefined
         },
         httpAgent: proxyAgent,
         httpsAgent: proxyAgent
@@ -199,11 +199,11 @@ export async function getAlbumInfo(album_id: string) {
     if (process.env.SOCKS5_PROXY) {
         proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);
     }
-    const response = await axios.get(process.env.USE_CORS_PROXY?.toLowerCase() === "true" ? "https://corsproxy.io/?url=" + encodeURIComponent(url.toString()) : url.toString(), {
+    const response = await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
         headers: {
             "x-app-id": process.env.QOBUZ_APP_ID!,
             "x-user-auth-token": getRandomToken(),
-            "User-Agent": process.env.USE_CORS_PROXY?.toLowerCase() === "true" ? "Qobuz-DL" : undefined
+            "User-Agent": process.env.CORS_PROXY ? "Qobuz-DL" : undefined
         },
         httpAgent: proxyAgent,
         httpsAgent: proxyAgent
