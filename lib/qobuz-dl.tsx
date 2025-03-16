@@ -5,7 +5,7 @@ let SocksProxyAgent: any;
 if (typeof window === "undefined") {
     crypto = await import('node:crypto');
     SocksProxyAgent = (await import('socks-proxy-agent'))['SocksProxyAgent'];
-}
+}s
 
 export type QobuzGenre = {
     path: number[],
