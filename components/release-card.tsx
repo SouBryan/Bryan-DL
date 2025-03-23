@@ -24,7 +24,8 @@ import DownloadAlbumButton from './download-album-button'
 import { filterData } from '@/app/search-view'
 import ArtistDialog from './artist-dialog'
 
-const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog = true }: { result: QobuzAlbum | QobuzTrack | QobuzArtist, resolvedTheme: string, ref?: React.Ref<HTMLDivElement>, showArtistDialog?: boolean }) => {
+const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result: QobuzAlbum | QobuzTrack | QobuzArtist, resolvedTheme: string, ref?: React.Ref<HTMLDivElement>, showArtistDialog?: boolean }) => {
+    if (typeof showArtistDialog === 'undefined') showArtistDialog = true;
     const { ffmpegState } = useFFmpeg();
     const { setStatusBar } = useStatusBar();
     const { settings } = useSettings();
@@ -63,8 +64,8 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog = true }: { 
                     }}
                 >
                     <div className="flex flex-col h-full justify-between">
-                        <div className="space-y-0.5 p-4 flex">
-                            <div className="w-full">
+                        <div className="space-y-0.5 p-4 flex justify-between relative overflow-x-hidden">
+                            <div className="w-full pr-9">
                                 <p className='text-sm truncate capitalize font-bold'>{!(getType(result) === "artists") ? album.genre.name : (result as QobuzArtist).albums_count + " Releases"}</p>
                                 {!(getType(result) === "artists") && <p className='text-xs truncate capitalize font-medium'>{new Date(album.released_at * 1000).getFullYear()}</p>}
                                 {!(getType(result) === "artists") && <div className="flex text-[10px] truncate font-semibold items-center justify-start">
@@ -81,11 +82,14 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog = true }: { 
                                     {!(getType(result) === "artists") && <p>{formatDuration((result as QobuzAlbum | QobuzTrack).duration)}</p>}
                                 </div>
                             </div>
-                            {(getType(result) !== "artists" && showArtistDialog) && <Button size='icon' variant='ghost' className='aspect-square' onClick={async () => {
-                                setOpenArtistDialog(true);
-                            }}>
-                                <UsersIcon />
-                            </Button>}
+                            {(getType(result) !== "artists" && showArtistDialog) && 
+                            <div className='absolute top-0 right-0 p-4'>
+                                <Button size='icon' variant='ghost' className='aspect-square' onClick={async () => {
+                                    setOpenArtistDialog(true);
+                                }}>
+                                    <UsersIcon />
+                                </Button>
+                            </div>}
                         </div>
                         {!(getType(result) === "artists") && <div className="flex items-center justify-between gap-4 p-2">
                             {(result as QobuzTrack).album ? <Button

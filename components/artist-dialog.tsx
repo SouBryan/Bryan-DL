@@ -135,7 +135,7 @@ const ArtistReleaseSection = ({ artist, artistResults, setArtistResults, categor
                 <div className='flex flex-col'>
                     <div className="flex gap-2 items-center mb-2">
                         <category.icon />
-                        <h1 className='text-2xl font-bold capitalize'>{category.label}</h1>
+                        <h1 className='text-lg md:text-2xl font-bold capitalize'>{category.label}</h1>
                         <Button variant="outline" className='ml-2' onClick={() => {
                             downloadArtistDiscography(artistResults, setArtistResults, fetchMore, category.value, setStatusBar, settings, toast, ffmpegState);
                         }}>
@@ -145,10 +145,10 @@ const ArtistReleaseSection = ({ artist, artistResults, setArtistResults, categor
                     </div>
                     <ScrollArea className='max-w-full overflow-x-clip'>
                         <div className="flex gap-2">
-                            {artistResults && artistResults.artist.releases[category.value]!.items.map((_, i) => <div className='min-w-[20%] max-w-[20%]' key={i}>
-                                <ReleaseCard result={artistResults.artist.releases[category.value]!.items[i]} resolvedTheme={String(resolvedTheme)} />
+                            {artistResults && artistResults.artist.releases[category.value]!.items.map((_, i) => <div className='2xl:min-w-[10vw] 2xl:max-w-[10vw] lg:min-w-[15vw] lg:max-w-[15vw] md:min-w-[20vw] md:max-w-[20vw] sm:min-w-[25vw] sm:max-w-[25vw] xs:min-w-[30vw] xs:max-w-[30vw] min-w-[40vw] max-w-[40vw]' key={i}>
+                                <ReleaseCard result={artistResults.artist.releases[category.value]!.items[i]} resolvedTheme={String(resolvedTheme)} showArtistDialog={false} />
                             </div>)}
-                            <div className="flex h-full items-center gap-2 relative min-w-[50%] max-w-[50%] overflow-hidden">
+                            <div className="flex h-full items-center gap-2 relative overflow-hidden 2xl:min-w-[25vw] 2xl:max-w-[25vw] lg:min-w-[37.5vw] lg:max-w-[37.5vw] md:min-w-[50vw] md:max-w-[50vw] sm:min-w-[62.5vw] sm:max-w-[62.5vw] xs:min-w-[75vw] xs:max-w-[75vw] min-w-[100vw] max-w-[100vw]">
                                 {artistResults?.artist.releases[category.value]!.has_more && Array(5).fill(0).map((_, index) => {
                                     return (
                                         <div key={index} className="relative min-w-[40%]">
