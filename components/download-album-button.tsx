@@ -4,7 +4,7 @@ import { DownloadIcon, FileArchiveIcon, MusicIcon } from 'lucide-react'
 import { StatusBarProps } from './status-bar/status-bar'
 import { FFmpegType } from '@/lib/ffmpeg-functions'
 import { SettingsProps } from '@/lib/settings-provider'
-import { FetchedQobuzAlbum, getFullAlbumInfo, QobuzAlbum } from '@/lib/qobuz-dl'
+import { FetchedQobuzAlbum, formatTitle, getFullAlbumInfo, QobuzAlbum } from '@/lib/qobuz-dl'
 import { createDownloadJob } from '@/lib/download-job'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu'
 
@@ -43,7 +43,10 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => createDownloadJob(result, setStatusBar, ffmpegState, settings, toast, fetchedAlbumData, setFetchedAlbumData)} className='flex items-center gap-2'>
+                        <DropdownMenuItem onClick={() => {
+                            createDownloadJob(result, setStatusBar, ffmpegState, settings, toast, fetchedAlbumData, setFetchedAlbumData)
+                            toast({ title: `Added '${formatTitle(result)}'`, description: "The album has been added to the queue" })
+                        }} className='flex items-center gap-2'>
                             <FileArchiveIcon className='!size-4' />
                             <p>ZIP Archive</p>
                         </DropdownMenuItem>
@@ -51,10 +54,11 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
                             const albumData = await getFullAlbumInfo(fetchedAlbumData, setFetchedAlbumData, result);
                             for (const track of albumData.tracks.items) {
                                 if (track.streamable) {
-                                    await createDownloadJob({...track, album: albumData}, setStatusBar, ffmpegState, settings, toast, albumData, setFetchedAlbumData);
+                                    await createDownloadJob({ ...track, album: albumData }, setStatusBar, ffmpegState, settings, toast, albumData, setFetchedAlbumData);
                                     await new Promise(resolve => setTimeout(resolve, 100));
                                 }
                             }
+                            toast({ title: `Added '${formatTitle(result)}'`, description: "The album has been added to the queue" })
                         }} className='flex items-center gap-2'>
                             <MusicIcon className='!size-4' />
                             <p>No ZIP Archive</p>

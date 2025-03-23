@@ -9,35 +9,41 @@ import ReleaseCard from '@/components/release-card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
-import { Disc3Icon, DiscAlbumIcon } from 'lucide-react';
-import { filterExplicit, QobuzAlbum, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
+import { Disc3Icon, DiscAlbumIcon, UsersIcon } from 'lucide-react';
+import { FilterDataType, filterExplicit, QobuzAlbum, QobuzArtist, QobuzSearchFilters, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
 import Image from 'next/image';
 import { motion, useAnimation } from 'motion/react';
 
+export const filterData: FilterDataType = [
+    {
+        label: "Albums",
+        value: 'albums',
+        icon: DiscAlbumIcon
+    },
+    {
+        label: "Tracks",
+        value: 'tracks',
+        icon: Disc3Icon
+    },
+    {
+        label: "Artists",
+        value: 'artists',
+        icon: UsersIcon
+    }
+]
+
 const SearchView = () => {
     const { resolvedTheme } = useTheme();
     const [results, setResults] = useState<QobuzSearchResults | null>(null);
-    const [searchField, setSearchField] = useState<"albums" | "tracks">('albums');
+    const [searchField, setSearchField] = useState<QobuzSearchFilters>('albums');
     const [query, setQuery] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const [searching, setSearching] = useState<boolean>(false);
     const [searchError, setSearchError] = useState<string>('');
     const { settings } = useSettings();
 
-    const filterData = [
-        {
-            label: "Albums",
-            value: 'albums',
-            icon: DiscAlbumIcon
-        },
-        {
-            label: "Tracks",
-            value: 'tracks',
-            icon: Disc3Icon
-        }
-    ]
     const FilterIcon = filterData.find((fd) => fd.value == searchField)?.icon || Disc3Icon;
 
     const [scrollTrigger, isInView] = useInView();
@@ -45,28 +51,34 @@ const SearchView = () => {
     const fetchMore = () => {
         if (loading) return;
         setLoading(true);
-        axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`)
-            .then((response) => {
-                if (response.status === 200) {
-                    let newResults = { ...results!, [searchField]: { ...results!.albums, items: [...results!.albums.items, ...response.data.data.albums.items] } }
-                    filterData.map((filter) => {
-                        newResults = { ...newResults, [filter.value]: { ...results![filter.value as "albums" | "tracks"], items: [...results![filter.value as "albums" | "tracks"].items, ...response.data.data[filter.value].items] } }
-                    })
-                    setLoading(false);
-                    if (query === response.data.data.query) setResults(newResults);
-                }
-            });
-    }
-
-    useEffect(() => {
-        if (results === null) return;
-
-        if (searching) return;
-
-        if (results![searchField].total > results![searchField].items.length) {
-            fetchMore();
+        const filter = filterData.find((fd) => fd.value == searchField) || filterData[0];
+        if (filter.searchRoute) {
+            axios.get("/api/" + filter.searchRoute + `?q=${query}&offset=${results![searchField].items.length}`)
+                .then((response) => {
+                    if (response.status === 200) {
+                        response.data.data[searchField].items.length = Math.max(response.data.data[searchField].items.length, Math.min(response.data.data[searchField].limit, response.data.data[searchField].total - response.data.data[searchField].offset));
+                        response.data.data[searchField].items.fill(null, response.data.data[searchField].items.length);
+                        const newResults = { ...results!, [searchField]: { ...results![searchField], items: [...results![searchField].items, ...response.data.data[searchField].items] } }
+                        setLoading(false);
+                        if (query === response.data.data.query) setResults(newResults);
+                }})
+        } else {
+            axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`)
+                .then((response) => {
+                    if (response.status === 200) {
+                        let newResults = { ...results!, [searchField]: { ...results!.albums, items: [...results!.albums.items, ...response.data.data.albums.items] } }
+                        filterData.map((filter) => {
+                            response.data.data[filter.value].items.length = Math.max(response.data.data[filter.value].items.length, Math.min(response.data.data[filter.value].limit, response.data.data[filter.value].total - response.data.data[filter.value].offset));
+                            response.data.data[filter.value].items.fill(null, response.data.data[filter.value].items.length);
+                            console.log(response.data.data[filter.value].items)
+                            newResults = { ...newResults, [filter.value]: { ...results![filter.value as QobuzSearchFilters], items: [...results![filter.value as QobuzSearchFilters].items, ...response.data.data[filter.value].items] } }
+                        })
+                        setLoading(false);
+                        if (query === response.data.data.query) setResults(newResults);
+                    }
+                });
         }
-    }, [searchField])
+    }
 
     useEffect(() => {
         if (searching) return;
@@ -166,12 +178,18 @@ const SearchView = () => {
                         onSearch={async (query: string, searchFieldInput: string = searchField) => {
                             setQuery(query);
                             setSearchError('');
+                            const filter = filterData.find((filter) => filter.value === searchFieldInput) || filterData[0];
                             try {
-                                const response = await axios.get(`/api/get-music?q=${query}&offset=0`);
+                                const response = await axios.get(`/api/${filter.searchRoute ? filter.searchRoute : 'get-music'}?q=${query}&offset=0`);
                                 if (response.status === 200) {
                                     setLoading(false);
-                                    if (searchField !== searchFieldInput) setSearchField(searchFieldInput as "albums" | "tracks");
-                                    setResults(response.data.data);
+                                    if (searchField !== searchFieldInput) setSearchField(searchFieldInput as QobuzSearchFilters);
+
+                                    let newResults = {...response.data.data };
+                                    filterData.map((filter) => {
+                                        if (!newResults[filter.value]) newResults = { ...newResults, [filter.value]: { total: undefined, offset: undefined, limit: undefined, items: [] } }
+                                    })
+                                    setResults(newResults);
                                 }
                             } catch (error: any) {
                                 setSearchError(error?.response.data?.error || error.message || 'An error occurred.');
@@ -213,7 +231,8 @@ const SearchView = () => {
                         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 w-full px-6 overflow-visible"
                         style={{ maxHeight: `${(Math.ceil(filterExplicit(results, settings.explicitContent)[searchField].items.length / numRows) + 2) * (cardHeight + 16)}px` }}
                     >
-                        {filterExplicit(results, settings.explicitContent)[searchField].items.map((result: QobuzAlbum | QobuzTrack, index: number) => {
+                        {filterExplicit(results, settings.explicitContent)[searchField].items.map((result: QobuzAlbum | QobuzTrack | QobuzArtist, index: number) => {
+                            if (!result) return null;
                             return (
                                 <ReleaseCard
                                     key={`${index}-${result.id}-${searchField}`}

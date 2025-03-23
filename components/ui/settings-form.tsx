@@ -110,7 +110,7 @@ const SettingsForm = () => {
                                 <DropdownMenuRadioGroup value={settings.outputCodec} onValueChange={(codec: string) => {
                                     setSettings(settings => ({ ...settings, outputCodec: codec as SettingsProps['outputCodec'] }));
                                     if (!losslessCodecs.includes(codec)) {
-                                        setSettings(settings => ({ ...settings, outputQuality: "5" as const, bitrate: settings.bitrate || 320 }));
+                                        setSettings(settings => ({ ...settings, outputQuality: settings.outputCodec === "OPUS" ? "6" as const : "5" as const, bitrate: settings.bitrate || 320 }));
                                     } else {
                                         setSettings(settings => {
                                             if (settings.outputQuality === "5") return { ...settings, outputQuality: "27" as const, bitrate: undefined };

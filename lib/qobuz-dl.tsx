@@ -1,4 +1,5 @@
 import axios from "axios";
+import { LucideIcon } from "lucide-react";
 
 let crypto: any;
 let SocksProxyAgent: any;
@@ -21,7 +22,13 @@ export type QobuzLabel = {
 }
 
 export type QobuzArtist = {
-    image: string | null,
+    image: {
+        small: string,
+        medium: string,
+        large: string,
+        extralarge: string,
+        mega: string
+    } | null,
     name: string,
     id: number,
     albums_count: number
@@ -102,15 +109,70 @@ export type QobuzSearchResults = {
         offset: number,
         total: number,
         items: QobuzTrack[]
+    },
+    artists: {
+        limit: number,
+        offset: number,
+        total: number,
+        items: QobuzArtist[]
     }
 }
 
-export function getAlbum(input: QobuzAlbum | QobuzTrack) {
+export type QobuzArtistResults = {
+    artist: {
+        id: string,
+        name: {
+            display: string,
+        },
+        artist_category: string,
+        biography: {
+            content: string,
+            source: null,
+            language: string
+        },
+        images: {
+            portrait: {
+                hash: string,
+                format: string
+            }
+        },
+        top_tracks: QobuzTrack[],
+        releases: {
+            album: {
+                has_more: boolean,
+                items: QobuzAlbum[]
+            },
+            live: {
+                has_more: boolean,
+                items: QobuzAlbum[]
+            },
+            compilation: {
+                has_more: boolean,
+                items: QobuzAlbum[]
+            },
+            epSingle: {
+                has_more: boolean,
+                items: QobuzAlbum[]
+            }
+        }
+    }
+}
+
+export type FilterDataType = {
+    label: string,
+    value: string,
+    searchRoute?: string,
+    icon: LucideIcon
+}[]
+
+export type QobuzSearchFilters = "albums" | "tracks" | "artists";
+
+export function getAlbum(input: QobuzAlbum | QobuzTrack | QobuzArtist) {
     return ((input as QobuzAlbum).image ? input : (input as QobuzTrack).album) as QobuzAlbum;
 }
 
-export function formatTitle(input: QobuzAlbum | QobuzTrack) {
-    return `${input.title}${input.version ? " (" + input.version + ")" : ""}`.trim();
+export function formatTitle(input: QobuzAlbum | QobuzTrack | QobuzArtist) {
+    return `${(input as QobuzAlbum | QobuzTrack).title ?? (input as QobuzArtist).name}${(input as QobuzAlbum | QobuzTrack).version ? " (" + (input as QobuzAlbum | QobuzTrack).version + ")" : ""}`.trim();
 }
 
 export function getFullResImageUrl(input: QobuzAlbum | QobuzTrack) {
@@ -126,7 +188,8 @@ export function getRandomToken() {
 }
 
 export function filterExplicit(results: QobuzSearchResults, explicit: boolean = true) {
-    return {...results,
+    return {
+        ...results,
         albums: {
             ...results.albums,
             items: results.albums.items.filter(album => explicit ? true : !album.parental_warning)
@@ -211,14 +274,40 @@ export async function getAlbumInfo(album_id: string) {
     return response.data;
 }
 
-export async function getFullResImage(resultData: QobuzAlbum | QobuzTrack): Promise<string> {
-    return new Promise((resolve) => {        
+export async function getArtistReleases(artist_id: string, release_type: string = "album", limit: number = 10, offset: number = 0, track_size: number = 1000) {
+    testForRequirements();
+    const url = new URL(process.env.QOBUZ_API_BASE + 'artist/getReleasesList');
+    url.searchParams.append("artist_id", artist_id);
+    url.searchParams.append("release_type", release_type);
+    url.searchParams.append("limit", limit.toString());
+    url.searchParams.append("offset", offset.toString());
+    url.searchParams.append("track_size", track_size.toString());
+    url.searchParams.append("sort", "release_date");
+    let proxyAgent = undefined;
+    if (process.env.SOCKS5_PROXY) {
+        proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);
+    }
+    const response = await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
+        headers: {
+            "x-app-id": process.env.QOBUZ_APP_ID!,
+            "x-user-auth-token": getRandomToken(),
+            "User-Agent": process.env.CORS_PROXY ? "Qobuz-DL" : undefined
+        },
+        httpAgent: proxyAgent,
+        httpsAgent: proxyAgent
+    })
+    return response.data;
+}
+
+export async function getFullResImage(resultData: QobuzAlbum | QobuzTrack): Promise<string | null> {
+    return new Promise((resolve) => {
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
         const imgToResize = new Image();
         imgToResize.crossOrigin = "anonymous";
         imgToResize.src = getFullResImageUrl(resultData);
-        imgToResize.onload = () => {        
+        imgToResize.onerror = () => resolve(null);
+        imgToResize.onload = () => {
             canvas.width = 3000;
             canvas.height = 3000;
             context!.drawImage(
@@ -257,4 +346,56 @@ export async function getFullAlbumInfo(fetchedAlbumData: FetchedQobuzAlbum | nul
     const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id } });
     setFetchedAlbumData(albumDataResponse.data.data);
     return albumDataResponse.data.data;
+}
+
+export function getType(input: QobuzAlbum | QobuzTrack | QobuzArtist): QobuzSearchFilters {
+    if ("albums_count" in input) return "artists";
+    if ("album" in input) return "tracks";
+    return "albums";
+}
+
+export async function getArtist(artistId: string) {
+    testForRequirements();
+    const url = "https://www.qobuz.com/api.json/0.2/artist/page";
+    let proxyAgent = undefined;
+    if (process.env.SOCKS5_PROXY) {
+        proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);
+    }
+    return (await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
+        params: { artist_id: artistId, sort: "release_date" },
+        headers: {
+            "x-app-id": process.env.QOBUZ_APP_ID!,
+            "x-user-auth-token": getRandomToken(),
+            "User-Agent": process.env.CORS_PROXY ? "Qobuz-DL" : undefined
+        },
+        httpAgent: proxyAgent,
+        httpsAgent: proxyAgent
+    })).data;
+}
+
+export function parseArtistAlbumData(album: QobuzAlbum) {
+    album.maximum_sampling_rate = (album as any).audio_info.maximum_sampling_rate;
+    album.maximum_bit_depth = (album as any).audio_info.maximum_bit_depth;
+    album.streamable = (album as any).rights.streamable;
+    album.released_at = new Date((album as any).dates.stream).getTime() / 1000;
+    album.release_date_original = (album as any).dates.original;
+    return album;
+}
+
+export function parseArtistData(artistData: QobuzArtistResults) {
+    // Fix weird inconsistencies in Qobuz API data
+    if ((!artistData.artist.releases as any).length) return artistData;
+    (artistData.artist.releases as any).forEach((release: any) => release.items.forEach((album: any, index: number) => {
+        release.items[index] = parseArtistAlbumData(album);
+    }));
+    const newReleases = {} as any;
+    for (const type of ["album", "live", "compilation", "epSingle"]) {
+        if (!(artistData.artist.releases as any).find((release: any) => release.type === type)) continue;
+        newReleases[type] = {
+            has_more: (artistData.artist.releases as any).find((release: any) => release.type === type)!.has_more,
+            items: (artistData.artist.releases as any).find((release: any) => release.type === type)!.items
+        }
+    }
+    artistData.artist.releases = newReleases;
+    return artistData;
 }

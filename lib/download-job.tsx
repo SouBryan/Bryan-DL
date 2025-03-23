@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { applyMetadata, codecMap, FFmpegType, loadFFmpeg } from "./ffmpeg-functions";
-import { FetchedQobuzAlbum, formatArtists, formatTitle, getFullResImage, QobuzAlbum, QobuzTrack } from "./qobuz-dl";
+import { FetchedQobuzAlbum, formatArtists, formatTitle, getFullResImage, QobuzAlbum, QobuzArtistResults, QobuzTrack } from "./qobuz-dl";
 import { createJob } from "./status-bar/jobs";
 import { StatusBarProps } from "@/components/status-bar/status-bar";
 import saveAs from "file-saver";
@@ -8,6 +8,8 @@ import { cleanFileName, formatBytes } from "./utils";
 import { Disc3Icon, DiscAlbumIcon } from "lucide-react";
 import { SettingsProps } from "./settings-provider";
 import { ToastAction } from "@/components/ui/toast";
+import { zipSync } from "fflate";
+import { artistReleaseCategories } from "@/components/artist-dialog";
 
 export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStatusBar: React.Dispatch<React.SetStateAction<StatusBarProps>>, ffmpegState: FFmpegType, settings: SettingsProps, toast: (toast: any) => void, fetchedAlbumData?: FetchedQobuzAlbum | null, setFetchedAlbumData?: React.Dispatch<React.SetStateAction<FetchedQobuzAlbum | null>>) => {
     if ((result as QobuzTrack).album) {
@@ -24,7 +26,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                             controller.abort();
                         }
                     }))
-                    if (settings.applyMetadata || (settings.outputQuality === "27" && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3")) await loadFFmpeg(ffmpegState, signal);
+                    if (settings.applyMetadata || !((settings.outputQuality === "27" && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3"))) await loadFFmpeg(ffmpegState, signal);
                     setStatusBar(prev => ({ ...prev, description: "Fetching track size..." }))
                     const APIResponse = await axios.get("/api/download-music", { params: { track_id: (result as QobuzTrack).id, quality: settings.outputQuality }, signal });
                     const trackURL = APIResponse.data.data.url;
@@ -76,14 +78,14 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                             controller.abort();
                         }
                     }))
-                    if (settings.applyMetadata || (settings.outputQuality === "27" && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3")) await loadFFmpeg(ffmpegState, signal);
+                    if (settings.applyMetadata || !((settings.outputQuality === "27" && settings.outputCodec === "FLAC") || (settings.bitrate === 320 && settings.outputCodec === "MP3"))) await loadFFmpeg(ffmpegState, signal);
                     setStatusBar(prev => ({ ...prev, description: "Fetching album data..." }));
                     if (!fetchedAlbumData) {
                         const albumDataResponse = await axios.get("/api/get-album", { params: { album_id: (result as QobuzAlbum).id }, signal });
                         if (setFetchedAlbumData) {
                             setFetchedAlbumData(albumDataResponse.data.data);
-                            fetchedAlbumData = albumDataResponse.data.data
                         }
+                        fetchedAlbumData = albumDataResponse.data.data
                     }
                     const albumTracks = fetchedAlbumData!.tracks.items.map((track: QobuzTrack) => ({ ...track, album: fetchedAlbumData })) as QobuzTrack[];
                     let totalAlbumSize = 0;
@@ -109,7 +111,8 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     const trackBuffers = [] as ArrayBuffer[];
                     let totalBytesDownloaded = 0;
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Fetching album art...` }));
-                    const albumArt = (await axios.get(await getFullResImage(fetchedAlbumData!), { responseType: 'arraybuffer' })).data;
+                    const albumArtURL = await getFullResImage(fetchedAlbumData!);
+                    const albumArt = albumArtURL ? (await axios.get(albumArtURL, { responseType: 'arraybuffer' })).data : false;
                     for (const [index, url] of albumUrls.entries()) {
                         if (url) {
                             const response = await axios.get(url, {
@@ -130,45 +133,20 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                         }
                     }
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Zipping album...` }));
-
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     const zipFiles = {
                         "cover.jpg": new Uint8Array(albumArt),
                         ...trackBuffers.reduce((acc, buffer, index) => {
                             if (buffer) {
-                                const fileName = `${(index + 1).toString().padStart(String(albumTracks.length - 1).length, '0')} ${formatTitle(albumTracks[index])}.${codecMap[settings.outputCodec].extension}`;
+                                const fileName = `${(index + 1).toString().padStart(Math.max(String(albumTracks.length - 1).length, 2), '0')} ${formatTitle(albumTracks[index])}.${codecMap[settings.outputCodec].extension}`;
                                 acc[cleanFileName(fileName)] = new Uint8Array(buffer);
                             }
                             return acc;
                         }, {} as { [key: string]: Uint8Array })
-                    };
-
-                    const zippedFile = await new Promise((resolve, reject) => {
-                        const workerBlob = new Blob([`
-                            onmessage = function(e) {
-                                const { zipFiles } = e.data;
-                                importScripts('https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js');
-                
-                                fflate.zip(zipFiles, { level: 0 }, (err, data) => {
-                                    if (err) postMessage({ error: err });
-                                    else postMessage({ data });
-                                });
-                            }
-                        `], { type: 'application/javascript' });
-                        const worker = new Worker(URL.createObjectURL(workerBlob));
-                        worker.postMessage({ zipFiles });
-                        worker.onmessage = function (e) {
-                            const { error, data } = e.data;
-                            if (error) {
-                                reject(error);
-                            } else {
-                                resolve(data);
-                            }
-                        };
-                        worker.onerror = function (error) {
-                            reject(error);
-                        };
-                    })
-                    const zipBlob = new Blob([zippedFile as Blob], { type: 'application/zip' });
+                    } as { [key: string]: Uint8Array };
+                    if (albumArt === false) delete zipFiles["cover.jpg"];
+                    const zippedFile = zipSync(zipFiles, { level: 0 });
+                    const zipBlob = new Blob([zippedFile], { type: 'application/zip' });
                     setStatusBar(prev => ({ ...prev, progress: 100 }));
                     const objectURL = URL.createObjectURL(zipBlob);
                     saveAs(objectURL, formattedTitle + ".zip");
@@ -190,4 +168,26 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
             })
         })
     }
+}
+
+export async function downloadArtistDiscography(artistResults: QobuzArtistResults, setArtistResults: React.Dispatch<React.SetStateAction<QobuzArtistResults | null>>, fetchMore: (searchField: any, artistResults: QobuzArtistResults) => Promise<void>, type: "album" | "epSingle" | "live" | "compilation" | "all", setStatusBar: React.Dispatch<React.SetStateAction<StatusBarProps>>, settings: SettingsProps, toast: (toast: any) => void, ffmpegState: FFmpegType) {
+    let types: ("album" | "epSingle" | "live" | "compilation")[] = [];
+    if (type === "all") types = ["album", "epSingle", "live", "compilation"]
+    else types = [type];
+    for (const type of types) {        
+        while (artistResults.artist.releases[type].has_more) {
+            await fetchMore(type, artistResults);
+            artistResults = await loadArtistResults(setArtistResults) as QobuzArtistResults;
+        }
+        for (const release of artistResults.artist.releases[type].items) {
+            await createDownloadJob(release, setStatusBar, ffmpegState, settings, toast);
+        }
+    }
+    toast({ title: `Added all ${artistReleaseCategories.find(category => category.value === type)?.label ?? "releases"} by '${artistResults.artist.name.display}'`, description: "All releases have been added to the queue" });
+}
+
+export async function loadArtistResults(setArtistResults: React.Dispatch<React.SetStateAction<QobuzArtistResults | null>>): Promise<QobuzArtistResults | null> {
+    return new Promise((resolve) => {
+        setArtistResults((prev: QobuzArtistResults | null) => (resolve(prev), prev))
+    });
 }

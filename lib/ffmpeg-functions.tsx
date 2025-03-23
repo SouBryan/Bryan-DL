@@ -34,12 +34,12 @@ export const codecMap = {
         codec: "aac"
     },
     OPUS: {
-        extension: "ogg",
+        extension: "opus",
         codec: "libopus"
     }
 }
 
-export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzTrack, ffmpeg: FFmpegType, settings: SettingsProps, setStatusBar?: React.Dispatch<React.SetStateAction<StatusBarProps>>, albumArt?: ArrayBuffer, upc?: string) {
+export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzTrack, ffmpeg: FFmpegType, settings: SettingsProps, setStatusBar?: React.Dispatch<React.SetStateAction<StatusBarProps>>, albumArt?: ArrayBuffer | false, upc?: string) {
     const skipRencode = (settings.outputQuality != "5" && settings.outputCodec === "FLAC") || (settings.outputQuality === "5" && settings.outputCodec === "MP3" && settings.bitrate === 320);
     if (skipRencode && !settings.applyMetadata) return trackBuffer;
     const extension = codecMap[settings.outputCodec].extension;
@@ -51,7 +51,7 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
             } else return prev;
         })
         await ffmpeg.FS("writeFile", "input." + inputExtension, new Uint8Array(trackBuffer));
-        await ffmpeg.run("-i", "input." + inputExtension, "-c:a", codecMap[settings.outputCodec].codec, settings.bitrate ? "-b:a" : "", settings.bitrate ? settings.bitrate + "k" : "", "output." + extension);
+        await ffmpeg.run("-i", "input." + inputExtension, "-c:a", codecMap[settings.outputCodec].codec, settings.bitrate ? "-b:a" : "", settings.bitrate ? settings.bitrate + "k" : "", ["OPUS"].includes(settings.outputCodec) ? "-vbr" : "", ["OPUS"].includes(settings.outputCodec) ? "on" : "", "output." + extension);
         trackBuffer = await ffmpeg.FS("readFile", "output." + extension);
         await ffmpeg.FS("unlink", "input." + inputExtension);
         await ffmpeg.FS("unlink", "output." + extension);
@@ -82,7 +82,15 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
     await ffmpeg.FS("writeFile", "input." + extension, new Uint8Array(trackBuffer));
     const encoder = new TextEncoder();
     await ffmpeg.FS("writeFile", "metadata.txt", encoder.encode(metadata));
-    await ffmpeg.FS("writeFile", "albumArt.jpg", new Uint8Array(albumArt ? albumArt : (await axios.get(await getFullResImage(resultData), { responseType: 'arraybuffer' })).data));
+    if (!(albumArt === false)) {
+        if (!albumArt) {
+            const albumArtURL = await getFullResImage(resultData);
+            if (albumArtURL) {
+                albumArt = (await axios.get(await getFullResImage(resultData) as string, { responseType: 'arraybuffer' })).data;
+            } else albumArt = false
+        }
+        if (albumArt) await ffmpeg.FS("writeFile", "albumArt.jpg", new Uint8Array(albumArt ? albumArt : (await axios.get(await getFullResImage(resultData) as string, { responseType: 'arraybuffer' })).data))
+    };
     
     await ffmpeg.run(
         "-i", "input." + extension,
@@ -91,7 +99,7 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
         "-codec", "copy",
         "secondInput." + extension
     );
-    if (["WAV", "OPUS"].includes(settings.outputCodec)) {
+    if (["WAV", "OPUS"].includes(settings.outputCodec) || (albumArt === false)) {
         const output = await ffmpeg.FS("readFile", "secondInput." + extension);
         ffmpeg.FS("unlink", "input." + extension);
         ffmpeg.FS("unlink", "metadata.txt");
@@ -118,7 +126,7 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
 export function createFFmpeg() {
     if (typeof FFmpeg === 'undefined') return null;
     const { createFFmpeg } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: false });
+    const ffmpeg = createFFmpeg({ log: true });
     return ffmpeg;
 }
 
