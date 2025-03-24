@@ -70,7 +70,6 @@ const SearchView = () => {
                         filterData.map((filter) => {
                             response.data.data[filter.value].items.length = Math.max(response.data.data[filter.value].items.length, Math.min(response.data.data[filter.value].limit, response.data.data[filter.value].total - response.data.data[filter.value].offset));
                             response.data.data[filter.value].items.fill(null, response.data.data[filter.value].items.length);
-                            console.log(response.data.data[filter.value].items)
                             newResults = { ...newResults, [filter.value]: { ...results![filter.value as QobuzSearchFilters], items: [...results![filter.value as QobuzSearchFilters].items, ...response.data.data[filter.value].items] } }
                         })
                         setLoading(false);

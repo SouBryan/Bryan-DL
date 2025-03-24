@@ -184,6 +184,16 @@ const SettingsForm = () => {
                 <SheetHeader>
                     <div className="flex items-center gap-2">
                         <div className="flex flex-col">
+                            <p className="font-medium">Fix MD5 Hash</p>
+                            <p className="text-xs text-muted-foreground">If enabled (default), MD5 hashes will be fixed, improving compatiablity with old software. This will take longer to download.</p>
+                        </div>
+                        <Checkbox checked={settings.fixMD5} onCheckedChange={(checked: boolean) => setSettings(settings => ({ ...settings, fixMD5: checked }))} />
+                    </div>
+                </SheetHeader>
+                <Separator />
+                <SheetHeader>
+                    <div className="flex items-center gap-2">
+                        <div className="flex flex-col">
                             <p className="font-medium">Allow Explicit content</p>
                             <p className="text-xs text-muted-foreground">If enabled (default), explicit songs will be shown when searching.</p>
                         </div>

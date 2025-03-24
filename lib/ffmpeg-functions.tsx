@@ -91,7 +91,7 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
         }
         if (albumArt) await ffmpeg.FS("writeFile", "albumArt.jpg", new Uint8Array(albumArt ? albumArt : (await axios.get(await getFullResImage(resultData) as string, { responseType: 'arraybuffer' })).data))
     };
-    
+
     await ffmpeg.run(
         "-i", "input." + extension,
         "-i", "metadata.txt",
@@ -123,10 +123,41 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
     return output;
 }
 
+export async function fixMD5Hash(trackBuffer: ArrayBuffer, setStatusBar?: React.Dispatch<React.SetStateAction<StatusBarProps>>): Promise<Blob> {
+    return new Promise((resolve) => {
+        setStatusBar?.(prev => ({ ...prev, description: "Fixing MD5 hash...", progress: 0 }))
+        const worker = new Worker('flac/EmsWorkerProxy.js');
+        worker.onmessage = function (e) {
+            if (e.data && e.data.reply === 'progress') {
+                const vals = e.data.values;
+                if (vals[1]) {
+                    setStatusBar?.(prev => ({...prev, progress: Math.floor(vals[0] / vals[1] * 100)}))
+                }
+            } else if (e.data && e.data.reply === 'done') {
+                for (const fileName in e.data.values) {
+                    resolve(e.data.values[fileName].blob);
+                }
+            }
+        };
+        worker.postMessage({
+            command: 'encode',
+            args: ["input.flac", "-o", "output.flac"],
+            outData: {
+                "output.flac": {
+                    MIME: "audio/flac",
+                },
+            },
+            fileData: {
+                "input.flac": new Uint8Array(trackBuffer)
+            }
+        });
+    })
+}
+
 export function createFFmpeg() {
     if (typeof FFmpeg === 'undefined') return null;
     const { createFFmpeg } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: true });
+    const ffmpeg = createFFmpeg({ log: false });
     return ffmpeg;
 }
 

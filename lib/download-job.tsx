@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { applyMetadata, codecMap, FFmpegType, loadFFmpeg } from "./ffmpeg-functions";
+import { applyMetadata, codecMap, FFmpegType, fixMD5Hash, loadFFmpeg } from "./ffmpeg-functions";
 import { FetchedQobuzAlbum, formatArtists, formatTitle, getFullResImage, QobuzAlbum, QobuzArtistResults, QobuzTrack } from "./qobuz-dl";
 import { createJob } from "./status-bar/jobs";
 import { StatusBarProps } from "@/components/status-bar/status-bar";
@@ -44,7 +44,8 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     });
                     setStatusBar(prev => ({ ...prev, description: `Applying metadata...`, progress: 100 }))
                     const inputFile = response.data;
-                    const outputFile = await applyMetadata(inputFile, result as QobuzTrack, ffmpegState, settings, setStatusBar);
+                    let outputFile = await applyMetadata(inputFile, result as QobuzTrack, ffmpegState, settings, setStatusBar);
+                    if (settings.outputCodec === "FLAC" && settings.fixMD5) outputFile = await fixMD5Hash(outputFile, setStatusBar);
                     const objectURL = URL.createObjectURL(new Blob([outputFile]));
                     saveAs(objectURL, formattedTitle + "." + codecMap[settings.outputCodec].extension);
                     setTimeout(() => {
@@ -128,7 +129,8 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                             await new Promise(resolve => setTimeout(resolve, 100));
                             totalBytesDownloaded += response.data.byteLength;
                             const inputFile = response.data;
-                            const outputFile = await applyMetadata(inputFile, albumTracks[index], ffmpegState, settings, undefined, albumArt, fetchedAlbumData!.upc);
+                            let outputFile = await applyMetadata(inputFile, albumTracks[index], ffmpegState, settings, undefined, albumArt, fetchedAlbumData!.upc);
+                            if (settings.outputCodec === "FLAC" && settings.fixMD5) outputFile = await (await fixMD5Hash(outputFile)).arrayBuffer();
                             trackBuffers[index] = outputFile;
                         }
                     }

@@ -7,6 +7,7 @@ export type SettingsProps = {
     outputCodec: "FLAC" | "WAV" | "ALAC" | "MP3" | "AAC" | "OPUS",
     bitrate: number | undefined,
     applyMetadata: boolean,
+    fixMD5: boolean,
     explicitContent: boolean
 }
 
@@ -17,7 +18,8 @@ const isValidSettings = (obj: any): obj is SettingsProps => {
         ['FLAC', 'WAV', 'ALAC', 'MP3', 'AAC', 'OPUS'].includes(obj.outputCodec) &&
         (typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 320) || obj.bitrate === undefined &&
         typeof obj.applyMetadata === 'boolean' &&
-        typeof obj.explicitContent === 'boolean'
+        typeof obj.explicitContent === 'boolean' && 
+        typeof obj.fixMD5 === 'boolean'
     );
 };
 
@@ -33,6 +35,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         outputCodec: "FLAC",
         bitrate: 320,
         applyMetadata: true,
+        fixMD5: true,
         explicitContent: true
     });
 
