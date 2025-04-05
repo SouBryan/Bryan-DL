@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog'
 import { parseArtistAlbumData, parseArtistData, QobuzArtist, QobuzArtistResults } from '@/lib/qobuz-dl'
-import Image from 'next/image'
 import { Skeleton } from './ui/skeleton'
 import { Disc3Icon, DiscAlbumIcon, DownloadIcon, LucideIcon, RadioTowerIcon, UsersIcon } from 'lucide-react'
 import { Button } from './ui/button'
@@ -16,6 +15,7 @@ import { useStatusBar } from '@/lib/status-bar/context'
 import { useToast } from '@/hooks/use-toast'
 import { useSettings } from '@/lib/settings-provider'
 import { useFFmpeg } from '@/lib/ffmpeg-provider'
+import Image from 'next/image'
 
 export type CategoryType = {
     label: string,
@@ -78,7 +78,7 @@ const ArtistDialog = ({ open, setOpen, artist }: { open: boolean, setOpen: (open
                 <div className="flex gap-3 overflow-hidden">
                     <div className="relative shrink-0 aspect-square min-w-[100px] min-h-[100px] rounded-sm overflow-hidden">
                         {(artist.image?.small || artistResults?.artist.images.portrait) && <Skeleton className='absolute aspect-square w-full h-full' />}
-                        {(artist.image?.small || artistResults?.artist.images.portrait) ? <Image fill src={artist.image?.small || "https://static.qobuz.com/images/artists/covers/medium/" + artistResults?.artist.images.portrait.hash + "." + artistResults?.artist.images.portrait.format} alt={artist.name} crossOrigin='anonymous' className='absolute aspect-square w-full h-full object-cover' /> : <div className='w-full h-full bg-secondary flex items-center justify-center p-6'><UsersIcon className='w-full h-full opacity-20'/></div>}
+                        {(artist.image?.small || artistResults?.artist.images.portrait) ? <Image fill src={artist.image?.small || "https://static.qobuz.com/images/artists/covers/medium/" + artistResults?.artist.images.portrait.hash + "." + artistResults?.artist.images.portrait.format} alt={artist.name} className='text-[0px] absolute aspect-square w-full h-full object-cover' /> : <div className='w-full h-full bg-secondary flex items-center justify-center p-6'><UsersIcon className='w-full h-full opacity-20'/></div>}
                     </div>
 
                     <div className="flex w-full flex-col justify-between overflow-hidden">

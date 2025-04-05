@@ -356,7 +356,7 @@ export function getType(input: QobuzAlbum | QobuzTrack | QobuzArtist): QobuzSear
 
 export async function getArtist(artistId: string) {
     testForRequirements();
-    const url = "https://www.qobuz.com/api.json/0.2/artist/page";
+    const url = new URL(process.env.QOBUZ_API_BASE + "/artist/page");
     let proxyAgent = undefined;
     if (process.env.SOCKS5_PROXY) {
         proxyAgent = new SocksProxyAgent("socks5://" + process.env.SOCKS5_PROXY);

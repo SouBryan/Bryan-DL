@@ -17,9 +17,8 @@ import { motion, useAnimation } from 'motion/react'
 import { createDownloadJob } from '@/lib/download-job'
 import { useSettings } from '@/lib/settings-provider'
 import { Skeleton } from './ui/skeleton'
-import Image from 'next/image'
 import { useToast } from "@/hooks/use-toast"
-
+import Image from 'next/image'
 import DownloadAlbumButton from './download-album-button'
 import { filterData } from '@/app/search-view'
 import ArtistDialog from './artist-dialog'
@@ -82,14 +81,14 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
                                     {!(getType(result) === "artists") && <p>{formatDuration((result as QobuzAlbum | QobuzTrack).duration)}</p>}
                                 </div>
                             </div>
-                            {(getType(result) !== "artists" && showArtistDialog) && 
-                            <div className='absolute top-0 right-0 p-4'>
-                                <Button size='icon' variant='ghost' className='aspect-square' onClick={async () => {
-                                    setOpenArtistDialog(true);
-                                }}>
-                                    <UsersIcon />
-                                </Button>
-                            </div>}
+                            {(getType(result) !== "artists" && showArtistDialog) &&
+                                <div className='absolute top-0 right-0 p-4'>
+                                    <Button size='icon' variant='ghost' className='aspect-square' onClick={async () => {
+                                        setOpenArtistDialog(true);
+                                    }}>
+                                        <UsersIcon />
+                                    </Button>
+                                </div>}
                         </div>
                         {!(getType(result) === "artists") && <div className="flex items-center justify-between gap-4 p-2">
                             {(result as QobuzTrack).album ? <Button
@@ -118,10 +117,15 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
                     transition={{ duration: 0.1 }}
                     className={cn('absolute left-0 top-0 z-[2] w-full aspect-square transition-all')}
                 >
-                    {(album || result).image?.small ? <Image fill src={(album || result).image?.small} alt={formatTitle(result)} className={cn("object-cover group-hover:scale-105 transition-all w-full h-full", focusCard && "scale-105", imageLoaded && "opacity-100")}
-                        sizes="(min-width: 1280px) calc((100vw - 96px) / 7), (min-width: 1024px) calc((100vw - 80px) / 6), (min-width: 768px) calc((100vw - 64px) / 5), (min-width: 640px) calc((100vw - 48px) / 3), calc((100vw - 32px) / 2)"
-                        onLoad={() => { setImageLoaded(true) }}
-                    /> :
+                    {(album || result).image?.small ? <>
+                        {getType(result) === "artists" ? <Image fill src={(album || result).image?.small} alt={formatTitle(result)} className={cn("object-cover group-hover:scale-105 transition-all w-full h-full text-[0px]", focusCard && "scale-105", imageLoaded && "opacity-100")}
+                            sizes="(min-width: 1280px) calc((100vw - 96px) / 7), (min-width: 1024px) calc((100vw - 80px) / 6), (min-width: 768px) calc((100vw - 64px) / 5), (min-width: 640px) calc((100vw - 48px) / 3), calc((100vw - 32px) / 2)"
+                            onLoad={() => { setImageLoaded(true) }}
+                        /> : <img crossOrigin="anonymous" src={(album || result).image?.small} alt={formatTitle(result)} className={cn("object-cover group-hover:scale-105 transition-all w-full h-full text-[0px]", focusCard && "scale-105", imageLoaded && "opacity-100")}
+                            sizes="(min-width: 1280px) calc((100vw - 96px) / 7), (min-width: 1024px) calc((100vw - 80px) / 6), (min-width: 768px) calc((100vw - 64px) / 5), (min-width: 640px) calc((100vw - 48px) / 3), calc((100vw - 32px) / 2)"
+                            onLoad={() => { setImageLoaded(true) }}
+                        />}
+                    </> :
                         <motion.div className="flex items-center justify-center bg-secondary w-full h-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             {filterData.map((filter, index) => {
                                 if (filter.value === getType(result)) {
@@ -149,7 +153,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
                     <div className="flex gap-3 overflow-hidden">
                         <div className="relative shrink-0 aspect-square min-w-[100px] min-h-[100px] rounded-sm overflow-hidden">
                             <Skeleton className='absolute aspect-square w-full h-full' />
-                            {(album || result).image?.small && <Image fill src={(album || result).image?.small} alt={formatTitle(result)} crossOrigin='anonymous' className='absolute aspect-square w-full h-full' />}
+                            {(album || result).image?.small && <img src={(album || result).image?.small} alt={formatTitle(result)} crossOrigin='anonymous' className='absolute aspect-square w-full h-full' />}
                         </div>
 
                         <div className="flex w-full flex-col justify-between overflow-hidden">

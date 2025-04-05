@@ -13,7 +13,6 @@ import { Disc3Icon, DiscAlbumIcon, UsersIcon } from 'lucide-react';
 import { FilterDataType, filterExplicit, QobuzAlbum, QobuzArtist, QobuzSearchFilters, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { useSettings } from '@/lib/settings-provider';
-import Image from 'next/image';
 import { motion, useAnimation } from 'motion/react';
 
 export const filterData: FilterDataType = [
@@ -164,7 +163,7 @@ const SearchView = () => {
                     transition={{ duration: 0.5 }}
                 >
                     {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === "qobuz-dl" ? (
-                        <Image src={resolvedTheme === "light" ? '/logo/qobuz-web-light.png' : '/logo/qobuz-web-dark.png'} priority={true} width={225} height={100} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='w-auto mx-auto' />
+                        <img src={resolvedTheme === "light" ? '/logo/qobuz-web-light.png' : '/logo/qobuz-web-dark.png'} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='w-auto h-[100px] mx-auto' />
                     ) : (
                         <>
                             <h1 className="text-4xl font-bold text-center">{process.env.NEXT_PUBLIC_APPLICATION_NAME}</h1>
