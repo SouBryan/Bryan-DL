@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { applyMetadata, codecMap, FFmpegType, fixMD5Hash, loadFFmpeg } from "./ffmpeg-functions";
-import { FetchedQobuzAlbum, formatArtists, formatTitle, QobuzAlbum, QobuzArtistResults, QobuzTrack } from "./qobuz-dl";
+import { FetchedQobuzAlbum, formatArtists, formatTitle, getFullResImageUrl, QobuzAlbum, QobuzArtistResults, QobuzTrack } from "./qobuz-dl";
 import { createJob } from "./status-bar/jobs";
 import { StatusBarProps } from "@/components/status-bar/status-bar";
 import saveAs from "file-saver";
@@ -112,7 +112,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     const trackBuffers = [] as ArrayBuffer[];
                     let totalBytesDownloaded = 0;
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Fetching album art...` }));
-                    const albumArtURL = await resizeImage(getFullResImageURL(fetchedAlbumData!), settings.albumArtSize);
+                    const albumArtURL = await resizeImage(getFullResImageUrl(fetchedAlbumData!), settings.albumArtSize);
                     const albumArt = albumArtURL ? (await axios.get(albumArtURL, { responseType: 'arraybuffer' })).data : false;
                     for (const [index, url] of albumUrls.entries()) {
                         if (url) {
@@ -176,7 +176,7 @@ export async function downloadArtistDiscography(artistResults: QobuzArtistResult
     let types: ("album" | "epSingle" | "live" | "compilation")[] = [];
     if (type === "all") types = ["album", "epSingle", "live", "compilation"]
     else types = [type];
-    for (const type of types) {        
+    for (const type of types) {
         while (artistResults.artist.releases[type].has_more) {
             await fetchMore(type, artistResults);
             artistResults = await loadArtistResults(setArtistResults) as QobuzArtistResults;
@@ -192,8 +192,4 @@ export async function loadArtistResults(setArtistResults: React.Dispatch<React.S
     return new Promise((resolve) => {
         setArtistResults((prev: QobuzArtistResults | null) => (resolve(prev), prev))
     });
-}
-
-function getFullResImageURL(arg0: FetchedQobuzAlbum): string {
-    throw new Error("Function not implemented.");
 }
