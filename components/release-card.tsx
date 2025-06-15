@@ -40,6 +40,8 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
     const [imageLoaded, setImageLoaded] = useState(false);
     const imageAnimationControls = useAnimation();
 
+    const artist = (result as QobuzAlbum).artist ?? (result as QobuzTrack).performer ?? (result as QobuzTrack).composer;
+
     useEffect(() => {
         if (imageLoaded) imageAnimationControls.start({ scale: 1 });
     }, [imageLoaded])
@@ -215,7 +217,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
                     </ScrollArea>}
                 </DialogContent>
             </Dialog>
-            {((getType(result) !== "artists") && showArtistDialog) && <ArtistDialog open={openArtistDialog} setOpen={setOpenArtistDialog} artist={(result as QobuzAlbum).artist ?? (result as QobuzTrack).performer} />}
+            {((getType(result) !== "artists") && showArtistDialog) && <ArtistDialog open={openArtistDialog} setOpen={setOpenArtistDialog} artist={artist} />}
         </div>
     )
 }

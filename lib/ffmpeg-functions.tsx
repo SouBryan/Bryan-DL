@@ -1,7 +1,8 @@
-import { formatArtists, formatTitle, getAlbum, getFullResImage, QobuzTrack } from "./qobuz-dl";
+import { formatArtists, formatTitle, getAlbum, getFullResImageUrl, QobuzTrack } from "./qobuz-dl";
 import axios from "axios";
 import { SettingsProps } from "./settings-provider";
 import { StatusBarProps } from "@/components/status-bar/status-bar";
+import { resizeImage } from "./utils";
 
 declare const FFmpeg: { createFFmpeg: any, fetchFile: any };
 
@@ -84,12 +85,12 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
     await ffmpeg.FS("writeFile", "metadata.txt", encoder.encode(metadata));
     if (!(albumArt === false)) {
         if (!albumArt) {
-            const albumArtURL = await getFullResImage(resultData);
+            const albumArtURL = await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize);
             if (albumArtURL) {
-                albumArt = (await axios.get(await getFullResImage(resultData) as string, { responseType: 'arraybuffer' })).data;
+                albumArt = (await axios.get(await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize) as string, { responseType: 'arraybuffer' })).data;
             } else albumArt = false
         }
-        if (albumArt) await ffmpeg.FS("writeFile", "albumArt.jpg", new Uint8Array(albumArt ? albumArt : (await axios.get(await getFullResImage(resultData) as string, { responseType: 'arraybuffer' })).data))
+        if (albumArt) await ffmpeg.FS("writeFile", "albumArt.jpg", new Uint8Array(albumArt ? albumArt : (await axios.get(await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize) as string, { responseType: 'arraybuffer' })).data))
     };
 
     await ffmpeg.run(

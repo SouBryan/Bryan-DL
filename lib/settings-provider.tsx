@@ -8,7 +8,8 @@ export type SettingsProps = {
     bitrate: number | undefined,
     applyMetadata: boolean,
     fixMD5: boolean,
-    explicitContent: boolean
+    explicitContent: boolean,
+    albumArtSize: number
 }
 
 const isValidSettings = (obj: any): obj is SettingsProps => {
@@ -19,7 +20,9 @@ const isValidSettings = (obj: any): obj is SettingsProps => {
         (typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 320) || obj.bitrate === undefined &&
         typeof obj.applyMetadata === 'boolean' &&
         typeof obj.explicitContent === 'boolean' && 
-        typeof obj.fixMD5 === 'boolean'
+        typeof obj.fixMD5 === 'boolean' &&
+        typeof obj.albumArtSize === 'number' && 
+        obj.albumArtSize >= 100 && obj.albumArtSize <= 3600
     );
 };
 
@@ -35,8 +38,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         outputCodec: "FLAC",
         bitrate: 320,
         applyMetadata: true,
-        fixMD5: true,
-        explicitContent: true
+        fixMD5: false,
+        explicitContent: true,
+        albumArtSize: 3600
     });
 
     useEffect(() => {

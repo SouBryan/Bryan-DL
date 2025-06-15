@@ -81,6 +81,9 @@ const SearchView = () => {
     useEffect(() => {
         if (searching) return;
         if (isInView && results![searchField].total > results![searchField].items.length && !loading) fetchMore();
+        if (results?.switchTo) {
+            setSearchField(results.switchTo);
+        }
     }, [isInView, results]);
 
     const cardRef = useRef<HTMLDivElement | null>(null);

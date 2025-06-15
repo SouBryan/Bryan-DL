@@ -50,7 +50,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={`${inter.className} antialiased`}>
+            <body className={`${inter.className} antialiased`} suppressHydrationWarning>
                 <FFmpegProvider>
                     <StatusBarProvider>
                         <SettingsProvider>

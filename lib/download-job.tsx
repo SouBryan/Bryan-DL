@@ -1,10 +1,10 @@
 import axios, { AxiosError } from "axios";
 import { applyMetadata, codecMap, FFmpegType, fixMD5Hash, loadFFmpeg } from "./ffmpeg-functions";
-import { FetchedQobuzAlbum, formatArtists, formatTitle, getFullResImage, QobuzAlbum, QobuzArtistResults, QobuzTrack } from "./qobuz-dl";
+import { FetchedQobuzAlbum, formatArtists, formatTitle, QobuzAlbum, QobuzArtistResults, QobuzTrack } from "./qobuz-dl";
 import { createJob } from "./status-bar/jobs";
 import { StatusBarProps } from "@/components/status-bar/status-bar";
 import saveAs from "file-saver";
-import { cleanFileName, formatBytes } from "./utils";
+import { cleanFileName, formatBytes, resizeImage } from "./utils";
 import { Disc3Icon, DiscAlbumIcon } from "lucide-react";
 import { SettingsProps } from "./settings-provider";
 import { ToastAction } from "@/components/ui/toast";
@@ -112,7 +112,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     const trackBuffers = [] as ArrayBuffer[];
                     let totalBytesDownloaded = 0;
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Fetching album art...` }));
-                    const albumArtURL = await getFullResImage(fetchedAlbumData!);
+                    const albumArtURL = await resizeImage(getFullResImageURL(fetchedAlbumData!), settings.albumArtSize);
                     const albumArt = albumArtURL ? (await axios.get(albumArtURL, { responseType: 'arraybuffer' })).data : false;
                     for (const [index, url] of albumUrls.entries()) {
                         if (url) {
@@ -148,7 +148,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     } as { [key: string]: Uint8Array };
                     if (albumArt === false) delete zipFiles["cover.jpg"];
                     const zippedFile = zipSync(zipFiles, { level: 0 });
-                    const zipBlob = new Blob([zippedFile], { type: 'application/zip' });
+                    const zipBlob = new Blob([zippedFile as BlobPart], { type: 'application/zip' });
                     setStatusBar(prev => ({ ...prev, progress: 100 }));
                     const objectURL = URL.createObjectURL(zipBlob);
                     saveAs(objectURL, formattedTitle + ".zip");
@@ -192,4 +192,8 @@ export async function loadArtistResults(setArtistResults: React.Dispatch<React.S
     return new Promise((resolve) => {
         setArtistResults((prev: QobuzArtistResults | null) => (resolve(prev), prev))
     });
+}
+
+function getFullResImageURL(arg0: FetchedQobuzAlbum): string {
+    throw new Error("Function not implemented.");
 }

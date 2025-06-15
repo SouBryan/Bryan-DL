@@ -24,6 +24,7 @@ import { ModeToggle } from '../mode-toggle';
 import { Separator } from './separator';
 import { Input } from './input';
 import { cn } from '@/lib/utils';
+import { Slider } from './slider';
 
 const losslessCodecs = ['FLAC', 'ALAC', 'WAV'];
 
@@ -199,6 +200,17 @@ const SettingsForm = () => {
                                 <p className="text-xs text-muted-foreground">If enabled (default), explicit songs will be shown when searching.</p>
                             </div>
                             <Checkbox checked={settings.explicitContent} onCheckedChange={(checked: boolean) => setSettings(settings => ({ ...settings, explicitContent: checked }))} />
+                        </div>
+                    </SheetHeader>
+                    <Separator />
+                    <SheetHeader>
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="flex flex-col">
+                                <p className="font-medium">Album Art Size</p>
+                                <p className="text-xs text-muted-foreground">If apply metadata is enabled, album art will be resized to this size.</p>
+                            </div>
+                            <Slider min={100} max={3600} step={100} value={[settings.albumArtSize]} onValueChange={(value: number[]) => setSettings(settings => ({ ...settings, albumArtSize: value[0] }))} />
+                            <p>{settings.albumArtSize}x{settings.albumArtSize}</p>
                         </div>
                     </SheetHeader>
                 </div>
