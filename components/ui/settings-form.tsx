@@ -10,7 +10,6 @@ import {
 import { Button } from './button';
 import { ChevronDownIcon, DotIcon, SettingsIcon } from 'lucide-react';
 import { SettingsProps, useSettings } from '@/lib/settings-provider';
-import { useBackground } from '@/lib/background-provider';
 import { Checkbox } from "@/components/ui/checkbox"
 
 import {
@@ -36,7 +35,6 @@ const qualityMap = {
 
 const SettingsForm = () => {
     const { settings, setSettings } = useSettings();
-    const { background, setBackground } = useBackground();
 
     const [open, setOpen] = useState(false);
 
@@ -79,12 +77,12 @@ const SettingsForm = () => {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="flex gap-2 items-center">
-                                    <p className='capitalize'>{background}</p>
+                                    <p className='capitalize'>{settings.particles ? "Particles" : "Solid Color"}</p>
                                     <ChevronDownIcon />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
-                                <DropdownMenuRadioGroup value={background} onValueChange={setBackground}>
+                                <DropdownMenuRadioGroup value={settings.particles ? "particles" : "solid color"} onValueChange={(value: string) => { setSettings(prev => ({ ...prev, particles: value === "particles" })) }}>
                                     <DropdownMenuRadioItem value="particles">Particles</DropdownMenuRadioItem>
                                     <DropdownMenuRadioItem value="solid color">Solid Color</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
@@ -206,11 +204,22 @@ const SettingsForm = () => {
                     <SheetHeader>
                         <div className="flex flex-col items-center gap-2">
                             <div className="flex flex-col">
-                                <p className="font-medium">Album Art Size</p>
+                                <p className="font-medium">Max Album Art Size</p>
                                 <p className="text-xs text-muted-foreground">If apply metadata is enabled, album art will be resized to this size.</p>
                             </div>
                             <Slider min={100} max={3600} step={100} value={[settings.albumArtSize]} onValueChange={(value: number[]) => setSettings(settings => ({ ...settings, albumArtSize: value[0] }))} />
                             <p>{settings.albumArtSize}x{settings.albumArtSize}</p>
+                        </div>
+                    </SheetHeader>
+                    <Separator />
+                    <SheetHeader>
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="flex flex-col">
+                                <p className="font-medium">Album Art Quality</p>
+                                <p className="text-xs text-muted-foreground">If apply metadata is enabled, album art will be compressed to this quality. 100% is lossless.</p>
+                            </div>
+                            <Slider min={10} max={100} step={1} value={[settings.albumArtQuality * 100]} onValueChange={(value: number[]) => setSettings(settings => ({ ...settings, albumArtQuality: value[0] / 100 }))} />
+                            <p>{Math.round(settings.albumArtQuality * 100)}%</p>
                         </div>
                     </SheetHeader>
                 </div>

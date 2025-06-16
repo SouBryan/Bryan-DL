@@ -4,14 +4,14 @@ import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { useEffect, useMemo, useState } from "react";
 import { loadSlim } from "@tsparticles/slim";
 import { useTheme } from "next-themes";
-import { useBackground } from "@/lib/background-provider";
+import { useSettings } from "@/lib/settings-provider";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react"; import { getHex } from "./mode-toggle";
 
 const ParticlesComponent = ({ className }: { className: string }) => {
     const { resolvedTheme } = useTheme();
     const [, setInit] = useState(false);
-    const { background } = useBackground();
+    const { settings } = useSettings();
 
     useEffect(() => {
         initParticlesEngine(async (engine) => {
@@ -97,7 +97,7 @@ const ParticlesComponent = ({ className }: { className: string }) => {
 
     return <>
         <AnimatePresence>
-            {background === "particles" ?
+            {settings.particles ?
                 <motion.div key="particles"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -105,7 +105,7 @@ const ParticlesComponent = ({ className }: { className: string }) => {
                     exit={{ opacity: 0 }}
                 >
                     <Particles className={className} options={options} />
-                </motion.div> : <div className={cn(className, resolvedTheme != "light" ? getHex(String(resolvedTheme), resolvedTheme) : "bg-white")}></div>}
+                </motion.div> : <div className={cn(className, "bg-background")}></div>}
         </AnimatePresence>
     </>
 };

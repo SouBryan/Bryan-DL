@@ -112,7 +112,7 @@ export const createDownloadJob = async (result: QobuzAlbum | QobuzTrack, setStat
                     const trackBuffers = [] as ArrayBuffer[];
                     let totalBytesDownloaded = 0;
                     setStatusBar(statusBar => ({ ...statusBar, progress: 0, description: `Fetching album art...` }));
-                    const albumArtURL = await resizeImage(getFullResImageUrl(fetchedAlbumData!), settings.albumArtSize);
+                    const albumArtURL = await resizeImage(getFullResImageUrl(fetchedAlbumData!), settings.albumArtSize, settings.albumArtQuality);
                     const albumArt = albumArtURL ? (await axios.get(albumArtURL, { responseType: 'arraybuffer' })).data : false;
                     for (const [index, url] of albumUrls.entries()) {
                         if (url) {

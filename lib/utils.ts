@@ -1,3 +1,4 @@
+import axios from "axios";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -44,25 +45,42 @@ export function getTailwindBreakpoint(width: any) {
     }
 }
 
-export async function resizeImage(imageURL: string, quality: number): Promise<string | null> {
+export async function resizeImage(imageURL: string, maxSize: number, quality: number = 0.92): Promise<string | null> {
     return new Promise((resolve) => {
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
         const imgToResize = new Image();
         imgToResize.crossOrigin = "anonymous";
         imgToResize.src = imageURL;
+
         imgToResize.onerror = () => resolve(null);
+
         imgToResize.onload = () => {
-            canvas.width = 3000;
-            canvas.height = 3000;
-            context!.drawImage(
-                imgToResize,
-                0,
-                0,
-                quality,
-                quality
-            );
-            resolve(canvas.toDataURL("image/jpeg"));
-        }
-    })
+            const { width, height } = imgToResize;
+
+            if (width <= maxSize && height <= maxSize) {
+                resolve(imageURL);
+                return;
+            }
+
+            let targetWidth = width;
+            let targetHeight = height;
+
+            if (width > height) {
+                targetWidth = maxSize;
+                targetHeight = (height / width) * maxSize;
+            } else {
+                targetHeight = maxSize;
+                targetWidth = (width / height) * maxSize;
+            }
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            context!.drawImage(imgToResize, 0, 0, targetWidth, targetHeight);
+
+            const dataUrl = canvas.toDataURL("image/jpeg", quality);
+            resolve(dataUrl);
+        };
+    });
 }

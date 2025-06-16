@@ -9,7 +9,8 @@ export type SettingsProps = {
     applyMetadata: boolean,
     fixMD5: boolean,
     explicitContent: boolean,
-    albumArtSize: number
+    albumArtSize: number,
+    albumArtQuality: number
 }
 
 const isValidSettings = (obj: any): obj is SettingsProps => {
@@ -17,12 +18,14 @@ const isValidSettings = (obj: any): obj is SettingsProps => {
         typeof obj.particles === 'boolean' &&
         ['27', '7', '6', '5'].includes(obj.outputQuality) &&
         ['FLAC', 'WAV', 'ALAC', 'MP3', 'AAC', 'OPUS'].includes(obj.outputCodec) &&
-        (typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 320) || obj.bitrate === undefined &&
+        ((typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 320) || obj.bitrate === undefined) &&
         typeof obj.applyMetadata === 'boolean' &&
         typeof obj.explicitContent === 'boolean' && 
         typeof obj.fixMD5 === 'boolean' &&
         typeof obj.albumArtSize === 'number' && 
-        obj.albumArtSize >= 100 && obj.albumArtSize <= 3600
+        obj.albumArtSize >= 100 && obj.albumArtSize <= 3600 &&
+        typeof obj.albumArtQuality === 'number' && 
+        obj.albumArtQuality >= 0.1 && obj.albumArtQuality <= 1
     );
 };
 
@@ -40,7 +43,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         applyMetadata: true,
         fixMD5: false,
         explicitContent: true,
-        albumArtSize: 3600
+        albumArtSize: 3600,
+        albumArtQuality: 1
     });
 
     useEffect(() => {

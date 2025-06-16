@@ -60,7 +60,8 @@ const SearchView = () => {
                         const newResults = { ...results!, [searchField]: { ...results![searchField], items: [...results![searchField].items, ...response.data.data[searchField].items] } }
                         setLoading(false);
                         if (query === response.data.data.query) setResults(newResults);
-                }})
+                    }
+                })
         } else {
             axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`)
                 .then((response) => {
@@ -138,14 +139,33 @@ const SearchView = () => {
 
     const [numRows, setNumRows] = useState(0);
 
+
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const [logoSrc, setLogoSrc] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (logoSrc) URL.revokeObjectURL(logoSrc);
+        if (mounted) {
+            (async () => {
+                const logoSrc = await axios.get(resolvedTheme === "light" ? "/logo/qobuz-web-light.png" : "/logo/qobuz-web-dark.png", { responseType: "blob" })
+                setLogoSrc(URL.createObjectURL(logoSrc.data));
+            })();
+        }
+    }, [mounted, resolvedTheme]);
+
     const logoAnimationControls = useAnimation();
     useEffect(() => {
-        logoAnimationControls.start({
-          opacity: 1,
-          y: 0,
-          transition: { duration: 0.5, type: "spring" },
-        });
-      }, [logoAnimationControls]);
+        if (mounted && logoSrc) setTimeout(() => logoAnimationControls.start({
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.5, type: "spring" },
+        }), 100);
+    }, [logoAnimationControls, mounted, logoSrc]);
 
     return (
         <>
@@ -156,7 +176,7 @@ const SearchView = () => {
                         logoAnimationControls.start({
                             scale: [1, 1.1, 1],
                             transition: { duration: 0.4, ease: "easeInOut" },
-                          });
+                        });
                         setQuery('');
                         setResults(null);
                         setSearchField('albums');
@@ -165,8 +185,9 @@ const SearchView = () => {
                     animate={logoAnimationControls}
                     transition={{ duration: 0.5 }}
                 >
-                    {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === "qobuz-dl" ? (
-                        <img src={resolvedTheme === "light" ? '/logo/qobuz-web-light.png' : '/logo/qobuz-web-dark.png'} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='w-auto h-[100px] mx-auto' />
+                    {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === "qobuz-dl" ? (<>
+                        {mounted && logoSrc ? <img src={logoSrc} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='w-auto h-[100px] mx-auto z-[5]' /> : <div className='min-h-[100px] min-w-[10px]' />}
+                    </>
                     ) : (
                         <>
                             <h1 className="text-4xl font-bold text-center">{process.env.NEXT_PUBLIC_APPLICATION_NAME}</h1>
@@ -186,7 +207,7 @@ const SearchView = () => {
                                     setLoading(false);
                                     if (searchField !== searchFieldInput) setSearchField(searchFieldInput as QobuzSearchFilters);
 
-                                    let newResults = {...response.data.data };
+                                    let newResults = { ...response.data.data };
                                     filterData.map((filter) => {
                                         if (!newResults[filter.value]) newResults = { ...newResults, [filter.value]: { total: undefined, offset: undefined, limit: undefined, items: [] } }
                                     })

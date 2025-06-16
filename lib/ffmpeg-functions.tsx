@@ -85,12 +85,12 @@ export async function applyMetadata(trackBuffer: ArrayBuffer, resultData: QobuzT
     await ffmpeg.FS("writeFile", "metadata.txt", encoder.encode(metadata));
     if (!(albumArt === false)) {
         if (!albumArt) {
-            const albumArtURL = await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize);
+            const albumArtURL = await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize, settings.albumArtQuality);
             if (albumArtURL) {
-                albumArt = (await axios.get(await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize) as string, { responseType: 'arraybuffer' })).data;
+                albumArt = (await axios.get(albumArtURL, { responseType: 'arraybuffer' })).data;
             } else albumArt = false
         }
-        if (albumArt) await ffmpeg.FS("writeFile", "albumArt.jpg", new Uint8Array(albumArt ? albumArt : (await axios.get(await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize) as string, { responseType: 'arraybuffer' })).data))
+        if (albumArt) await ffmpeg.FS("writeFile", "albumArt.jpg", new Uint8Array(albumArt ? albumArt : (await axios.get(await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize, settings.albumArtQuality) as string, { responseType: 'arraybuffer' })).data))
     };
 
     await ffmpeg.run(
