@@ -1,20 +1,20 @@
-"use client"
-import React, { useState } from 'react'
-import { ChevronUp, ChevronDown, List as QueueIcon, LucideIcon, X, DotIcon } from 'lucide-react'
-import { motion } from "motion/react"
-import { AnimatePresence } from 'motion/react'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card'
-import { Progress } from '../ui/progress'
-import QueueDialog from './queue-dialog'
-import { useStatusBar } from '@/lib/status-bar/context'
+"use client";
+import QueueDialog from './queue-dialog';
+import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { ChevronDown, ChevronUp, DotIcon, List as QueueIcon, LucideIcon, X } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Progress } from '../ui/progress';
+import { useStatusBar } from '@/lib/status-bar/context';
 
 export type QueueProps = {
     title: string,
     icon?: LucideIcon | null,
     UUID: string,
-    remove?: () => void
-}
+    remove?: () => void;
+};
 
 export type StatusBarProps = {
     open: boolean,
@@ -22,10 +22,10 @@ export type StatusBarProps = {
     title: string,
     description: string,
     progress: number,
-    processing: boolean
+    processing: boolean;
     queue?: QueueProps[],
     onCancel?: () => void,
-}
+};
 
 const StatusBar = () => {
     const { statusBar, setStatusBar } = useStatusBar();
@@ -43,7 +43,7 @@ const StatusBar = () => {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ type: "spring" }}
                             exit={{ y: 100, opacity: 0 }}
-                       > 
+                        >
                             <Card>
                                 <CardHeader className='flex items-center flex-row justify-between transition-[height] pt-4 overflow-hidden pb-2'>
                                     <Button
@@ -129,7 +129,7 @@ const StatusBar = () => {
                 queueItems={statusBar.queue || []}
             />
         </>
-    )
-}
+    );
+};
 
-export default StatusBar
+export default StatusBar;

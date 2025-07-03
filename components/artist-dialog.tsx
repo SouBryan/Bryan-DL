@@ -1,27 +1,27 @@
-import React, { useEffect, useState } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog'
-import { parseArtistAlbumData, parseArtistData, QobuzArtist, QobuzArtistResults } from '@/lib/qobuz-dl'
-import { Skeleton } from './ui/skeleton'
-import { Disc3Icon, DiscAlbumIcon, DownloadIcon, LucideIcon, RadioTowerIcon, UsersIcon } from 'lucide-react'
-import { Button } from './ui/button'
-import { ScrollArea, ScrollBar } from './ui/scroll-area'
-import ReleaseCard from './release-card'
-import { useTheme } from 'next-themes'
-import axios from 'axios'
-import { useInView } from 'react-intersection-observer'
-import { motion } from 'motion/react'
-import { downloadArtistDiscography } from '@/lib/download-job'
-import { useStatusBar } from '@/lib/status-bar/context'
-import { useToast } from '@/hooks/use-toast'
-import { useSettings } from '@/lib/settings-provider'
-import { useFFmpeg } from '@/lib/ffmpeg-provider'
-import Image from 'next/image'
+import axios from 'axios';
+import Image from 'next/image';
+import React, { useEffect, useState } from 'react';
+import ReleaseCard from './release-card';
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
+import { Disc3Icon, DiscAlbumIcon, DownloadIcon, LucideIcon, RadioTowerIcon, UsersIcon } from 'lucide-react';
+import { downloadArtistDiscography } from '@/lib/download-job';
+import { motion } from 'motion/react';
+import { parseArtistAlbumData, parseArtistData, QobuzArtist, QobuzArtistResults } from '@/lib/qobuz-dl';
+import { ScrollArea, ScrollBar } from './ui/scroll-area';
+import { Skeleton } from './ui/skeleton';
+import { useFFmpeg } from '@/lib/ffmpeg-provider';
+import { useInView } from 'react-intersection-observer';
+import { useSettings } from '@/lib/settings-provider';
+import { useStatusBar } from '@/lib/status-bar/context';
+import { useTheme } from 'next-themes';
+import { useToast } from '@/hooks/use-toast';
 
 export type CategoryType = {
     label: string,
     value: "album" | "epSingle" | "live" | "compilation",
-    icon: LucideIcon
-}
+    icon: LucideIcon;
+};
 
 export const artistReleaseCategories: CategoryType[] = [
     {
@@ -44,17 +44,22 @@ export const artistReleaseCategories: CategoryType[] = [
         value: 'compilation',
         icon: DiscAlbumIcon
     }
-]
+];
 
-const ArtistDialog = ({ open, setOpen, artist }: { open: boolean, setOpen: (open: boolean) => void, artist: QobuzArtist }) => {
+const ArtistDialog = ({ open, setOpen, artist }: { open: boolean, setOpen: (open: boolean) => void, artist: QobuzArtist; }) => {
     const [artistResults, setArtistResults] = useState<QobuzArtistResults | null>(null);
     const [, setSearching] = useState(false);
 
     const getArtistData = async () => {
         if (artistResults) return;
-        const response = await axios.get(`/api/get-artist`, { params: { artist_id: artist.id } });
-        setArtistResults(parseArtistData(response.data.data));
-    }
+        try {
+            const response = await axios.get(`/api/get-artist`, { params: { artist_id: artist.id } });
+            setArtistResults(parseArtistData(response.data.data));
+        }
+        catch {
+            toast({ title: 'Error', description: "Could not fetch artist data, check token" });
+        }
+    };
 
     const fetchMore = async (searchField: "album" | "epSingle" | "live" | "compilation", artistResults: QobuzArtistResults) => {
         setSearching(true);
@@ -62,11 +67,11 @@ const ArtistDialog = ({ open, setOpen, artist }: { open: boolean, setOpen: (open
         const newReleases = [...artistResults!.artist.releases[searchField].items, ...response.data.data.items.map((release: any) => parseArtistAlbumData(release))];
         setArtistResults({ ...artistResults!, artist: { ...artistResults!.artist, releases: { ...artistResults!.artist.releases, [searchField]: { ...artistResults!.artist.releases[searchField], items: newReleases, has_more: response.data.data.has_more } } } });
         setSearching(false);
-    }
+    };
 
     useEffect(() => {
         if (open) getArtistData();
-    }, [open])
+    }, [open]);
 
     const { setStatusBar } = useStatusBar();
     const { toast } = useToast();
@@ -78,7 +83,7 @@ const ArtistDialog = ({ open, setOpen, artist }: { open: boolean, setOpen: (open
                 <div className="flex gap-3 overflow-hidden">
                     <div className="relative shrink-0 aspect-square min-w-[100px] min-h-[100px] rounded-sm overflow-hidden">
                         {(artist.image?.small || artistResults?.artist.images.portrait) && <Skeleton className='absolute aspect-square w-full h-full' />}
-                        {(artist.image?.small || artistResults?.artist.images.portrait) ? <Image fill src={artist.image?.small || "https://static.qobuz.com/images/artists/covers/medium/" + artistResults?.artist.images.portrait.hash + "." + artistResults?.artist.images.portrait.format} alt={artist.name} className='text-[0px] absolute aspect-square w-full h-full object-cover' /> : <div className='w-full h-full bg-secondary flex items-center justify-center p-6'><UsersIcon className='w-full h-full opacity-20'/></div>}
+                        {(artist.image?.small || artistResults?.artist.images.portrait) ? <Image fill src={artist.image?.small || "https://static.qobuz.com/images/artists/covers/medium/" + artistResults?.artist.images.portrait.hash + "." + artistResults?.artist.images.portrait.format} alt={artist.name} className='text-[0px] absolute aspect-square w-full h-full object-cover' /> : <div className='w-full h-full bg-secondary flex items-center justify-center p-6'><UsersIcon className='w-full h-full opacity-20' /></div>}
                     </div>
 
                     <div className="flex w-full flex-col justify-between overflow-hidden">
@@ -96,19 +101,19 @@ const ArtistDialog = ({ open, setOpen, artist }: { open: boolean, setOpen: (open
                     </div>
                 </div>
                 <ScrollArea>
-                    {artistResults && <motion.div initial={{ maxHeight: "0vh", opacity: 0 }} animate={{ maxHeight: "70vh", opacity: 1 }} transition={{ duration: 0.3 }}>                        
+                    {artistResults && <motion.div initial={{ maxHeight: "0vh", opacity: 0 }} animate={{ maxHeight: "70vh", opacity: 1 }} transition={{ duration: 0.3 }}>
                         <div className="flex gap-4 flex-col">
                             {artistReleaseCategories.map((category) => <ArtistReleaseSection artist={artist} artistResults={artistResults} setArtistResults={setArtistResults} category={category} key={category.value} />)}
                         </div>
                     </motion.div>}
-                    <ScrollBar orientation='vertical' className='z-50'/>
+                    <ScrollBar orientation='vertical' className='z-50' />
                 </ScrollArea>
             </DialogContent>
         </Dialog>
-    )
-}
+    );
+};
 
-const ArtistReleaseSection = ({ artist, artistResults, setArtistResults, category }: { artist: QobuzArtist, artistResults: QobuzArtistResults | null, setArtistResults: React.Dispatch<React.SetStateAction<QobuzArtistResults | null>>, category: CategoryType }) => {
+const ArtistReleaseSection = ({ artist, artistResults, setArtistResults, category }: { artist: QobuzArtist, artistResults: QobuzArtistResults | null, setArtistResults: React.Dispatch<React.SetStateAction<QobuzArtistResults | null>>, category: CategoryType; }) => {
     const { resolvedTheme } = useTheme();
     const [searching, setSearching] = useState(false);
     const [scrollTrigger, isInView] = useInView();
@@ -119,7 +124,7 @@ const ArtistReleaseSection = ({ artist, artistResults, setArtistResults, categor
         const newReleases = [...artistResults!.artist.releases[searchField].items, ...response.data.data.items.map((release: any) => parseArtistAlbumData(release))];
         setArtistResults({ ...artistResults!, artist: { ...artistResults!.artist, releases: { ...artistResults!.artist.releases, [searchField]: { ...artistResults!.artist.releases[searchField], items: newReleases, has_more: response.data.data.has_more } } } });
         setSearching(false);
-    }
+    };
 
     useEffect(() => {
         if (isInView && !searching) fetchMore(category.value, artistResults!);
@@ -131,7 +136,7 @@ const ArtistReleaseSection = ({ artist, artistResults, setArtistResults, categor
     const { ffmpegState } = useFFmpeg();
     return (
         <>
-            {artistResults && artistResults.artist.releases[category.value] && artistResults.artist.releases[category.value]!.items.length > 0 && 
+            {artistResults && artistResults.artist.releases[category.value] && artistResults.artist.releases[category.value]!.items.length > 0 &&
                 <div className='flex flex-col'>
                     <div className="flex gap-2 items-center mb-2">
                         <category.icon />
@@ -167,7 +172,7 @@ const ArtistReleaseSection = ({ artist, artistResults, setArtistResults, categor
                 </div>
             }
         </>
-    )
-}
+    );
+};
 
-export default ArtistDialog
+export default ArtistDialog;

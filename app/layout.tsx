@@ -1,23 +1,24 @@
-import type { Metadata } from "next";
-import { Inter } from 'next/font/google'
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider"
-import ParticlesComponent from "@/components/particles";
-import { StatusBarProvider } from "@/lib/status-bar/context";
-import StatusBarContainer from "@/components/status-bar/container";
-import { FFmpegProvider } from "@/lib/ffmpeg-provider";
-import SettingsForm from "@/components/ui/settings-form";
-import { SettingsProvider } from "@/lib/settings-provider";
-import { Toaster } from "@/components/ui/toaster"
-import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { FaDiscord } from "@react-icons/all-files/fa/FaDiscord";
-import { FaGithub } from "@react-icons/all-files/fa/FaGithub";
+import ChangelogDialog from '@/components/ui/changelog-dialog';
+import ParticlesComponent from '@/components/particles';
+import SettingsForm from '@/components/ui/settings-form';
+import StatusBarContainer from '@/components/status-bar/container';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FaDiscord } from '@react-icons/all-files/fa/FaDiscord';
+import { FaGithub } from '@react-icons/all-files/fa/FaGithub';
+import { FFmpegProvider } from '@/lib/ffmpeg-provider';
+import { Inter } from 'next/font/google';
+import type { Metadata } from 'next';
+import { SettingsProvider } from '@/lib/settings-provider';
+import { StatusBarProvider } from '@/lib/status-bar/context';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
+import './globals.css';
 
 const inter = Inter({
     subsets: ['latin'],
     display: 'swap',
-})
+});
 
 export const metadata: Metadata = {
     metadataBase: new URL('https://www.qobuz-dl.com/'), // Site URL
@@ -42,11 +43,12 @@ export const metadata: Metadata = {
         "mp3",
         "aac",
         "opus",
-        "wav"
+        "wav",
+        "qobuz download"
     ]
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${inter.className} antialiased`} suppressHydrationWarning>
@@ -60,7 +62,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                             >
                                 <ParticlesComponent className="z-[-1] h-full w-full fixed" />
                                 <div className="fixed justify-between items-center flex w-full max-w-screen p-4 z-[10]">
-                                    <SettingsForm />
+                                    <div className="flex flex-col gap-2">
+                                        <SettingsForm />
+                                        <ChangelogDialog />
+                                    </div>
                                     <div className="flex gap-2 items-center">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>

@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { useInView } from "react-intersection-observer";
-import { useTheme } from 'next-themes';
-import SearchBar from '@/components/search-bar';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import ReleaseCard from '@/components/release-card';
+import SearchBar from '@/components/search-bar';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
 import { Disc3Icon, DiscAlbumIcon, UsersIcon } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { FilterDataType, filterExplicit, QobuzAlbum, QobuzArtist, QobuzSearchFilters, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
 import { getTailwindBreakpoint } from '@/lib/utils';
-import { useSettings } from '@/lib/settings-provider';
 import { motion, useAnimation } from 'motion/react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useInView } from 'react-intersection-observer';
+import { useSettings } from '@/lib/settings-provider';
+import { useTheme } from 'next-themes';
 
 export const filterData: FilterDataType = [
     {
@@ -31,7 +31,7 @@ export const filterData: FilterDataType = [
         value: 'artists',
         icon: UsersIcon
     }
-]
+];
 
 const SearchView = () => {
     const { resolvedTheme } = useTheme();
@@ -42,6 +42,16 @@ const SearchView = () => {
     const [searching, setSearching] = useState<boolean>(false);
     const [searchError, setSearchError] = useState<string>('');
     const { settings } = useSettings();
+
+    useEffect(() => {
+        console.log(`%c${process.env.NEXT_PUBLIC_APPLICATION_NAME}`, 'font-size: 25px; font-weight: bold;');
+        if (process.env.NEXT_PUBLIC_DISCORD) {
+            console.log(`Discord: ${process.env.NEXT_PUBLIC_DISCORD}`);
+        }
+        if (process.env.NEXT_PUBLIC_GITHUB) {
+            console.log(`GitHub: ${process.env.NEXT_PUBLIC_GITHUB}`);
+        }
+    }, []);
 
     const FilterIcon = filterData.find((fd) => fd.value == searchField)?.icon || Disc3Icon;
 
@@ -57,27 +67,27 @@ const SearchView = () => {
                     if (response.status === 200) {
                         response.data.data[searchField].items.length = Math.max(response.data.data[searchField].items.length, Math.min(response.data.data[searchField].limit, response.data.data[searchField].total - response.data.data[searchField].offset));
                         response.data.data[searchField].items.fill(null, response.data.data[searchField].items.length);
-                        const newResults = { ...results!, [searchField]: { ...results![searchField], items: [...results![searchField].items, ...response.data.data[searchField].items] } }
+                        const newResults = { ...results!, [searchField]: { ...results![searchField], items: [...results![searchField].items, ...response.data.data[searchField].items] } };
                         setLoading(false);
                         if (query === response.data.data.query) setResults(newResults);
                     }
-                })
+                });
         } else {
             axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`)
                 .then((response) => {
                     if (response.status === 200) {
-                        let newResults = { ...results!, [searchField]: { ...results!.albums, items: [...results!.albums.items, ...response.data.data.albums.items] } }
+                        let newResults = { ...results!, [searchField]: { ...results!.albums, items: [...results!.albums.items, ...response.data.data.albums.items] } };
                         filterData.map((filter) => {
                             response.data.data[filter.value].items.length = Math.max(response.data.data[filter.value].items.length, Math.min(response.data.data[filter.value].limit, response.data.data[filter.value].total - response.data.data[filter.value].offset));
                             response.data.data[filter.value].items.fill(null, response.data.data[filter.value].items.length);
-                            newResults = { ...newResults, [filter.value]: { ...results![filter.value as QobuzSearchFilters], items: [...results![filter.value as QobuzSearchFilters].items, ...response.data.data[filter.value].items] } }
-                        })
+                            newResults = { ...newResults, [filter.value]: { ...results![filter.value as QobuzSearchFilters], items: [...results![filter.value as QobuzSearchFilters].items, ...response.data.data[filter.value].items] } };
+                        });
                         setLoading(false);
                         if (query === response.data.data.query) setResults(newResults);
                     }
                 });
         }
-    }
+    };
 
     useEffect(() => {
         if (searching) return;
@@ -135,7 +145,7 @@ const SearchView = () => {
         "xl": 7,
         "2xl": 7,
         "base": 2
-    }
+    };
 
     const [numRows, setNumRows] = useState(0);
 
@@ -152,7 +162,7 @@ const SearchView = () => {
         if (logoSrc) URL.revokeObjectURL(logoSrc);
         if (mounted) {
             (async () => {
-                const logoSrc = await axios.get(resolvedTheme === "light" ? "/logo/qobuz-web-light.png" : "/logo/qobuz-web-dark.png", { responseType: "blob" })
+                const logoSrc = await axios.get(resolvedTheme === "light" ? "/logo/qobuz-web-light.png" : "/logo/qobuz-web-dark.png", { responseType: "blob" });
                 setLogoSrc(URL.createObjectURL(logoSrc.data));
             })();
         }
@@ -209,8 +219,8 @@ const SearchView = () => {
 
                                     let newResults = { ...response.data.data };
                                     filterData.map((filter) => {
-                                        if (!newResults[filter.value]) newResults = { ...newResults, [filter.value]: { total: undefined, offset: undefined, limit: undefined, items: [] } }
-                                    })
+                                        if (!newResults[filter.value]) newResults = { ...newResults, [filter.value]: { total: undefined, offset: undefined, limit: undefined, items: [] } };
+                                    });
                                     setResults(newResults);
                                 }
                             } catch (error: any) {
@@ -277,7 +287,7 @@ const SearchView = () => {
                 </div>}
             </div>
         </>
-    )
-}
+    );
+};
 
-export default SearchView
+export default SearchView;
