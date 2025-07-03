@@ -7,7 +7,6 @@ import { ClockIcon, FileClockIcon, XIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 import { Input } from './input';
 import { ScrollArea } from './scroll-area';
-import { toast } from '@/hooks/use-toast';
 
 type ChangeLog = {
     title: string,
@@ -27,7 +26,9 @@ const ChangelogDialog = () => {
             const data = await response.data;
             setLogs(data);
         }
-        catch { }
+        catch {
+            setLogs([]);
+        }
     };
 
     useEffect(() => {
@@ -66,22 +67,24 @@ const ChangelogDialog = () => {
                 </div>
                 <div className="-mt-4">
                     <ScrollArea className="space-y-6 max-h-[450px]">
-                        {filtered.length > 0 ? filtered.map((log, index) => (
-                            <div key={index} className='space-y-3'>
-                                <div className="space-y-1">
-                                    <h3 className="text-md font-semibold">{log?.title ?? 'N/A'}</h3>
-                                    <div title={String(log?.date)} className="flex items-center gap-1.5">
-                                        <ClockIcon className='text-sm text-muted-foreground size-3.5' />
-                                        <span className="text-sm text-muted-foreground">{log?.date ? new Date(log?.date).toDateString() : 'N/A'}</span>
+                        {filtered.length > 0 ? filtered.map((log, index) => {
+                            return (
+                                <div key={index} className='space-y-3'>
+                                    <div className="space-y-1">
+                                        <h3 className="text-md font-semibold">{log?.title ?? 'N/A'}</h3>
+                                        <div title={String(log?.date)} className="flex items-center gap-1.5">
+                                            <ClockIcon className='text-sm text-muted-foreground size-3.5' />
+                                            <span className="text-sm text-muted-foreground">{log?.date ? new Date(log?.date).toDateString() : 'N/A'}</span>
+                                        </div>
                                     </div>
+                                    <ul className="list-disc pl-4 text-sm space-y-1">
+                                        {log?.changes?.map((change, index) => (
+                                            <li key={index}>{change ?? 'N/A'}</li>
+                                        ))}
+                                    </ul>
                                 </div>
-                                <ul className="list-disc pl-4 text-sm space-y-1">
-                                    {log?.changes?.map((change, index) => (
-                                        <li key={index}>{change ?? 'N/A'}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )) : (
+                            );
+                        }) : (
                             <div className='space-y-3'>
                                 <div className="space-y-1">
                                     <h3 className="text-sm font-semibold">No changelog(s) found</h3>

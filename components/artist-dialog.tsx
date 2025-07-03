@@ -57,7 +57,7 @@ const ArtistDialog = ({ open, setOpen, artist }: { open: boolean, setOpen: (open
             setArtistResults(parseArtistData(response.data.data));
         }
         catch {
-            toast({ title: 'Error', description: "Could not fetch artist data, check token" });
+            toast({ title: 'Error', description: "Could not fetch artist data, check your token" });
         }
     };
 
