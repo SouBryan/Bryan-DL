@@ -53,18 +53,18 @@ const ChangelogDialog = () => {
                 </DialogHeader>
                 <div className="-mt-4">
                     <ScrollArea className="space-y-6 max-h-[450px]">
-                        {logs.map((log, index) => (
+                        {logs && logs.map((log, index) => (
                             <div key={index} className='space-y-3'>
                                 <div className="space-y-1">
-                                    <h3 className="text-md font-semibold">{log.title}</h3>
+                                    <h3 className="text-md font-semibold">{log?.title ?? 'N/A'}</h3>
                                     <div className="flex items-center gap-1.5">
                                         <ClockIcon className='text-sm text-muted-foreground size-3.5' />
-                                        <span className="text-sm text-muted-foreground">{new Date(log.date).toDateString()}</span>
+                                        <span className="text-sm text-muted-foreground">{log?.date ? new Date(log?.date).toDateString() : 'N/A'}</span>
                                     </div>
                                 </div>
                                 <ul className="list-disc pl-4 text-sm space-y-1">
-                                    {log.changes.map((change, index) => (
-                                        <li key={index}>{change}</li>
+                                    {log?.changes?.map((change, index) => (
+                                        <li key={index}>{change ?? 'N/A'}</li>
                                     ))}
                                 </ul>
                             </div>
