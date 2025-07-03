@@ -3,8 +3,9 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Button } from './button';
-import { ClockIcon, FileClockIcon } from 'lucide-react';
+import { ClockIcon, FileClockIcon, XIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
+import { Input } from './input';
 import { ScrollArea } from './scroll-area';
 import { toast } from '@/hooks/use-toast';
 
@@ -18,6 +19,7 @@ const ChangelogDialog = () => {
     const [open, setOpen] = useState<boolean>(false);
 
     const [logs, setLogs] = useState<ChangeLog[]>([]);
+    const [query, setQuery] = useState<string>('');
 
     const fetchChangelog = async () => {
         try {
@@ -25,16 +27,14 @@ const ChangelogDialog = () => {
             const data = await response.data;
             setLogs(data);
         }
-        catch {
-            toast({ title: 'Error', description: "Could not fetch the changelog!" });
-        }
+        catch { }
     };
 
     useEffect(() => {
-        if (open) {
-            fetchChangelog();
-        }
+        fetchChangelog();
     }, [open]);
+
+    const filtered = logs.filter((log) => log.title.toLowerCase().includes(query.toLowerCase()));
 
     return (
         <Dialog
@@ -48,16 +48,29 @@ const ChangelogDialog = () => {
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Changelog</DialogTitle>
+                    <DialogTitle>Changelog Reports</DialogTitle>
                     <DialogDescription>View the latest updates and features</DialogDescription>
                 </DialogHeader>
+                <div className="relative">
+                    <Input
+                        placeholder="Search..."
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
+                    {query && (
+                        <XIcon
+                            className="absolute right-3 size-4 text-muted-foreground hover:opacity-100 transition-colors opacity-75 top-1/2 -translate-y-1/2 cursor-pointer"
+                            onClick={() => setQuery('')}
+                        />
+                    )}
+                </div>
                 <div className="-mt-4">
                     <ScrollArea className="space-y-6 max-h-[450px]">
-                        {logs && logs.map((log, index) => (
+                        {filtered.length > 0 ? filtered.map((log, index) => (
                             <div key={index} className='space-y-3'>
                                 <div className="space-y-1">
                                     <h3 className="text-md font-semibold">{log?.title ?? 'N/A'}</h3>
-                                    <div className="flex items-center gap-1.5">
+                                    <div title={String(log?.date)} className="flex items-center gap-1.5">
                                         <ClockIcon className='text-sm text-muted-foreground size-3.5' />
                                         <span className="text-sm text-muted-foreground">{log?.date ? new Date(log?.date).toDateString() : 'N/A'}</span>
                                     </div>
@@ -68,7 +81,13 @@ const ChangelogDialog = () => {
                                     ))}
                                 </ul>
                             </div>
-                        ))}
+                        )) : (
+                            <div className='space-y-3'>
+                                <div className="space-y-1">
+                                    <h3 className="text-sm font-semibold">No changelog(s) found</h3>
+                                </div>
+                            </div>
+                        )}
                     </ScrollArea>
                 </div>
             </DialogContent>

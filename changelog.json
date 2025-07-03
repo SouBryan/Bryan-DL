@@ -3,9 +3,9 @@
         "title": "Change Log & PWA Support",
         "date": "03-07-2025",
         "changes": [
-            "Change log added and now is used to handle updates and fixes",
-            "Added PWA support for easy access of the site on a mobile device for example",
-            "Changed the border radius style to slightly more rounded."
+            "Changelog added and now is used to handle updates and fixes along with Discord notifications",
+            "Added PWA support for easy access of the site on a mobile device for example with the abilty to add to the homescreen",
+            "Changed the border radius style to slightly more rounded, :)"
         ]
     }
 ]
