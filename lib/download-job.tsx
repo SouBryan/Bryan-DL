@@ -5,7 +5,7 @@ import { artistReleaseCategories } from '@/components/artist-dialog';
 import { cleanFileName, formatBytes, formatCustomTitle, resizeImage } from './utils';
 import { createJob } from './status-bar/jobs';
 import { Disc3Icon, DiscAlbumIcon } from 'lucide-react';
-import { FetchedQobuzAlbum, formatArtists, formatDuration, formatTitle, getFullResImageUrl, QobuzAlbum, QobuzArtistResults, QobuzTrack } from './qobuz-dl';
+import { FetchedQobuzAlbum, formatTitle, getFullResImageUrl, QobuzAlbum, QobuzArtistResults, QobuzTrack } from './qobuz-dl';
 import { SettingsProps } from './settings-provider';
 import { StatusBarProps } from '@/components/status-bar/status-bar';
 import { ToastAction } from '@/components/ui/toast';
