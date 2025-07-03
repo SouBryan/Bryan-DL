@@ -1,5 +1,5 @@
-"use client"
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+"use client";
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 export type SettingsProps = {
     particles: boolean,
@@ -10,8 +10,12 @@ export type SettingsProps = {
     fixMD5: boolean,
     explicitContent: boolean,
     albumArtSize: number,
-    albumArtQuality: number
-}
+    albumArtQuality: number,
+    zipName: string;
+    trackName: string;
+};
+
+export const nameVariables: string[] = ['artists', 'name', 'year', 'duration'];
 
 const isValidSettings = (obj: any): obj is SettingsProps => {
     return (
@@ -20,46 +24,53 @@ const isValidSettings = (obj: any): obj is SettingsProps => {
         ['FLAC', 'WAV', 'ALAC', 'MP3', 'AAC', 'OPUS'].includes(obj.outputCodec) &&
         ((typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 320) || obj.bitrate === undefined) &&
         typeof obj.applyMetadata === 'boolean' &&
-        typeof obj.explicitContent === 'boolean' && 
+        typeof obj.explicitContent === 'boolean' &&
         typeof obj.fixMD5 === 'boolean' &&
-        typeof obj.albumArtSize === 'number' && 
+        typeof obj.albumArtSize === 'number' &&
         obj.albumArtSize >= 100 && obj.albumArtSize <= 3600 &&
-        typeof obj.albumArtQuality === 'number' && 
-        obj.albumArtQuality >= 0.1 && obj.albumArtQuality <= 1
+        typeof obj.albumArtQuality === 'number' &&
+        obj.albumArtQuality >= 0.1 && obj.albumArtQuality <= 1,
+        typeof obj.zipName === 'string' &&
+        typeof obj.trackName === 'string'
     );
 };
 
 const SettingsContext = createContext<{
     settings: SettingsProps;
     setSettings: React.Dispatch<React.SetStateAction<SettingsProps>>;
+    resetSettings: () => void;
 } | undefined>(undefined);
 
-export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [settings, setSettings] = useState<SettingsProps>( {
-        particles: true,
-        outputQuality: "27",
-        outputCodec: "FLAC",
-        bitrate: 320,
-        applyMetadata: true,
-        fixMD5: false,
-        explicitContent: true,
-        albumArtSize: 3600,
-        albumArtQuality: 1
-    });
+export const defaultSettings: SettingsProps = {
+    particles: true,
+    outputQuality: "27",
+    outputCodec: "FLAC",
+    bitrate: 320,
+    applyMetadata: true,
+    fixMD5: false,
+    explicitContent: true,
+    albumArtSize: 3600,
+    albumArtQuality: 1,
+    zipName: "{artists} - {name}",
+    trackName: "{artists} - {name}",
+};
+
+export const SettingsProvider: React.FC<{ children: ReactNode; }> = ({ children }) => {
+    const [settings, setSettings] = useState<SettingsProps>(defaultSettings);
 
     useEffect(() => {
         const savedSettings = localStorage.getItem('settings');
         if (savedSettings && isValidSettings(JSON.parse(savedSettings))) {
             setSettings(JSON.parse(savedSettings));
         }
-    }, [])
+    }, []);
 
     useEffect(() => {
         localStorage.setItem("settings", JSON.stringify(settings));
     }, [settings]);
 
     return (
-        <SettingsContext.Provider value={{ settings, setSettings }}>
+        <SettingsContext.Provider value={{ settings, setSettings, resetSettings: () => setSettings(defaultSettings) }}>
             {children}
         </SettingsContext.Provider>
     );
@@ -71,6 +82,6 @@ export const useSettings = () => {
     if (!context) {
         throw new Error('useSettings must be used within a SettingsProvider');
     }
-    
+
     return context;
 };

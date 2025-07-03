@@ -1,28 +1,16 @@
-"use client"
-import React, { useEffect, useRef, useState } from 'react'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+"use client";
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from './button';
-import { ChevronDownIcon, DotIcon, SettingsIcon } from 'lucide-react';
-import { SettingsProps, useSettings } from '@/lib/settings-provider';
-import { Checkbox } from "@/components/ui/checkbox"
-
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-} from "@/components/ui/sheet"
-import { ModeToggle } from '../mode-toggle';
-import { Separator } from './separator';
-import { Input } from './input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ChevronDownIcon, DotIcon, InfoIcon, SettingsIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from './input';
+import { ModeToggle } from '../mode-toggle';
+import { nameVariables, SettingsProps, useSettings } from '@/lib/settings-provider';
+import { Separator } from './separator';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Slider } from './slider';
 
 const losslessCodecs = ['FLAC', 'ALAC', 'WAV'];
@@ -31,10 +19,10 @@ const qualityMap = {
     "27": [24, 192],
     "7": [24, 96],
     "6": [16, 44.1]
-}
+};
 
 const SettingsForm = () => {
-    const { settings, setSettings } = useSettings();
+    const { settings, setSettings, resetSettings } = useSettings();
 
     const [open, setOpen] = useState(false);
 
@@ -48,11 +36,11 @@ const SettingsForm = () => {
             if (numberInput < 24) numberInput = 320;
             setSettings(prev => ({ ...prev, bitrate: numberInput || 320 }));
         }
-    }, [open])
+    }, [open]);
 
     return (
         <Sheet open={open} onOpenChange={setOpen} modal={true}>
-            <Button variant="outline" size="icon" onClick={() => { setOpen(true) }}>
+            <Button variant="outline" size="icon" onClick={() => { setOpen(true); }}>
                 <SettingsIcon />
             </Button>
             <SheetContent className="flex flex-col gap-4 overflow-hidden">
@@ -82,7 +70,7 @@ const SettingsForm = () => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
-                                <DropdownMenuRadioGroup value={settings.particles ? "particles" : "solid color"} onValueChange={(value: string) => { setSettings(prev => ({ ...prev, particles: value === "particles" })) }}>
+                                <DropdownMenuRadioGroup value={settings.particles ? "particles" : "solid color"} onValueChange={(value: string) => { setSettings(prev => ({ ...prev, particles: value === "particles" })); }}>
                                     <DropdownMenuRadioItem value="particles">Particles</DropdownMenuRadioItem>
                                     <DropdownMenuRadioItem value="solid color">Solid Color</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
@@ -98,6 +86,76 @@ const SettingsForm = () => {
                             </SheetDescription>
                         </div>
                         <div className="space-y-2">
+                            <div className="px-0.5 space-y-2">
+                                <p className='font-medium text-sm'>Zip File Naming</p>
+                                <div className="flex gap-2">
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                size='icon'
+                                                className='aspect-square'
+                                                variant='outline'
+                                            >
+                                                <InfoIcon />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Zip File Naming</DialogTitle>
+                                                <DialogDescription>The variables used in the zip file name</DialogDescription>
+                                            </DialogHeader>
+                                            <p className='text-xs text-muted-foreground'>An example is {'{artists} - {name}'}</p>
+                                            <div className='flex flex-col gap-2'>
+                                                {nameVariables.map((variable, index) => (
+                                                    <div key={index} className='flex text-sm items-center justify-between gap-2'>
+                                                        <p><span className='capitalize'>{variable}</span> <span className='text-muted-foreground'>{`{${variable}}`}</span></p>
+                                                        <p>{settings.zipName.includes(variable) ? "Currently used" : "Not used"}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                    <Input
+                                        value={settings.zipName}
+                                        onChange={(e) => setSettings(prev => ({ ...prev, zipName: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="px-0.5 space-y-2">
+                                <p className='font-medium text-sm'>Track File Naming</p>
+                                <div className="flex gap-2">
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                size='icon'
+                                                className='aspect-square'
+                                                variant='outline'
+                                            >
+                                                <InfoIcon />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Track File Naming</DialogTitle>
+                                                <DialogDescription>The variables used in the track file name</DialogDescription>
+                                            </DialogHeader>
+                                            <p className='text-xs text-muted-foreground'>An example is {'{artists} - {name}'}</p>
+                                            <div className='flex flex-col gap-2'>
+                                                {nameVariables.map((variable, index) => (
+                                                    <div key={index} className='flex text-sm items-center justify-between gap-2'>
+                                                        <p><span className='capitalize'>{variable}</span> <span className='text-muted-foreground'>{`{${variable}}`}</span></p>
+                                                        <p>{settings.trackName.includes(variable) ? "Currently used" : "Not used"}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                    <Input
+                                        value={settings.trackName}
+                                        onChange={(e) => setSettings(prev => ({ ...prev, trackName: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
                             <p className='font-medium text-sm'>Output Codec</p>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -222,11 +280,17 @@ const SettingsForm = () => {
                             <p>{Math.round(settings.albumArtQuality * 100)}%</p>
                         </div>
                     </SheetHeader>
+                    <Button
+                        variant='destructive'
+                        onClick={resetSettings}
+                    >
+                        Reset Settings
+                    </Button>
                 </div>
             </SheetContent>
         </Sheet>
-    )
-}
+    );
+};
 
 
 export const parseQualityHTML = (quality: string) => {
@@ -241,6 +305,6 @@ export const parseQualityHTML = (quality: string) => {
     } catch {
         return quality;
     }
-}
+};
 
-export default SettingsForm
+export default SettingsForm;
