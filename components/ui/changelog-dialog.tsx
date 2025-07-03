@@ -3,8 +3,9 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Button } from './button';
+import { ClockIcon, FileClockIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
-import { FileClockIcon } from 'lucide-react';
+import { ScrollArea } from './scroll-area';
 import { toast } from '@/hooks/use-toast';
 
 type ChangeLog = {
@@ -20,7 +21,7 @@ const ChangelogDialog = () => {
 
     const fetchChangelog = async () => {
         try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_GITHUB!.replace('github.com', 'raw.githubusercontent.com')}/changelog.json`);
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_GITHUB!.replace('github.com', 'raw.githubusercontent.com')}/refs/heads/main/changelog.json`);
             const data = await response.data;
             setLogs(data);
         }
@@ -41,7 +42,7 @@ const ChangelogDialog = () => {
             onOpenChange={setOpen}
         >
             <DialogTrigger asChild>
-                <Button variant="outline" size="icon" onClick={() => { setOpen(true); }}>
+                <Button title='Changelog' variant="outline" size="icon" onClick={() => { setOpen(true); }}>
                     <FileClockIcon />
                 </Button>
             </DialogTrigger>
@@ -50,18 +51,25 @@ const ChangelogDialog = () => {
                     <DialogTitle>Changelog</DialogTitle>
                     <DialogDescription>View the latest updates and features</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
-                    {logs.map((log, index) => (
-                        <div key={index}>
-                            <h3 className="text-lg font-semibold">{log.title}</h3>
-                            <span className="text-sm text-muted-foreground">{new Date(log.date ?? new Date()).toString()}</span>
-                            <ul className="list-disc pl-4">
-                                {log.changes.map((change, index) => (
-                                    <li key={index}>{change}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
+                <div className="-mt-4">
+                    <ScrollArea className="space-y-6 max-h-[450px]">
+                        {logs.map((log, index) => (
+                            <div key={index} className='space-y-3'>
+                                <div className="space-y-1">
+                                    <h3 className="text-md font-semibold">{log.title}</h3>
+                                    <div className="flex items-center gap-1.5">
+                                        <ClockIcon className='text-sm text-muted-foreground size-3.5' />
+                                        <span className="text-sm text-muted-foreground">{new Date(log.date).toDateString()}</span>
+                                    </div>
+                                </div>
+                                <ul className="list-disc pl-4 text-sm space-y-1">
+                                    {log.changes.map((change, index) => (
+                                        <li key={index}>{change}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </ScrollArea>
                 </div>
             </DialogContent>
         </Dialog>
