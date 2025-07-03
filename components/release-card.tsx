@@ -1,29 +1,24 @@
-import { formatArtists, formatTitle, getAlbum, formatDuration, QobuzAlbum, QobuzTrack, FetchedQobuzAlbum, getFullAlbumInfo, getType, QobuzArtist } from '@/lib/qobuz-dl'
-import { cn } from '@/lib/utils'
-import { AlignJustifyIcon, DotIcon, DownloadIcon, UsersIcon } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
-import { Button } from './ui/button'
-import { useStatusBar } from '@/lib/status-bar/context'
-import { useFFmpeg } from '@/lib/ffmpeg-provider'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import { Separator } from './ui/separator'
-import { ScrollArea } from './ui/scroll-area'
-import { motion, useAnimation } from 'motion/react'
-import { createDownloadJob } from '@/lib/download-job'
-import { useSettings } from '@/lib/settings-provider'
-import { Skeleton } from './ui/skeleton'
-import { useToast } from "@/hooks/use-toast"
-import Image from 'next/image'
-import DownloadAlbumButton from './download-album-button'
-import { filterData } from '@/app/search-view'
-import ArtistDialog from './artist-dialog'
+import ArtistDialog from './artist-dialog';
+import DownloadAlbumButton from './download-album-button';
+import Image from 'next/image';
+import React, { useEffect, useState } from 'react';
+import { AlignJustifyIcon, DotIcon, DownloadIcon, UsersIcon } from 'lucide-react';
+import { Button } from './ui/button';
+import { cn } from '@/lib/utils';
+import { createDownloadJob } from '@/lib/download-job';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { FetchedQobuzAlbum, formatArtists, formatDuration, formatTitle, getAlbum, getFullAlbumInfo, getType, QobuzAlbum, QobuzArtist, QobuzTrack } from '@/lib/qobuz-dl';
+import { filterData } from '@/app/search-view';
+import { motion, useAnimation } from 'motion/react';
+import { ScrollArea } from './ui/scroll-area';
+import { Separator } from './ui/separator';
+import { Skeleton } from './ui/skeleton';
+import { useFFmpeg } from '@/lib/ffmpeg-provider';
+import { useSettings } from '@/lib/settings-provider';
+import { useStatusBar } from '@/lib/status-bar/context';
+import { useToast } from '@/hooks/use-toast';
 
-const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result: QobuzAlbum | QobuzTrack | QobuzArtist, resolvedTheme: string, ref?: React.Ref<HTMLDivElement>, showArtistDialog?: boolean }) => {
+const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result: QobuzAlbum | QobuzTrack | QobuzArtist, resolvedTheme: string, ref?: React.Ref<HTMLDivElement>, showArtistDialog?: boolean; }) => {
     if (typeof showArtistDialog === 'undefined') showArtistDialog = true;
     const { ffmpegState } = useFFmpeg();
     const { setStatusBar } = useStatusBar();
@@ -44,7 +39,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
 
     useEffect(() => {
         if (imageLoaded) imageAnimationControls.start({ scale: 1 });
-    }, [imageLoaded])
+    }, [imageLoaded]);
 
     const [openArtistDialog, setOpenArtistDialog] = useState(false);
 
@@ -122,16 +117,16 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
                     {(album || result).image?.small ? <>
                         {getType(result) === "artists" ? <Image fill src={(album || result).image?.small} alt={formatTitle(result)} className={cn("object-cover group-hover:scale-105 transition-all w-full h-full text-[0px]", focusCard && "scale-105", imageLoaded && "opacity-100")}
                             sizes="(min-width: 1280px) calc((100vw - 96px) / 7), (min-width: 1024px) calc((100vw - 80px) / 6), (min-width: 768px) calc((100vw - 64px) / 5), (min-width: 640px) calc((100vw - 48px) / 3), calc((100vw - 32px) / 2)"
-                            onLoad={() => { setImageLoaded(true) }}
+                            onLoad={() => { setImageLoaded(true); }}
                         /> : <img crossOrigin="anonymous" src={(album || result).image?.small} alt={formatTitle(result)} className={cn("object-cover group-hover:scale-105 transition-all w-full h-full text-[0px]", focusCard && "scale-105", imageLoaded && "opacity-100")}
                             sizes="(min-width: 1280px) calc((100vw - 96px) / 7), (min-width: 1024px) calc((100vw - 80px) / 6), (min-width: 768px) calc((100vw - 64px) / 5), (min-width: 640px) calc((100vw - 48px) / 3), calc((100vw - 32px) / 2)"
-                            onLoad={() => { setImageLoaded(true) }}
+                            onLoad={() => { setImageLoaded(true); }}
                         />}
                     </> :
                         <motion.div className="flex items-center justify-center bg-secondary w-full h-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             {filterData.map((filter, index) => {
                                 if (filter.value === getType(result)) {
-                                    return <filter.icon key={index} className='w-1/2 h-1/2 opacity-20' />
+                                    return <filter.icon key={index} className='w-1/2 h-1/2 opacity-20' />;
                                 }
                             })}
                         </motion.div>}
@@ -140,7 +135,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
             </div>
             <div className="space-y-1">
                 <div className="flex gap-1.5 items-center">
-                    {(result as QobuzAlbum | QobuzTrack).parental_warning && <p className='text-[10px] bg-primary text-primary-foreground p-1 rounded-sm aspect-square w-[18px] h-[18px] text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
+                    {(result as QobuzAlbum | QobuzTrack).parental_warning && <p className='text-[10px] bg-primary text-primary-foreground p-1 rounded-[3px] aspect-square w-[18px] h-[18px] text-center justify-center items-center shrink-0 flex font-semibold' title='Explicit'>E</p>}
                     <h1 className='text-sm truncate font-bold group-hover:underline'>
                         {formatTitle(result)}
                     </h1>
@@ -191,7 +186,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
                                             <div className={cn('flex items-center justify-between gap-2 overflow-hidden hover:bg-primary/5 transition-all p-2 rounded group', !track.streamable && 'opacity-50')}>
                                                 <div className="gap-2 flex items-center overflow-hidden">
                                                     <span className='text-muted-foreground text-sm'>{index + 1}</span>
-                                                    {track.parental_warning && <p className='text-[10px] bg-primary text-primary-foreground p-1 rounded-sm aspect-square w-[18px] h-[18px] text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
+                                                    {track.parental_warning && <p className='text-[10px] bg-primary text-primary-foreground p-1 rounded-[3px] aspect-square w-[18px] h-[18px] shrink-0 text-center justify-center items-center flex font-semibold' title='Explicit'>E</p>}
                                                     <p className='truncate font-medium'>{formatTitle(track)}</p>
                                                 </div>
                                                 {track.streamable && <Button
@@ -201,7 +196,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
                                                     variant='ghost'
                                                     onClick={async () => {
                                                         await createDownloadJob(track, setStatusBar, ffmpegState, settings, toast as any);
-                                                        toast({ title: `Added '${formatTitle(track)}' to the queue`, description: "Track has been added to the queue" })
+                                                        toast({ title: `Added '${formatTitle(track)}' to the queue`, description: "Track has been added to the queue" });
                                                     }}
                                                 >
                                                     <DownloadIcon className='!size-4' />
@@ -210,7 +205,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
                                             {index < fetchedAlbumData.tracks.items.length - 1 && <Separator />}
                                             <div />
                                         </div>
-                                    )
+                                    );
                                 })}
                             </div>
                         </motion.div>
@@ -219,7 +214,7 @@ const ReleaseCard = ({ result, resolvedTheme, ref, showArtistDialog }: { result:
             </Dialog>
             {((getType(result) !== "artists") && showArtistDialog) && <ArtistDialog open={openArtistDialog} setOpen={setOpenArtistDialog} artist={artist} />}
         </div>
-    )
-}
+    );
+};
 
-export default ReleaseCard
+export default ReleaseCard;

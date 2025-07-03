@@ -12,9 +12,10 @@ export type SettingsProps = {
     albumArtSize: number,
     albumArtQuality: number,
     zipName: string;
+    trackName: string;
 };
 
-export const zipNameVariables: string[] = ['artists', 'name', 'year'];
+export const nameVariables: string[] = ['artists', 'name', 'year', 'duration'];
 
 const isValidSettings = (obj: any): obj is SettingsProps => {
     return (
@@ -29,28 +30,33 @@ const isValidSettings = (obj: any): obj is SettingsProps => {
         obj.albumArtSize >= 100 && obj.albumArtSize <= 3600 &&
         typeof obj.albumArtQuality === 'number' &&
         obj.albumArtQuality >= 0.1 && obj.albumArtQuality <= 1,
-        typeof obj.zipName === 'string' && zipNameVariables.every(variable => obj.zipName.includes(`{${variable}}`))
+        typeof obj.zipName === 'string' &&
+        typeof obj.trackName === 'string'
     );
 };
 
 const SettingsContext = createContext<{
     settings: SettingsProps;
     setSettings: React.Dispatch<React.SetStateAction<SettingsProps>>;
+    resetSettings: () => void;
 } | undefined>(undefined);
 
+export const defaultSettings: SettingsProps = {
+    particles: true,
+    outputQuality: "27",
+    outputCodec: "FLAC",
+    bitrate: 320,
+    applyMetadata: true,
+    fixMD5: false,
+    explicitContent: true,
+    albumArtSize: 3600,
+    albumArtQuality: 1,
+    zipName: "{artists} - {name}",
+    trackName: "{artists} - {name}",
+};
+
 export const SettingsProvider: React.FC<{ children: ReactNode; }> = ({ children }) => {
-    const [settings, setSettings] = useState<SettingsProps>({
-        particles: true,
-        outputQuality: "27",
-        outputCodec: "FLAC",
-        bitrate: 320,
-        applyMetadata: true,
-        fixMD5: false,
-        explicitContent: true,
-        albumArtSize: 3600,
-        albumArtQuality: 1,
-        zipName: "{artists} - {name}"
-    });
+    const [settings, setSettings] = useState<SettingsProps>(defaultSettings);
 
     useEffect(() => {
         const savedSettings = localStorage.getItem('settings');
@@ -64,7 +70,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode; }> = ({ children 
     }, [settings]);
 
     return (
-        <SettingsContext.Provider value={{ settings, setSettings }}>
+        <SettingsContext.Provider value={{ settings, setSettings, resetSettings: () => setSettings(defaultSettings) }}>
             {children}
         </SettingsContext.Provider>
     );

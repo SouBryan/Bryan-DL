@@ -4,15 +4,14 @@ import { Button } from './button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronDownIcon, DotIcon, InfoIcon, SettingsIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTrigger } from './dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from './input';
 import { ModeToggle } from '../mode-toggle';
+import { nameVariables, SettingsProps, useSettings } from '@/lib/settings-provider';
 import { Separator } from './separator';
-import { SettingsProps, useSettings, zipNameVariables } from '@/lib/settings-provider';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Slider } from './slider';
-
 
 const losslessCodecs = ['FLAC', 'ALAC', 'WAV'];
 
@@ -23,7 +22,7 @@ const qualityMap = {
 };
 
 const SettingsForm = () => {
-    const { settings, setSettings } = useSettings();
+    const { settings, setSettings, resetSettings } = useSettings();
 
     const [open, setOpen] = useState(false);
 
@@ -102,12 +101,12 @@ const SettingsForm = () => {
                                         </DialogTrigger>
                                         <DialogContent>
                                             <DialogHeader>
-                                                <DialogTrigger>Zip File Naming</DialogTrigger>
+                                                <DialogTitle>Zip File Naming</DialogTitle>
                                                 <DialogDescription>The variables used in the zip file name</DialogDescription>
                                             </DialogHeader>
                                             <p className='text-xs text-muted-foreground'>An example is {'{artists} - {name}'}</p>
                                             <div className='flex flex-col gap-2'>
-                                                {zipNameVariables.map((variable, index) => (
+                                                {nameVariables.map((variable, index) => (
                                                     <div key={index} className='flex text-sm items-center justify-between gap-2'>
                                                         <p><span className='capitalize'>{variable}</span> <span className='text-muted-foreground'>{`{${variable}}`}</span></p>
                                                         <p>{settings.zipName.includes(variable) ? "Currently used" : "Not used"}</p>
@@ -119,6 +118,41 @@ const SettingsForm = () => {
                                     <Input
                                         value={settings.zipName}
                                         onChange={(e) => setSettings(prev => ({ ...prev, zipName: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="px-0.5 space-y-2">
+                                <p className='font-medium text-sm'>Track File Naming</p>
+                                <div className="flex gap-2">
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                size='icon'
+                                                className='aspect-square'
+                                                variant='outline'
+                                            >
+                                                <InfoIcon />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Track File Naming</DialogTitle>
+                                                <DialogDescription>The variables used in the track file name</DialogDescription>
+                                            </DialogHeader>
+                                            <p className='text-xs text-muted-foreground'>An example is {'{artists} - {name}'}</p>
+                                            <div className='flex flex-col gap-2'>
+                                                {nameVariables.map((variable, index) => (
+                                                    <div key={index} className='flex text-sm items-center justify-between gap-2'>
+                                                        <p><span className='capitalize'>{variable}</span> <span className='text-muted-foreground'>{`{${variable}}`}</span></p>
+                                                        <p>{settings.trackName.includes(variable) ? "Currently used" : "Not used"}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                    <Input
+                                        value={settings.trackName}
+                                        onChange={(e) => setSettings(prev => ({ ...prev, trackName: e.target.value }))}
                                     />
                                 </div>
                             </div>
@@ -246,6 +280,12 @@ const SettingsForm = () => {
                             <p>{Math.round(settings.albumArtQuality * 100)}%</p>
                         </div>
                     </SheetHeader>
+                    <Button
+                        variant='destructive'
+                        onClick={resetSettings}
+                    >
+                        Reset Settings
+                    </Button>
                 </div>
             </SheetContent>
         </Sheet>

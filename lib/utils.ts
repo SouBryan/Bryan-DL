@@ -1,8 +1,9 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { formatArtists, formatDuration, formatTitle, type QobuzAlbum, type QobuzTrack } from './qobuz-dl';
+import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from 'clsx';
 
 export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
+    return twMerge(clsx(inputs));
 }
 
 export const formatBytes = (bytes: number): string => {
@@ -26,7 +27,7 @@ export const cleanFileName = (filename: string) => {
         filename = filename.replaceAll(bannedChars[char], "_");
     };
     return filename;
-}
+};
 
 export function getTailwindBreakpoint(width: any) {
     if (width >= 1536) {
@@ -82,4 +83,12 @@ export async function resizeImage(imageURL: string, maxSize: number, quality: nu
             resolve(dataUrl);
         };
     });
+}
+
+export function formatCustomTitle(titleSetting: string, result: QobuzAlbum | QobuzTrack): string {
+    return titleSetting
+        .replaceAll('{artists}', formatArtists(result))
+        .replaceAll('{name}', formatTitle(result))
+        .replaceAll('{year}', String(new Date(result.released_at * 1000).getFullYear()))
+        .replaceAll('{duration}', String(formatDuration(result.duration)));
 }
