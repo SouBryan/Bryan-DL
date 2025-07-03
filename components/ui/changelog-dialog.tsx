@@ -4,7 +4,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Button } from './button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
-import { ScrollTextIcon } from 'lucide-react';
+import { FileClockIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 type ChangeLog = {
@@ -42,7 +42,7 @@ const ChangelogDialog = () => {
         >
             <DialogTrigger asChild>
                 <Button variant="outline" size="icon" onClick={() => { setOpen(true); }}>
-                    <ScrollTextIcon />
+                    <FileClockIcon />
                 </Button>
             </DialogTrigger>
             <DialogContent>
