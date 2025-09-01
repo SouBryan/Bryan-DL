@@ -245,13 +245,16 @@ const ReleaseCard = ({
               E
             </p>
           )}
-          <h1 className='text-sm truncate font-bold group-hover:underline'>{formatTitle(result)}</h1>
+          <h1 className='text-sm truncate font-bold group-hover:underline text-wrap'>{formatTitle(result)}</h1>
         </div>
         {!(getType(result) === 'artists') && (
           <p className='text-xs truncate' title={formatArtists(result as QobuzAlbum | QobuzTrack)}>
             {formatArtists(result as QobuzAlbum | QobuzTrack)}
           </p>
         )}
+        {(result as QobuzTrack).album.title ? (
+          <p className='text-xs truncate'>{(result as QobuzTrack).album.title}</p>
+        ) : null}
       </div>
       {getType(result) === 'artists' && (
         <ArtistDialog open={openArtistDialog} setOpen={setOpenArtistDialog} artist={result as QobuzArtist} />
