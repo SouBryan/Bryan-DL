@@ -252,7 +252,7 @@ const ReleaseCard = ({
             {formatArtists(result as QobuzAlbum | QobuzTrack)}
           </p>
         )}
-        {(result as QobuzTrack).album.title ? (
+        {(result as QobuzTrack).album?.title ? (
           <p className='text-xs truncate'>{(result as QobuzTrack).album.title}</p>
         ) : null}
       </div>

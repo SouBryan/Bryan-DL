@@ -82,11 +82,34 @@ export const createDownloadJob = async (
           if (settings.outputCodec === 'FLAC' && settings.fixMD5)
             outputFile = await fixMD5Hash(outputFile, setStatusBar)
           const objectURL = URL.createObjectURL(new Blob([outputFile]))
-          saveAs(objectURL, formattedTitle + '.' + codecMap[settings.outputCodec].extension)
-          setTimeout(() => {
-            URL.revokeObjectURL(objectURL)
-          }, 100)
-          resolve()
+          const title = formattedTitle + '.' + codecMap[settings.outputCodec].extension
+          const audioElement = document.createElement('audio')
+          audioElement.id = `track_${result.id}`
+          audioElement.src = objectURL
+          audioElement.onloadedmetadata = function () {
+            if (audioElement.duration >= result.duration) {
+              proceedDownload(objectURL, title)
+              resolve()
+            } else {
+              toast({
+                title: 'Error',
+                description: `Qobuz provided a file shorter than expected for "${title}". This can indicate the file being a sample track rather than the full track`,
+                duration: Infinity,
+                action: (
+                  <ToastAction
+                    altText='Copy Stack'
+                    onClick={() => {
+                      proceedDownload(objectURL, title)
+                    }}
+                  >
+                    Download anyway
+                  </ToastAction>
+                )
+              })
+              resolve()
+            }
+          }
+          document.body.append(audioElement)
         } catch (e) {
           if (e instanceof AxiosError && e.code === 'ERR_CANCELED') resolve()
           else {
@@ -257,6 +280,13 @@ export const createDownloadJob = async (
       })
     })
   }
+}
+
+function proceedDownload(objectURL: string, title: string) {
+  saveAs(objectURL, title)
+  setTimeout(() => {
+    URL.revokeObjectURL(objectURL)
+  }, 100)
 }
 
 export async function downloadArtistDiscography(
