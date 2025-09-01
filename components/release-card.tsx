@@ -2,7 +2,7 @@ import ArtistDialog from './artist-dialog'
 import DownloadAlbumButton from './download-album-button'
 import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
-import { AlignJustifyIcon, DotIcon, DownloadIcon, UsersIcon } from 'lucide-react'
+import { AlignJustifyIcon, DotIcon, DownloadIcon, UsersIcon, DiscAlbumIcon } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '@/lib/utils'
 import { createDownloadJob } from '@/lib/download-job'
@@ -248,12 +248,16 @@ const ReleaseCard = ({
           <h1 className='text-sm truncate font-bold group-hover:underline text-wrap'>{formatTitle(result)}</h1>
         </div>
         {!(getType(result) === 'artists') && (
-          <p className='text-xs truncate' title={formatArtists(result as QobuzAlbum | QobuzTrack)}>
-            {formatArtists(result as QobuzAlbum | QobuzTrack)}
-          </p>
+          <div className='text-xs truncate flex gap-x-0.5' title={formatArtists(result as QobuzAlbum | QobuzTrack)}>
+            <UsersIcon className='size-3.5' />
+            <span>{formatArtists(result as QobuzAlbum | QobuzTrack)}</span>
+          </div>
         )}
         {(result as QobuzTrack).album?.title ? (
-          <p className='text-xs truncate'>{(result as QobuzTrack).album.title}</p>
+          <div className='text-xs truncate flex gap-x-0.5'>
+            <DiscAlbumIcon className='size-3.5' />
+            <span>{(result as QobuzTrack).album.title}</span>
+          </div>
         ) : null}
       </div>
       {getType(result) === 'artists' && (
