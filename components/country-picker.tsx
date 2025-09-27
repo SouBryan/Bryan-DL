@@ -17,10 +17,11 @@ const CountryPicker = () => {
         (async () => {
             const response = await axios.get('/api/get-countries');
             if (!response.data.success) return;
+            if (response.data.data.length === 0) return;
             setEnabled(true);
             setCountriesList(response.data.data);
             const savedCountry = localStorage.getItem('country');
-            if (!savedCountry) setCountry(response.data.data[0]);
+            if (!savedCountry || !response.data.data.includes(savedCountry)) setCountry(response.data.data[0]);
         })();
     }, []);
     return (
