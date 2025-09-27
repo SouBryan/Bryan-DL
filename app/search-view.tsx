@@ -303,9 +303,6 @@ const SearchView = () => {
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <div className='flex items-center justify-center w-full'>
-                        <CountryPicker />
-                    </div>
                     {searchError && (
                         <p className='text-destructive w-full text-center font-semibold'>
                             {typeof searchError === 'object' ? JSON.stringify(searchError) : searchError}

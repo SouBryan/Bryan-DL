@@ -9,6 +9,7 @@ import axios from 'axios';
 import { QobuzSearchResults } from '@/lib/qobuz-dl';
 import AutocompleteCard from './autocomplete-card';
 import { useCountry } from '@/lib/country-provider';
+import CountryPicker from '../country-picker';
 
 const SearchBar = ({
     onSearch,
@@ -121,6 +122,9 @@ const SearchBar = ({
                         setSearchInput(event.currentTarget.value);
                     }}
                 />
+                <div className='flex'>
+                    <CountryPicker />
+                </div>
             </div>
             <Button
                 size='icon'

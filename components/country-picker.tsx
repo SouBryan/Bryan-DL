@@ -30,12 +30,10 @@ const CountryPicker = () => {
                     <Select value={country} onValueChange={setCountry} open={open} onOpenChange={setOpen}>
                         <SelectTrigger className='select-none outline-none'>
                             <div className='bg-background rounded-full'>
-                                <div className='bg-primary/10 flex gap-2 px-3 py-1 rounded-full outline-primary/40 outline-[0.5px] outline items-center justify-center'>
+                                <div className='bg-primary/10 flex gap-2 px-3 py-1 rounded-full outline-primary/40 outline-[0.5px] outline items-center justify-center text-nowrap'>
                                     {country ? (
                                         <>
-                                            <p>Searching in</p>
                                             <ReactCountryFlag countryCode={country} />
-                                            <p className='font-bold'>{displayNames.of(country)}</p>
                                         </>
                                     ) : (
                                         <p>Select a country</p>
@@ -44,7 +42,7 @@ const CountryPicker = () => {
                                 </div>
                             </div>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className='mt-2'>
                             {countriesList.map((country) => (
                                 <SelectItem key={country} value={country}>
                                     <div className='flex gap-2 items-center'>
