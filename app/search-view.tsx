@@ -208,6 +208,45 @@ const SearchView = () => {
             );
     }, [logoAnimationControls, mounted, logoSrc]);
 
+    const onSearch = async (query: string, searchFieldInput: string = searchField) => {
+        setQuery(query);
+        setSearchError('');
+        const filter = filterData.find((filter) => filter.value === searchFieldInput) || filterData[0];
+        try {
+            const response = await axios.get(`/api/${filter.searchRoute ? filter.searchRoute : 'get-music'}?q=${query}&offset=0`, {
+                headers: {
+                    'Token-Country': country
+                }
+            });
+            if (response.status === 200) {
+                setLoading(false);
+                if (searchField !== searchFieldInput) setSearchField(searchFieldInput as QobuzSearchFilters);
+
+                let newResults = { ...response.data.data };
+                filterData.map((filter) => {
+                    if (!newResults[filter.value])
+                        newResults = {
+                            ...newResults,
+                            [filter.value]: {
+                                total: undefined,
+                                offset: undefined,
+                                limit: undefined,
+                                items: []
+                            }
+                        };
+                });
+                setResults(newResults);
+            }
+        } catch (error: any) {
+            setSearchError(error?.response.data?.error || error.message || 'An error occurred.');
+        }
+        setSearching(false);
+    };
+
+    useEffect(() => {
+        if (country && query) onSearch(query);
+    }, [country]);
+
     return (
         <>
             <div className='space-y-4'>
@@ -242,45 +281,7 @@ const SearchView = () => {
                     )}
                 </motion.div>
                 <div className='flex flex-col items-start justify-center'>
-                    <SearchBar
-                        onSearch={async (query: string, searchFieldInput: string = searchField) => {
-                            setQuery(query);
-                            setSearchError('');
-                            const filter = filterData.find((filter) => filter.value === searchFieldInput) || filterData[0];
-                            try {
-                                const response = await axios.get(`/api/${filter.searchRoute ? filter.searchRoute : 'get-music'}?q=${query}&offset=0`, {
-                                    headers: {
-                                        'Token-Country': country
-                                    }
-                                });
-                                if (response.status === 200) {
-                                    setLoading(false);
-                                    if (searchField !== searchFieldInput) setSearchField(searchFieldInput as QobuzSearchFilters);
-
-                                    let newResults = { ...response.data.data };
-                                    filterData.map((filter) => {
-                                        if (!newResults[filter.value])
-                                            newResults = {
-                                                ...newResults,
-                                                [filter.value]: {
-                                                    total: undefined,
-                                                    offset: undefined,
-                                                    limit: undefined,
-                                                    items: []
-                                                }
-                                            };
-                                    });
-                                    setResults(newResults);
-                                }
-                            } catch (error: any) {
-                                setSearchError(error?.response.data?.error || error.message || 'An error occurred.');
-                            }
-                            setSearching(false);
-                        }}
-                        searching={searching}
-                        setSearching={setSearching}
-                        query={query}
-                    />
+                    <SearchBar onSearch={onSearch} searching={searching} setSearching={setSearching} query={query} />
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -305,7 +306,11 @@ const SearchView = () => {
                     <div className='flex items-center justify-center w-full'>
                         <CountryPicker />
                     </div>
-                    {searchError && <p className='text-destructive w-full text-center font-semibold'>{searchError}</p>}
+                    {searchError && (
+                        <p className='text-destructive w-full text-center font-semibold'>
+                            {typeof searchError === 'object' ? JSON.stringify(searchError) : searchError}
+                        </p>
+                    )}
                 </div>
             </div>
 
