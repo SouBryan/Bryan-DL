@@ -283,26 +283,29 @@ const SearchView = () => {
                 <div className='flex flex-col items-start justify-center'>
                     <SearchBar onSearch={onSearch} searching={searching} setSearching={setSearching} query={query} />
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant='outline'
-                                className='my-2 flex gap-2 focus-visible:outline-none focus-visible:ring-transparent select-none shadow-none outline-none !z-[99]'
-                            >
-                                <FilterIcon />
-                                <span className='capitalize'>{searchField}</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuRadioGroup value={searchField} onValueChange={setSearchField as React.Dispatch<React.SetStateAction<string>>}>
-                                {filterData.map((type, index) => (
-                                    <DropdownMenuRadioItem key={index} value={type.value}>
-                                        {type.label}
-                                    </DropdownMenuRadioItem>
-                                ))}
-                            </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className='w-full flex items-center justify-between'>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant='outline'
+                                    className='my-2 flex gap-2 focus-visible:outline-none focus-visible:ring-transparent select-none shadow-none outline-none !z-[99]'
+                                >
+                                    <FilterIcon />
+                                    <span className='capitalize'>{searchField}</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuRadioGroup value={searchField} onValueChange={setSearchField as React.Dispatch<React.SetStateAction<string>>}>
+                                    {filterData.map((type, index) => (
+                                        <DropdownMenuRadioItem key={index} value={type.value}>
+                                            {type.label}
+                                        </DropdownMenuRadioItem>
+                                    ))}
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <CountryPicker className='sm:hidden' />
+                    </div>
                     {searchError && (
                         <p className='text-destructive w-full text-center font-semibold'>
                             {typeof searchError === 'object' ? JSON.stringify(searchError) : searchError}

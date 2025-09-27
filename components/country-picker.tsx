@@ -5,8 +5,9 @@ import { ReactCountryFlag } from 'react-country-flag';
 import { useCountry } from '@/lib/country-provider';
 import axios from 'axios';
 import { ChevronDownIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const CountryPicker = () => {
+const CountryPicker = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
     const { country, setCountry } = useCountry();
     const [countriesList, setCountriesList] = useState<string[]>([]);
     const [open, setOpen] = useState(false);
@@ -27,7 +28,7 @@ const CountryPicker = () => {
     return (
         <>
             {enabled && (
-                <div className='flex'>
+                <div className={cn('flex', className)} ref={ref} {...props}>
                     <Select value={country} onValueChange={setCountry} open={open} onOpenChange={setOpen}>
                         <SelectTrigger className='select-none outline-none'>
                             <div className='bg-background rounded-full'>
@@ -58,6 +59,6 @@ const CountryPicker = () => {
             )}
         </>
     );
-};
+});
 
 export default CountryPicker;

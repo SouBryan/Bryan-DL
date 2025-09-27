@@ -123,7 +123,7 @@ const SearchBar = ({
                     }}
                 />
                 <div className='flex'>
-                    <CountryPicker />
+                    <CountryPicker className='hidden sm:flex' />
                 </div>
             </div>
             <Button
