@@ -3,31 +3,19 @@
 import axios from 'axios';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import ReleaseCard from '@/components/release-card';
-import SearchBar from '@/components/search-bar';
+import SearchBar from '@/components/search-bar/search-bar';
 import { Button } from '@/components/ui/button';
 import { Disc3Icon, DiscAlbumIcon, UsersIcon } from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import {
-    FilterDataType,
-    filterExplicit,
-    QobuzAlbum,
-    QobuzArtist,
-    QobuzSearchFilters,
-    QobuzSearchResults,
-    QobuzTrack
-} from '@/lib/qobuz-dl';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FilterDataType, filterExplicit, QobuzAlbum, QobuzArtist, QobuzSearchFilters, QobuzSearchResults, QobuzTrack } from '@/lib/qobuz-dl';
 import { getTailwindBreakpoint } from '@/lib/utils';
 import { motion, useAnimation } from 'motion/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInView } from 'react-intersection-observer';
 import { useSettings } from '@/lib/settings-provider';
 import { useTheme } from 'next-themes';
+import CountryPicker from '@/components/country-picker';
+import { useCountry } from '@/lib/country-provider';
 
 export const filterData: FilterDataType = [
     {
@@ -56,6 +44,7 @@ const SearchView = () => {
     const [searching, setSearching] = useState<boolean>(false);
     const [searchError, setSearchError] = useState<string>('');
     const { settings } = useSettings();
+    const { country } = useCountry();
 
     useEffect(() => {
         console.log(`%c${process.env.NEXT_PUBLIC_APPLICATION_NAME}`, 'font-size: 25px; font-weight: bold;');
@@ -77,15 +66,12 @@ const SearchView = () => {
         const filter = filterData.find((fd) => fd.value == searchField) || filterData[0];
         if (filter.searchRoute) {
             axios
-                .get('/api/' + filter.searchRoute + `?q=${query}&offset=${results![searchField].items.length}`)
+                .get('/api/' + filter.searchRoute + `?q=${query}&offset=${results![searchField].items.length}`, { headers: { 'Token-Country': country } })
                 .then((response) => {
                     if (response.status === 200) {
                         response.data.data[searchField].items.length = Math.max(
                             response.data.data[searchField].items.length,
-                            Math.min(
-                                response.data.data[searchField].limit,
-                                response.data.data[searchField].total - response.data.data[searchField].offset
-                            )
+                            Math.min(response.data.data[searchField].limit, response.data.data[searchField].total - response.data.data[searchField].offset)
                         );
                         response.data.data[searchField].items.fill(null, response.data.data[searchField].items.length);
                         const newResults = {
@@ -100,7 +86,7 @@ const SearchView = () => {
                     }
                 });
         } else {
-            axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`).then((response) => {
+            axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`, { headers: { 'Token-Country': country } }).then((response) => {
                 if (response.status === 200) {
                     let newResults = {
                         ...results!,
@@ -112,23 +98,14 @@ const SearchView = () => {
                     filterData.map((filter) => {
                         response.data.data[filter.value].items.length = Math.max(
                             response.data.data[filter.value].items.length,
-                            Math.min(
-                                response.data.data[filter.value].limit,
-                                response.data.data[filter.value].total - response.data.data[filter.value].offset
-                            )
+                            Math.min(response.data.data[filter.value].limit, response.data.data[filter.value].total - response.data.data[filter.value].offset)
                         );
-                        response.data.data[filter.value].items.fill(
-                            null,
-                            response.data.data[filter.value].items.length
-                        );
+                        response.data.data[filter.value].items.fill(null, response.data.data[filter.value].items.length);
                         newResults = {
                             ...newResults,
                             [filter.value]: {
                                 ...results![filter.value as QobuzSearchFilters],
-                                items: [
-                                    ...results![filter.value as QobuzSearchFilters].items,
-                                    ...response.data.data[filter.value].items
-                                ]
+                                items: [...results![filter.value as QobuzSearchFilters].items, ...response.data.data[filter.value].items]
                             }
                         };
                     });
@@ -211,10 +188,7 @@ const SearchView = () => {
         if (logoSrc) URL.revokeObjectURL(logoSrc);
         if (mounted) {
             (async () => {
-                const logoSrc = await axios.get(
-                    resolvedTheme === 'light' ? '/logo/qobuz-web-light.png' : '/logo/qobuz-web-dark.png',
-                    { responseType: 'blob' }
-                );
+                const logoSrc = await axios.get(resolvedTheme === 'light' ? '/logo/qobuz-web-light.png' : '/logo/qobuz-web-dark.png', { responseType: 'blob' });
                 setLogoSrc(URL.createObjectURL(logoSrc.data));
             })();
         }
@@ -255,23 +229,15 @@ const SearchView = () => {
                     {process.env.NEXT_PUBLIC_APPLICATION_NAME!.toLowerCase() === 'qobuz-dl' ? (
                         <>
                             {mounted && logoSrc ? (
-                                <img
-                                    src={logoSrc}
-                                    alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!}
-                                    className='w-auto h-[100px] mx-auto z-[5]'
-                                />
+                                <img src={logoSrc} alt={process.env.NEXT_PUBLIC_APPLICATION_NAME!} className='w-auto h-[100px] mx-auto z-[5]' />
                             ) : (
                                 <div className='min-h-[100px] min-w-[10px]' />
                             )}
                         </>
                     ) : (
                         <>
-                            <h1 className='text-4xl font-bold text-center'>
-                                {process.env.NEXT_PUBLIC_APPLICATION_NAME}
-                            </h1>
-                            <p className='text-md text-center font-medium text-muted-foreground'>
-                                The simplest music downloader
-                            </p>
+                            <h1 className='text-4xl font-bold text-center'>{process.env.NEXT_PUBLIC_APPLICATION_NAME}</h1>
+                            <p className='text-md text-center font-medium text-muted-foreground'>The simplest music downloader</p>
                         </>
                     )}
                 </motion.div>
@@ -280,16 +246,16 @@ const SearchView = () => {
                         onSearch={async (query: string, searchFieldInput: string = searchField) => {
                             setQuery(query);
                             setSearchError('');
-                            const filter =
-                                filterData.find((filter) => filter.value === searchFieldInput) || filterData[0];
+                            const filter = filterData.find((filter) => filter.value === searchFieldInput) || filterData[0];
                             try {
-                                const response = await axios.get(
-                                    `/api/${filter.searchRoute ? filter.searchRoute : 'get-music'}?q=${query}&offset=0`
-                                );
+                                const response = await axios.get(`/api/${filter.searchRoute ? filter.searchRoute : 'get-music'}?q=${query}&offset=0`, {
+                                    headers: {
+                                        'Token-Country': country
+                                    }
+                                });
                                 if (response.status === 200) {
                                     setLoading(false);
-                                    if (searchField !== searchFieldInput)
-                                        setSearchField(searchFieldInput as QobuzSearchFilters);
+                                    if (searchField !== searchFieldInput) setSearchField(searchFieldInput as QobuzSearchFilters);
 
                                     let newResults = { ...response.data.data };
                                     filterData.map((filter) => {
@@ -327,10 +293,7 @@ const SearchView = () => {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuRadioGroup
-                                value={searchField}
-                                onValueChange={setSearchField as React.Dispatch<React.SetStateAction<string>>}
-                            >
+                            <DropdownMenuRadioGroup value={searchField} onValueChange={setSearchField as React.Dispatch<React.SetStateAction<string>>}>
                                 {filterData.map((type, index) => (
                                     <DropdownMenuRadioItem key={index} value={type.value}>
                                         {type.label}
@@ -339,6 +302,9 @@ const SearchView = () => {
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    <div className='flex items-center justify-center w-full'>
+                        <CountryPicker />
+                    </div>
                     {searchError && <p className='text-destructive w-full text-center font-semibold'>{searchError}</p>}
                 </div>
             </div>
@@ -385,9 +351,7 @@ const SearchView = () => {
                                 })}
                         </div>
                         {results![searchField].items.length >= results![searchField].total && (
-                            <div className='w-full h-[40px] text-lg flex items-center justify-center font-semibold pt-8'>
-                                No more {searchField} to show.
-                            </div>
+                            <div className='w-full h-[40px] text-lg flex items-center justify-center font-semibold pt-8'>No more {searchField} to show.</div>
                         )}
                     </div>
                 )}

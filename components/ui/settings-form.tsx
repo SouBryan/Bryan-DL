@@ -5,13 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronDownIcon, DotIcon, InfoIcon, SettingsIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from './input';
 import { ModeToggle } from '../mode-toggle';
 import { nameVariables, SettingsProps, useSettings } from '@/lib/settings-provider';
@@ -60,9 +54,7 @@ const SettingsForm = () => {
                     <SheetHeader>
                         <div className='flex flex-col my-1'>
                             <SheetTitle>Theme</SheetTitle>
-                            <SheetDescription>
-                                Change the way {process.env.NEXT_PUBLIC_APPLICATION_NAME} looks
-                            </SheetDescription>
+                            <SheetDescription>Change the way {process.env.NEXT_PUBLIC_APPLICATION_NAME} looks</SheetDescription>
                         </div>
                         <ModeToggle />
                     </SheetHeader>
@@ -70,9 +62,7 @@ const SettingsForm = () => {
                     <SheetHeader>
                         <div className='flex flex-col my-1'>
                             <SheetTitle>Background</SheetTitle>
-                            <SheetDescription>
-                                Change the background of {process.env.NEXT_PUBLIC_APPLICATION_NAME}
-                            </SheetDescription>
+                            <SheetDescription>Change the background of {process.env.NEXT_PUBLIC_APPLICATION_NAME}</SheetDescription>
                         </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -113,37 +103,23 @@ const SettingsForm = () => {
                                         <DialogContent>
                                             <DialogHeader>
                                                 <DialogTitle>Zip File Naming</DialogTitle>
-                                                <DialogDescription>
-                                                    The variables used in the zip file name
-                                                </DialogDescription>
+                                                <DialogDescription>The variables used in the zip file name</DialogDescription>
                                             </DialogHeader>
-                                            <p className='text-xs text-muted-foreground'>
-                                                An example is {'{artists} - {name}'}
-                                            </p>
+                                            <p className='text-xs text-muted-foreground'>An example is {'{artists} - {name}'}</p>
                                             <div className='flex flex-col gap-2'>
                                                 {nameVariables.map((variable, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className='flex text-sm items-center justify-between gap-2'
-                                                    >
+                                                    <div key={index} className='flex text-sm items-center justify-between gap-2'>
                                                         <p>
                                                             <span className='capitalize'>{variable}</span>{' '}
                                                             <span className='text-muted-foreground'>{`{${variable}}`}</span>
                                                         </p>
-                                                        <p>
-                                                            {settings.zipName.includes(variable)
-                                                                ? 'Currently used'
-                                                                : 'Not used'}
-                                                        </p>
+                                                        <p>{settings.zipName.includes(variable) ? 'Currently used' : 'Not used'}</p>
                                                     </div>
                                                 ))}
                                             </div>
                                         </DialogContent>
                                     </Dialog>
-                                    <Input
-                                        value={settings.zipName}
-                                        onChange={(e) => setSettings((prev) => ({ ...prev, zipName: e.target.value }))}
-                                    />
+                                    <Input value={settings.zipName} onChange={(e) => setSettings((prev) => ({ ...prev, zipName: e.target.value }))} />
                                 </div>
                             </div>
                             <div className='px-0.5 space-y-2'>
@@ -158,39 +134,23 @@ const SettingsForm = () => {
                                         <DialogContent>
                                             <DialogHeader>
                                                 <DialogTitle>Track File Naming</DialogTitle>
-                                                <DialogDescription>
-                                                    The variables used in the track file name
-                                                </DialogDescription>
+                                                <DialogDescription>The variables used in the track file name</DialogDescription>
                                             </DialogHeader>
-                                            <p className='text-xs text-muted-foreground'>
-                                                An example is {'{artists} - {name}'}
-                                            </p>
+                                            <p className='text-xs text-muted-foreground'>An example is {'{artists} - {name}'}</p>
                                             <div className='flex flex-col gap-2'>
                                                 {nameVariables.map((variable, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className='flex text-sm items-center justify-between gap-2'
-                                                    >
+                                                    <div key={index} className='flex text-sm items-center justify-between gap-2'>
                                                         <p>
                                                             <span className='capitalize'>{variable}</span>{' '}
                                                             <span className='text-muted-foreground'>{`{${variable}}`}</span>
                                                         </p>
-                                                        <p>
-                                                            {settings.trackName.includes(variable)
-                                                                ? 'Currently used'
-                                                                : 'Not used'}
-                                                        </p>
+                                                        <p>{settings.trackName.includes(variable) ? 'Currently used' : 'Not used'}</p>
                                                     </div>
                                                 ))}
                                             </div>
                                         </DialogContent>
                                     </Dialog>
-                                    <Input
-                                        value={settings.trackName}
-                                        onChange={(e) =>
-                                            setSettings((prev) => ({ ...prev, trackName: e.target.value }))
-                                        }
-                                    />
+                                    <Input value={settings.trackName} onChange={(e) => setSettings((prev) => ({ ...prev, trackName: e.target.value }))} />
                                 </div>
                             </div>
                             <p className='font-medium text-sm'>Output Codec</p>
@@ -212,10 +172,7 @@ const SettingsForm = () => {
                                             if (!losslessCodecs.includes(codec)) {
                                                 setSettings((settings) => ({
                                                     ...settings,
-                                                    outputQuality:
-                                                        settings.outputCodec === 'OPUS'
-                                                            ? ('6' as const)
-                                                            : ('5' as const),
+                                                    outputQuality: settings.outputCodec === 'OPUS' ? ('6' as const) : ('5' as const),
                                                     bitrate: settings.bitrate || 320
                                                 }));
                                             } else {
@@ -283,60 +240,32 @@ const SettingsForm = () => {
                         ) : (
                             <>
                                 <p className='text-xs text-muted-foreground text-center'>
-                                    Lossy codec selected. All music will be downloaded at 320kbps. You can specify a
-                                    bitrate to rencode to below.
+                                    Lossy codec selected. All music will be downloaded at 320kbps. You can specify a bitrate to rencode to below.
                                 </p>
                                 <div className='flex items-center gap-2 w-full justify-center'>
-                                    <Input
-                                        ref={bitrateInput}
-                                        max={320}
-                                        min={24}
-                                        className='w-fit'
-                                        type='number'
-                                        defaultValue={settings.bitrate}
-                                    />
+                                    <Input ref={bitrateInput} max={320} min={24} className='w-fit' type='number' defaultValue={settings.bitrate} />
                                     <p>kbps</p>
                                 </div>
                             </>
                         )}
                         <div className='flex items-center gap-2 pt-2'>
                             <div className='flex flex-col'>
-                                <p
-                                    className={cn(
-                                        'font-medium',
-                                        settings.outputCodec === 'WAV' && 'text-muted-foreground'
-                                    )}
-                                >
-                                    Apply metadata
-                                </p>
-                                <p
-                                    className={cn(
-                                        'text-xs',
-                                        settings.outputCodec === 'WAV'
-                                            ? 'text-muted-background'
-                                            : 'text-muted-foreground'
-                                    )}
-                                >
+                                <p className={cn('font-medium', settings.outputCodec === 'WAV' && 'text-muted-foreground')}>Apply metadata</p>
+                                <p className={cn('text-xs', settings.outputCodec === 'WAV' ? 'text-muted-background' : 'text-muted-foreground')}>
                                     If enabled (default), songs will be tagged with cover art, album information, etc.
                                 </p>
                             </div>
                             <Checkbox
                                 checked={settings.applyMetadata && settings.outputCodec !== 'WAV'}
-                                onCheckedChange={(checked: boolean) =>
-                                    setSettings((settings) => ({ ...settings, applyMetadata: checked }))
-                                }
+                                onCheckedChange={(checked: boolean) => setSettings((settings) => ({ ...settings, applyMetadata: checked }))}
                                 disabled={settings.outputCodec === 'WAV'}
                             />
                         </div>
                         {settings.outputCodec === 'OPUS' && (
-                            <p className='text-xs text-destructive font-semibold text-center'>
-                                WARNING: OGG (OPUS) files do not support album art.
-                            </p>
+                            <p className='text-xs text-destructive font-semibold text-center'>WARNING: OGG (OPUS) files do not support album art.</p>
                         )}
                         {settings.outputCodec === 'WAV' && (
-                            <p className='text-xs text-destructive font-semibold text-center'>
-                                WAV files do not support metadata / tags.
-                            </p>
+                            <p className='text-xs text-destructive font-semibold text-center'>WAV files do not support metadata / tags.</p>
                         )}
                     </SheetHeader>
                     <Separator />
@@ -345,15 +274,13 @@ const SettingsForm = () => {
                             <div className='flex flex-col'>
                                 <p className='font-medium'>Fix MD5 Hash</p>
                                 <p className='text-xs text-muted-foreground'>
-                                    If enabled (default), MD5 hashes will be fixed, improving compatiablity with old
-                                    software. This will take longer to download.
+                                    If enabled (default), MD5 hashes will be fixed, improving compatiablity with old software. This will take longer to
+                                    download.
                                 </p>
                             </div>
                             <Checkbox
                                 checked={settings.fixMD5}
-                                onCheckedChange={(checked: boolean) =>
-                                    setSettings((settings) => ({ ...settings, fixMD5: checked }))
-                                }
+                                onCheckedChange={(checked: boolean) => setSettings((settings) => ({ ...settings, fixMD5: checked }))}
                             />
                         </div>
                     </SheetHeader>
@@ -362,15 +289,11 @@ const SettingsForm = () => {
                         <div className='flex items-center gap-2'>
                             <div className='flex flex-col'>
                                 <p className='font-medium'>Allow Explicit content</p>
-                                <p className='text-xs text-muted-foreground'>
-                                    If enabled (default), explicit songs will be shown when searching.
-                                </p>
+                                <p className='text-xs text-muted-foreground'>If enabled (default), explicit songs will be shown when searching.</p>
                             </div>
                             <Checkbox
                                 checked={settings.explicitContent}
-                                onCheckedChange={(checked: boolean) =>
-                                    setSettings((settings) => ({ ...settings, explicitContent: checked }))
-                                }
+                                onCheckedChange={(checked: boolean) => setSettings((settings) => ({ ...settings, explicitContent: checked }))}
                             />
                         </div>
                     </SheetHeader>
@@ -379,18 +302,14 @@ const SettingsForm = () => {
                         <div className='flex flex-col items-center gap-2'>
                             <div className='flex flex-col'>
                                 <p className='font-medium'>Max Album Art Size</p>
-                                <p className='text-xs text-muted-foreground'>
-                                    If apply metadata is enabled, album art will be resized to this size.
-                                </p>
+                                <p className='text-xs text-muted-foreground'>If apply metadata is enabled, album art will be resized to this size.</p>
                             </div>
                             <Slider
                                 min={100}
                                 max={3600}
                                 step={100}
                                 value={[settings.albumArtSize]}
-                                onValueChange={(value: number[]) =>
-                                    setSettings((settings) => ({ ...settings, albumArtSize: value[0] }))
-                                }
+                                onValueChange={(value: number[]) => setSettings((settings) => ({ ...settings, albumArtSize: value[0] }))}
                             />
                             <p>
                                 {settings.albumArtSize}x{settings.albumArtSize}
@@ -403,8 +322,7 @@ const SettingsForm = () => {
                             <div className='flex flex-col'>
                                 <p className='font-medium'>Album Art Quality</p>
                                 <p className='text-xs text-muted-foreground'>
-                                    If apply metadata is enabled, album art will be compressed to this quality. 100% is
-                                    lossless.
+                                    If apply metadata is enabled, album art will be compressed to this quality. 100% is lossless.
                                 </p>
                             </div>
                             <Slider
@@ -412,9 +330,7 @@ const SettingsForm = () => {
                                 max={100}
                                 step={1}
                                 value={[settings.albumArtQuality * 100]}
-                                onValueChange={(value: number[]) =>
-                                    setSettings((settings) => ({ ...settings, albumArtQuality: value[0] / 100 }))
-                                }
+                                onValueChange={(value: number[]) => setSettings((settings) => ({ ...settings, albumArtQuality: value[0] / 100 }))}
                             />
                             <p>{Math.round(settings.albumArtQuality * 100)}%</p>
                         </div>

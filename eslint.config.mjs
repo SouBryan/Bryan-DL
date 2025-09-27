@@ -18,8 +18,7 @@ const eslintConfig = [
             '@next/next/no-sync-scripts': 'off',
             'react-hooks/exhaustive-deps': 'off'
         }
-    },
-    eslintConfigPrettier
+    }
 ];
 
 export default eslintConfig;

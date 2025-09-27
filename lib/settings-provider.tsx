@@ -22,8 +22,7 @@ const isValidSettings = (obj: any): obj is SettingsProps => {
         typeof obj.particles === 'boolean' &&
             ['27', '7', '6', '5'].includes(obj.outputQuality) &&
             ['FLAC', 'WAV', 'ALAC', 'MP3', 'AAC', 'OPUS'].includes(obj.outputCodec) &&
-            ((typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 320) ||
-                obj.bitrate === undefined) &&
+            ((typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 320) || obj.bitrate === undefined) &&
             typeof obj.applyMetadata === 'boolean' &&
             typeof obj.explicitContent === 'boolean' &&
             typeof obj.fixMD5 === 'boolean' &&
@@ -74,11 +73,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         localStorage.setItem('settings', JSON.stringify(settings));
     }, [settings]);
 
-    return (
-        <SettingsContext.Provider value={{ settings, setSettings, resetSettings: () => setSettings(defaultSettings) }}>
-            {children}
-        </SettingsContext.Provider>
-    );
+    return <SettingsContext.Provider value={{ settings, setSettings, resetSettings: () => setSettings(defaultSettings) }}>{children}</SettingsContext.Provider>;
 };
 
 export const useSettings = () => {

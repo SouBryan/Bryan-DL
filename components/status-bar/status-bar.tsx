@@ -55,9 +55,7 @@ const StatusBar = () => {
                                     <QueueIcon className='w-4 h-4' />
                                 </Button>
                                 <div className='flex flex-col justify-center text-center items-center overflow-x-hidden px-2'>
-                                    <CardTitle className='text-nowrap max-w-full truncate p-1'>
-                                        {statusBar.title || 'No items in the queue'}
-                                    </CardTitle>
+                                    <CardTitle className='text-nowrap max-w-full truncate p-1'>{statusBar.title || 'No items in the queue'}</CardTitle>
                                     <AnimatePresence>
                                         {statusBar.description && (
                                             <motion.div
@@ -66,9 +64,7 @@ const StatusBar = () => {
                                                 exit={{ opacity: 0, y: 10, maxHeight: 0 }}
                                                 className='max-w-full'
                                             >
-                                                <CardDescription className='text-nowrap max-w-full truncate'>
-                                                    {statusBar.description}
-                                                </CardDescription>
+                                                <CardDescription className='text-nowrap max-w-full truncate'>{statusBar.description}</CardDescription>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>

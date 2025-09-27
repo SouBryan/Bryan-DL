@@ -20,10 +20,7 @@ export const getHex = (themeValue: string, resolvedTheme: string | undefined): s
         return resolvedTheme === 'light' ? '#000000' : '#FFFFFF';
     }
 
-    return (
-        themes.flatMap((group) => group.themes).find((theme) => theme.value.toLowerCase() === themeValue.toLowerCase())
-            ?.hex || '#FFFFFFF'
-    );
+    return themes.flatMap((group) => group.themes).find((theme) => theme.value.toLowerCase() === themeValue.toLowerCase())?.hex || '#FFFFFFF';
 };
 
 export const themes = [

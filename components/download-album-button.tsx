@@ -7,6 +7,7 @@ import { SettingsProps } from '@/lib/settings-provider';
 import { FetchedQobuzAlbum, formatTitle, getFullAlbumInfo, QobuzAlbum } from '@/lib/qobuz-dl';
 import { createDownloadJob } from '@/lib/download-job';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { useCountry } from '@/lib/country-provider';
 
 export interface DownloadAlbumButtonProps extends ButtonProps {
     result: QobuzAlbum;
@@ -40,6 +41,7 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
         },
         ref
     ) => {
+        const { country } = useCountry();
         const [open, setOpen] = useState(false);
         useEffect(() => {
             if (open) onOpen?.();
@@ -49,29 +51,14 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
             <>
                 <DropdownMenu open={open} onOpenChange={setOpen}>
                     <DropdownMenuTrigger asChild>
-                        <Button
-                            className={className}
-                            ref={ref}
-                            variant={variant}
-                            size={size}
-                            asChild={asChild}
-                            {...props}
-                        >
+                        <Button className={className} ref={ref} variant={variant} size={size} asChild={asChild} {...props}>
                             <DownloadIcon className='!size-4' />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                         <DropdownMenuItem
                             onClick={() => {
-                                createDownloadJob(
-                                    result,
-                                    setStatusBar,
-                                    ffmpegState,
-                                    settings,
-                                    toast,
-                                    fetchedAlbumData,
-                                    setFetchedAlbumData
-                                );
+                                createDownloadJob(result, setStatusBar, ffmpegState, settings, toast, fetchedAlbumData, setFetchedAlbumData, country);
                                 toast({
                                     title: `Added '${formatTitle(result)}'`,
                                     description: 'The album has been added to the queue'
@@ -84,7 +71,7 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={async () => {
-                                const albumData = await getFullAlbumInfo(fetchedAlbumData, setFetchedAlbumData, result);
+                                const albumData = await getFullAlbumInfo(fetchedAlbumData, setFetchedAlbumData, result, country);
                                 for (const track of albumData.tracks.items) {
                                     if (track.streamable) {
                                         await createDownloadJob(
@@ -94,7 +81,8 @@ const DownloadButton = React.forwardRef<HTMLButtonElement, DownloadAlbumButtonPr
                                             settings,
                                             toast,
                                             albumData,
-                                            setFetchedAlbumData
+                                            setFetchedAlbumData,
+                                            country
                                         );
                                         await new Promise((resolve) => setTimeout(resolve, 100));
                                     }

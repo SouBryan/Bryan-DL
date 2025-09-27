@@ -38,12 +38,7 @@ const QueueView = ({ queueItems }: { queueItems: QueueProps[] }) => {
                                             <Progress value={statusBar.progress} />
                                         </div>
                                     </CardTitle>
-                                    <Button
-                                        size='icon'
-                                        variant='outline'
-                                        className='size-6 bg-muted/10 hover:bg-muted'
-                                        onClick={statusBar.onCancel}
-                                    >
+                                    <Button size='icon' variant='outline' className='size-6 bg-muted/10 hover:bg-muted' onClick={statusBar.onCancel}>
                                         <X className='size-4 shrink-0 aspect-square' />
                                     </Button>
                                 </CardHeader>
@@ -53,9 +48,7 @@ const QueueView = ({ queueItems }: { queueItems: QueueProps[] }) => {
                             <Card key={index}>
                                 <CardHeader className='flex p-3 flex-row space-y-0 items-center justify-between'>
                                     <CardTitle className='flex items-center gap-2 leading-snug'>
-                                        {item.icon != undefined && (
-                                            <item.icon className='size-5 shrink-0 aspect-square' />
-                                        )}
+                                        {item.icon != undefined && <item.icon className='size-5 shrink-0 aspect-square' />}
                                         {item.title}
                                     </CardTitle>
                                     <Button

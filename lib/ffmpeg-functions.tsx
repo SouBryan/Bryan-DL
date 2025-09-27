@@ -106,11 +106,7 @@ export async function applyMetadata(
     await ffmpeg.FS('writeFile', 'metadata.txt', encoder.encode(metadata));
     if (!(albumArt === false)) {
         if (!albumArt) {
-            const albumArtURL = await resizeImage(
-                getFullResImageUrl(resultData),
-                settings.albumArtSize,
-                settings.albumArtQuality
-            );
+            const albumArtURL = await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize, settings.albumArtQuality);
             if (albumArtURL) {
                 albumArt = (await axios.get(albumArtURL, { responseType: 'arraybuffer' })).data;
             } else albumArt = false;
@@ -123,30 +119,15 @@ export async function applyMetadata(
                     albumArt
                         ? albumArt
                         : (
-                              await axios.get(
-                                  (await resizeImage(
-                                      getFullResImageUrl(resultData),
-                                      settings.albumArtSize,
-                                      settings.albumArtQuality
-                                  )) as string,
-                                  { responseType: 'arraybuffer' }
-                              )
+                              await axios.get((await resizeImage(getFullResImageUrl(resultData), settings.albumArtSize, settings.albumArtQuality)) as string, {
+                                  responseType: 'arraybuffer'
+                              })
                           ).data
                 )
             );
     }
 
-    await ffmpeg.run(
-        '-i',
-        'input.' + extension,
-        '-i',
-        'metadata.txt',
-        '-map_metadata',
-        '1',
-        '-codec',
-        'copy',
-        'secondInput.' + extension
-    );
+    await ffmpeg.run('-i', 'input.' + extension, '-i', 'metadata.txt', '-map_metadata', '1', '-codec', 'copy', 'secondInput.' + extension);
     if (['WAV', 'OPUS'].includes(settings.outputCodec) || albumArt === false) {
         const output = await ffmpeg.FS('readFile', 'secondInput.' + extension);
         ffmpeg.FS('unlink', 'input.' + extension);
@@ -177,10 +158,7 @@ export async function applyMetadata(
     return output;
 }
 
-export async function fixMD5Hash(
-    trackBuffer: ArrayBuffer,
-    setStatusBar?: React.Dispatch<React.SetStateAction<StatusBarProps>>
-): Promise<Blob> {
+export async function fixMD5Hash(trackBuffer: ArrayBuffer, setStatusBar?: React.Dispatch<React.SetStateAction<StatusBarProps>>): Promise<Blob> {
     return new Promise((resolve) => {
         setStatusBar?.((prev) => ({ ...prev, description: 'Fixing MD5 hash...', progress: 0 }));
         const worker = new Worker('flac/EmsWorkerProxy.js');

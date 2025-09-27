@@ -23,7 +23,7 @@ const ChangelogDialog = () => {
     const fetchChangelog = async () => {
         try {
             const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_GITHUB!.replace('github.com', 'raw.githubusercontent.com')}/refs/heads/main/changelog.json`
+                `${(process.env.NEXT_PUBLIC_GITHUB || 'https://github.com/QobuzDL/Qobuz-DL').replace('github.com', 'raw.githubusercontent.com')}/refs/heads/main/changelog.json`
             );
             const data = await response.data;
             setLogs(data);

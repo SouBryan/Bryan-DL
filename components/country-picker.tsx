@@ -1,0 +1,64 @@
+import React, { useEffect, useState } from 'react';
+import { Select, SelectContent, SelectItem } from './ui/select';
+import { SelectTrigger } from '@radix-ui/react-select';
+import { ReactCountryFlag } from 'react-country-flag';
+import { useCountry } from '@/lib/country-provider';
+import axios from 'axios';
+import { ChevronDownIcon } from 'lucide-react';
+
+const CountryPicker = () => {
+    const { country, setCountry } = useCountry();
+    const [countriesList, setCountriesList] = useState<string[]>([]);
+    const [open, setOpen] = useState(false);
+    const [enabled, setEnabled] = useState(false);
+    const displayNames = new Intl.DisplayNames(['en'], { type: 'region' });
+
+    useEffect(() => {
+        (async () => {
+            const response = await axios.get('/api/get-countries');
+            if (!response.data.success) return;
+            setEnabled(true);
+            setCountriesList(response.data.data);
+            const savedCountry = localStorage.getItem('country');
+            if (!savedCountry) setCountry(response.data.data[0]);
+        })();
+    }, []);
+    return (
+        <>
+            {enabled && (
+                <div className='flex'>
+                    <Select value={country} onValueChange={setCountry} open={open} onOpenChange={setOpen}>
+                        <SelectTrigger className='select-none outline-none'>
+                            <div className='bg-background rounded-full'>
+                                <div className='bg-primary/10 flex gap-2 px-3 py-1 rounded-full outline-primary/40 outline-[0.5px] outline items-center justify-center'>
+                                    {country ? (
+                                        <>
+                                            <p>Searching in</p>
+                                            <ReactCountryFlag countryCode={country} />
+                                            <p className='font-bold'>{displayNames.of(country)}</p>
+                                        </>
+                                    ) : (
+                                        <p>Select a country</p>
+                                    )}
+                                    <ChevronDownIcon />
+                                </div>
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                            {countriesList.map((country) => (
+                                <SelectItem key={country} value={country}>
+                                    <div className='flex gap-2 items-center'>
+                                        <ReactCountryFlag countryCode={country} />
+                                        {displayNames.of(country)}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+        </>
+    );
+};
+
+export default CountryPicker;

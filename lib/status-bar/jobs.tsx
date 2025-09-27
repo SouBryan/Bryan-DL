@@ -4,9 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 let jobs = [] as { ready: () => Promise<void>; UUID: string }[];
 
-export function loadStatusBarValue(
-    setStatusBar: React.Dispatch<React.SetStateAction<StatusBarProps>>
-): Promise<StatusBarProps> {
+export function loadStatusBarValue(setStatusBar: React.Dispatch<React.SetStateAction<StatusBarProps>>): Promise<StatusBarProps> {
     return new Promise((resolve) => {
         setStatusBar((prev) => (resolve(prev), prev));
     });

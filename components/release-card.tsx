@@ -28,6 +28,7 @@ import { useFFmpeg } from '@/lib/ffmpeg-provider';
 import { useSettings } from '@/lib/settings-provider';
 import { useStatusBar } from '@/lib/status-bar/context';
 import { useToast } from '@/hooks/use-toast';
+import { useCountry } from '@/lib/country-provider';
 
 const ReleaseCard = ({
     result,
@@ -63,6 +64,7 @@ const ReleaseCard = ({
     }, [imageLoaded]);
 
     const [openArtistDialog, setOpenArtistDialog] = useState(false);
+    const { country } = useCountry();
 
     return (
         <div className='space-y-2' title={formatTitle(result)} ref={ref || undefined}>
@@ -82,14 +84,10 @@ const ReleaseCard = ({
                         <div className='space-y-0.5 p-4 flex justify-between relative overflow-x-hidden'>
                             <div className='w-full pr-9'>
                                 <p className='text-sm truncate capitalize font-bold'>
-                                    {!(getType(result) === 'artists')
-                                        ? album.genre.name
-                                        : (result as QobuzArtist).albums_count + ' Releases'}
+                                    {!(getType(result) === 'artists') ? album.genre.name : (result as QobuzArtist).albums_count + ' Releases'}
                                 </p>
                                 {!(getType(result) === 'artists') && (
-                                    <p className='text-xs truncate capitalize font-medium'>
-                                        {new Date(album.released_at * 1000).getFullYear()}
-                                    </p>
+                                    <p className='text-xs truncate capitalize font-medium'>{new Date(album.released_at * 1000).getFullYear()}</p>
                                 )}
                                 {!(getType(result) === 'artists') && (
                                     <div className='flex text-[10px] truncate font-semibold items-center justify-start'>
@@ -102,15 +100,12 @@ const ReleaseCard = ({
                                     {(result as QobuzAlbum).tracks_count ? (
                                         <>
                                             <p>
-                                                {(result as QobuzAlbum).tracks_count}{' '}
-                                                {(result as QobuzAlbum).tracks_count > 1 ? 'tracks' : 'track'}
+                                                {(result as QobuzAlbum).tracks_count} {(result as QobuzAlbum).tracks_count > 1 ? 'tracks' : 'track'}
                                             </p>
                                             <DotIcon size={16} />
                                         </>
                                     ) : null}
-                                    {!(getType(result) === 'artists') && (
-                                        <p>{formatDuration((result as QobuzAlbum | QobuzTrack).duration)}</p>
-                                    )}
+                                    {!(getType(result) === 'artists') && <p>{formatDuration((result as QobuzAlbum | QobuzTrack).duration)}</p>}
                                 </div>
                             </div>
                             {getType(result) !== 'artists' && showArtistDialog && (
@@ -142,7 +137,8 @@ const ReleaseCard = ({
                                                 settings,
                                                 toast as any,
                                                 fetchedAlbumData,
-                                                setFetchedAlbumData
+                                                setFetchedAlbumData,
+                                                country
                                             );
                                         }}
                                     >
@@ -169,11 +165,7 @@ const ReleaseCard = ({
                                         variant='ghost'
                                         onClick={async () => {
                                             setOpenTracklist(!openTracklist);
-                                            await getFullAlbumInfo(
-                                                fetchedAlbumData,
-                                                setFetchedAlbumData,
-                                                result as QobuzAlbum
-                                            );
+                                            await getFullAlbumInfo(fetchedAlbumData, setFetchedAlbumData, result as QobuzAlbum, country);
                                         }}
                                     >
                                         <AlignJustifyIcon />
@@ -224,11 +216,7 @@ const ReleaseCard = ({
                             )}
                         </>
                     ) : (
-                        <motion.div
-                            className='flex items-center justify-center bg-secondary w-full h-full'
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                        >
+                        <motion.div className='flex items-center justify-center bg-secondary w-full h-full' initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             {filterData.map((filter, index) => {
                                 if (filter.value === getType(result)) {
                                     return <filter.icon key={index} className='w-1/2 h-1/2 opacity-20' />;
@@ -252,10 +240,7 @@ const ReleaseCard = ({
                     <h1 className='text-sm truncate font-bold group-hover:underline'>{formatTitle(result)}</h1>
                 </div>
                 {!(getType(result) === 'artists') && (
-                    <div
-                        className='text-xs truncate flex gap-x-0.5 items-center'
-                        title={formatArtists(result as QobuzAlbum | QobuzTrack)}
-                    >
+                    <div className='text-xs truncate flex gap-x-0.5 items-center' title={formatArtists(result as QobuzAlbum | QobuzTrack)}>
                         <UsersIcon className='size-3.5 shrink-0' />
                         <span className='truncate'>{formatArtists(result as QobuzAlbum | QobuzTrack)}</span>
                     </div>
@@ -267,9 +252,7 @@ const ReleaseCard = ({
                     </div>
                 ) : null}
             </div>
-            {getType(result) === 'artists' && (
-                <ArtistDialog open={openArtistDialog} setOpen={setOpenArtistDialog} artist={result as QobuzArtist} />
-            )}
+            {getType(result) === 'artists' && <ArtistDialog open={openArtistDialog} setOpen={setOpenArtistDialog} artist={result as QobuzArtist} />}
             <Dialog open={openTracklist} onOpenChange={setOpenTracklist}>
                 <DialogContent className='w-[600px] max-w-[90%] md:max-w-[80%] overflow-hidden'>
                     <div className='flex gap-3 overflow-hidden'>
@@ -287,17 +270,11 @@ const ReleaseCard = ({
 
                         <div className='flex w-full flex-col justify-between overflow-hidden'>
                             <div className='space-y-1.5 overflow-visible'>
-                                <DialogTitle
-                                    title={formatTitle(album || result)}
-                                    className='truncate overflow-visible py-0.5 pr-2'
-                                >
+                                <DialogTitle title={formatTitle(album || result)} className='truncate overflow-visible py-0.5 pr-2'>
                                     {formatTitle(album || result)}
                                 </DialogTitle>
                                 {!(getType(result) === 'artists') && (
-                                    <DialogDescription
-                                        title={formatArtists(result as QobuzAlbum | QobuzTrack)}
-                                        className='truncate overflow-visible '
-                                    >
+                                    <DialogDescription title={formatArtists(result as QobuzAlbum | QobuzTrack)} className='truncate overflow-visible '>
                                         {formatArtists(result as QobuzAlbum | QobuzTrack)}
                                     </DialogDescription>
                                 )}
@@ -306,8 +283,7 @@ const ReleaseCard = ({
                                 <div className='space-y-1.5 w-fit'>
                                     {!(getType(result) === 'artists') && (
                                         <DialogDescription className='truncate'>
-                                            {album.tracks_count} {album.tracks_count > 1 ? 'tracks' : 'track'} -{' '}
-                                            {formatDuration(album.duration)}
+                                            {album.tracks_count} {album.tracks_count > 1 ? 'tracks' : 'track'} - {formatDuration(album.duration)}
                                         </DialogDescription>
                                     )}
                                 </div>
@@ -344,9 +320,7 @@ const ReleaseCard = ({
                                                     )}
                                                 >
                                                     <div className='gap-2 flex items-center overflow-hidden'>
-                                                        <span className='text-muted-foreground text-sm'>
-                                                            {index + 1}
-                                                        </span>
+                                                        <span className='text-muted-foreground text-sm'>{index + 1}</span>
                                                         {track.parental_warning && (
                                                             <p
                                                                 className='text-[10px] bg-primary text-primary-foreground p-1 rounded-[3px] aspect-square w-[18px] h-[18px] shrink-0 text-center justify-center items-center flex font-semibold'
@@ -369,7 +343,10 @@ const ReleaseCard = ({
                                                                     setStatusBar,
                                                                     ffmpegState,
                                                                     settings,
-                                                                    toast as any
+                                                                    toast as any,
+                                                                    undefined,
+                                                                    undefined,
+                                                                    country
                                                                 );
                                                                 toast({
                                                                     title: `Added '${formatTitle(track)}' to the queue`,
@@ -392,9 +369,7 @@ const ReleaseCard = ({
                     )}
                 </DialogContent>
             </Dialog>
-            {getType(result) !== 'artists' && showArtistDialog && (
-                <ArtistDialog open={openArtistDialog} setOpen={setOpenArtistDialog} artist={artist} />
-            )}
+            {getType(result) !== 'artists' && showArtistDialog && <ArtistDialog open={openArtistDialog} setOpen={setOpenArtistDialog} artist={artist} />}
         </div>
     );
 };

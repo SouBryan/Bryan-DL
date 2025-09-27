@@ -5,14 +5,7 @@ import { artistReleaseCategories } from '@/components/artist-dialog';
 import { cleanFileName, formatBytes, formatCustomTitle, resizeImage } from './utils';
 import { createJob } from './status-bar/jobs';
 import { Disc3Icon, DiscAlbumIcon } from 'lucide-react';
-import {
-    FetchedQobuzAlbum,
-    formatTitle,
-    getFullResImageUrl,
-    QobuzAlbum,
-    QobuzArtistResults,
-    QobuzTrack
-} from './qobuz-dl';
+import { FetchedQobuzAlbum, formatTitle, getFullResImageUrl, QobuzAlbum, QobuzArtistResults, QobuzTrack } from './qobuz-dl';
 import { SettingsProps } from './settings-provider';
 import { StatusBarProps } from '@/components/status-bar/status-bar';
 import { ToastAction } from '@/components/ui/toast';
@@ -25,7 +18,8 @@ export const createDownloadJob = async (
     settings: SettingsProps,
     toast: (toast: any) => void,
     fetchedAlbumData?: FetchedQobuzAlbum | null,
-    setFetchedAlbumData?: React.Dispatch<React.SetStateAction<FetchedQobuzAlbum | null>>
+    setFetchedAlbumData?: React.Dispatch<React.SetStateAction<FetchedQobuzAlbum | null>>,
+    country?: string
 ) => {
     if ((result as QobuzTrack).album) {
         const formattedTitle = formatCustomTitle(settings.trackName, result as QobuzTrack);
@@ -47,14 +41,14 @@ export const createDownloadJob = async (
                     }));
                     if (
                         settings.applyMetadata ||
-                        !(
-                            (settings.outputQuality === '27' && settings.outputCodec === 'FLAC') ||
-                            (settings.bitrate === 320 && settings.outputCodec === 'MP3')
-                        )
+                        !((settings.outputQuality === '27' && settings.outputCodec === 'FLAC') || (settings.bitrate === 320 && settings.outputCodec === 'MP3'))
                     )
                         await loadFFmpeg(ffmpegState, signal);
                     setStatusBar((prev) => ({ ...prev, description: 'Fetching track size...' }));
                     const APIResponse = await axios.get('/api/download-music', {
+                        headers: {
+                            'Token-Country': country
+                        },
                         params: { track_id: (result as QobuzTrack).id, quality: settings.outputQuality },
                         signal
                     });
@@ -78,22 +72,15 @@ export const createDownloadJob = async (
                     });
                     setStatusBar((prev) => ({ ...prev, description: `Applying metadata...`, progress: 100 }));
                     const inputFile = response.data;
-                    let outputFile = await applyMetadata(
-                        inputFile,
-                        result as QobuzTrack,
-                        ffmpegState,
-                        settings,
-                        setStatusBar
-                    );
-                    if (settings.outputCodec === 'FLAC' && settings.fixMD5)
-                        outputFile = await fixMD5Hash(outputFile, setStatusBar);
+                    let outputFile = await applyMetadata(inputFile, result as QobuzTrack, ffmpegState, settings, setStatusBar);
+                    if (settings.outputCodec === 'FLAC' && settings.fixMD5) outputFile = await fixMD5Hash(outputFile, setStatusBar);
                     const objectURL = URL.createObjectURL(new Blob([outputFile]));
                     const title = formattedTitle + '.' + codecMap[settings.outputCodec].extension;
                     const audioElement = document.createElement('audio');
                     audioElement.id = `track_${result.id}`;
                     audioElement.src = objectURL;
                     audioElement.onloadedmetadata = function () {
-                        if (audioElement.duration >= result.duration) {
+                        if (Math.round(audioElement.duration) >= Math.round(result.duration)) {
                             proceedDownload(objectURL, title);
                             resolve();
                         } else {
@@ -123,10 +110,7 @@ export const createDownloadJob = async (
                             title: 'Error',
                             description: e instanceof Error ? e.message : 'An unknown error occurred',
                             action: (
-                                <ToastAction
-                                    altText='Copy Stack'
-                                    onClick={() => navigator.clipboard.writeText((e as Error).stack!)}
-                                >
+                                <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>
                                     Copy Stack
                                 </ToastAction>
                             )
@@ -157,16 +141,14 @@ export const createDownloadJob = async (
                     }));
                     if (
                         settings.applyMetadata ||
-                        !(
-                            (settings.outputQuality === '27' && settings.outputCodec === 'FLAC') ||
-                            (settings.bitrate === 320 && settings.outputCodec === 'MP3')
-                        )
+                        !((settings.outputQuality === '27' && settings.outputCodec === 'FLAC') || (settings.bitrate === 320 && settings.outputCodec === 'MP3'))
                     )
                         await loadFFmpeg(ffmpegState, signal);
                     setStatusBar((prev) => ({ ...prev, description: 'Fetching album data...' }));
                     if (!fetchedAlbumData) {
                         const albumDataResponse = await axios.get('/api/get-album', {
                             params: { album_id: (result as QobuzAlbum).id },
+                            headers: { 'Token-Country': country },
                             signal
                         });
                         if (setFetchedAlbumData) {
@@ -187,6 +169,7 @@ export const createDownloadJob = async (
                         if (track.streamable) {
                             const fileURLResponse = await axios.get('/api/download-music', {
                                 params: { track_id: track.id, quality: settings.outputQuality },
+                                headers: { 'Token-Country': country },
                                 signal
                             });
                             const trackURL = fileURLResponse.data.data.url;
@@ -207,14 +190,8 @@ export const createDownloadJob = async (
                     const trackBuffers = [] as ArrayBuffer[];
                     let totalBytesDownloaded = 0;
                     setStatusBar((statusBar) => ({ ...statusBar, progress: 0, description: `Fetching album art...` }));
-                    const albumArtURL = await resizeImage(
-                        getFullResImageUrl(fetchedAlbumData!),
-                        settings.albumArtSize,
-                        settings.albumArtQuality
-                    );
-                    const albumArt = albumArtURL
-                        ? (await axios.get(albumArtURL, { responseType: 'arraybuffer' })).data
-                        : false;
+                    const albumArtURL = await resizeImage(getFullResImageUrl(fetchedAlbumData!), settings.albumArtSize, settings.albumArtQuality);
+                    const albumArt = albumArtURL ? (await axios.get(albumArtURL, { responseType: 'arraybuffer' })).data : false;
                     for (const [index, url] of albumUrls.entries()) {
                         if (url) {
                             const response = await axios.get(url, {
@@ -225,11 +202,7 @@ export const createDownloadJob = async (
                                             if (statusBar.processing && !cancelled)
                                                 return {
                                                     ...statusBar,
-                                                    progress: Math.floor(
-                                                        ((totalBytesDownloaded + progressEvent.loaded) /
-                                                            totalAlbumSize) *
-                                                            100
-                                                    ),
+                                                    progress: Math.floor(((totalBytesDownloaded + progressEvent.loaded) / totalAlbumSize) * 100),
                                                     description: `${formatBytes(totalBytesDownloaded + progressEvent.loaded)} / ${formatBytes(totalAlbumSize)}`
                                                 };
                                             else return statusBar;
@@ -249,8 +222,7 @@ export const createDownloadJob = async (
                                 albumArt,
                                 fetchedAlbumData!.upc
                             );
-                            if (settings.outputCodec === 'FLAC' && settings.fixMD5)
-                                outputFile = await (await fixMD5Hash(outputFile)).arrayBuffer();
+                            if (settings.outputCodec === 'FLAC' && settings.fixMD5) outputFile = await (await fixMD5Hash(outputFile)).arrayBuffer();
                             trackBuffers[index] = outputFile;
                         }
                     }
@@ -287,10 +259,7 @@ export const createDownloadJob = async (
                             title: 'Error',
                             description: e instanceof Error ? e.message : 'An unknown error occurred',
                             action: (
-                                <ToastAction
-                                    altText='Copy Stack'
-                                    onClick={() => navigator.clipboard.writeText((e as Error).stack!)}
-                                >
+                                <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>
                                     Copy Stack
                                 </ToastAction>
                             )
@@ -318,7 +287,8 @@ export async function downloadArtistDiscography(
     setStatusBar: React.Dispatch<React.SetStateAction<StatusBarProps>>,
     settings: SettingsProps,
     toast: (toast: any) => void,
-    ffmpegState: FFmpegType
+    ffmpegState: FFmpegType,
+    country?: string
 ) {
     let types: ('album' | 'epSingle' | 'live' | 'compilation')[] = [];
     if (type === 'all') types = ['album', 'epSingle', 'live', 'compilation'];
@@ -329,7 +299,7 @@ export async function downloadArtistDiscography(
             artistResults = (await loadArtistResults(setArtistResults)) as QobuzArtistResults;
         }
         for (const release of artistResults.artist.releases[type].items) {
-            await createDownloadJob(release, setStatusBar, ffmpegState, settings, toast);
+            await createDownloadJob(release, setStatusBar, ffmpegState, settings, toast, undefined, undefined, country);
         }
     }
     toast({
@@ -338,9 +308,7 @@ export async function downloadArtistDiscography(
     });
 }
 
-export async function loadArtistResults(
-    setArtistResults: React.Dispatch<React.SetStateAction<QobuzArtistResults | null>>
-): Promise<QobuzArtistResults | null> {
+export async function loadArtistResults(setArtistResults: React.Dispatch<React.SetStateAction<QobuzArtistResults | null>>): Promise<QobuzArtistResults | null> {
     return new Promise((resolve) => {
         setArtistResults((prev: QobuzArtistResults | null) => (resolve(prev), prev));
     });
