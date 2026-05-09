@@ -8,7 +8,7 @@ services:
             - '${PORT:-3000}:3000'
         env_file: .env
         environment:
-            - SOCKS5_PROXY=warp-socks:1080
+            - SOCKS5_PROXY=warp-socks:9091
         depends_on:
             warp-socks:
                 condition: service_healthy
@@ -29,11 +29,11 @@ services:
         volumes:
             - warp_data:/var/lib/cloudflare-warp
         healthcheck:
-            test: ['CMD', 'curl', '-x', 'socks5h://localhost:1080', '-s', 'https://cloudflare.com/cdn-cgi/trace']
+            test: ['CMD', 'curl', '-x', 'socks5h://localhost:9091', '-s', 'https://cloudflare.com/cdn-cgi/trace']
             interval: 15s
-            timeout: 5s
-            retries: 5
-            start_period: 30s
+            timeout: 10s
+            retries: 10
+            start_period: 45s
         restart: unless-stopped
         networks:
             - qobuz-network
