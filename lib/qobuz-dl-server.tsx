@@ -35,18 +35,10 @@ function isRateLimited(error: unknown): boolean {
 }
 
 async function triggerIpRotation(): Promise<void> {
-    // Reconnect WARP tunnel to get a new IP (faster than container restart)
     try {
         const { execSync } = await import('node:child_process');
-        try {
-            execSync('docker exec warp-socks warp-cli disconnect 2>/dev/null', { timeout: 5000 });
-            await new Promise((r) => setTimeout(r, 1000));
-            execSync('docker exec warp-socks warp-cli connect 2>/dev/null', { timeout: 5000 });
-        } catch {
-            // Fallback: full container restart
-            execSync('docker restart warp-socks 2>/dev/null', { timeout: 15000 });
-        }
-        await new Promise((r) => setTimeout(r, 5000));
+        execSync('docker restart warp-socks 2>/dev/null', { timeout: 15000 });
+        await new Promise((r) => setTimeout(r, 10000));
         console.log('[warp] IP rotated due to rate limit');
     } catch {
         console.warn('[warp] Could not trigger IP rotation (not in Docker or no permission)');
