@@ -1,6 +1,6 @@
 import { getTokenForCountry, tokenCountriesMap } from '@/config/token-countries';
 import { APIOptionProps, QobuzArtist, QobuzSearchResults } from './qobuz-dl';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 // Functions only to be used by servers
 // Do not import this file into the client
@@ -9,11 +9,75 @@ const QOBUZ_ALBUM_URL_REGEX = /https:\/\/(play|open)\.qobuz\.com\/album\/[a-zA-Z
 const QOBUZ_TRACK_URL_REGEX = /https:\/\/(play|open)\.qobuz\.com\/track\/\d+/;
 const QOBUZ_ARTIST_URL_REGEX = /https:\/\/(play|open)\.qobuz\.com\/artist\/\d+/;
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
+
 let crypto: any;
 let SocksProxyAgent: any;
 if (typeof window === 'undefined') {
     crypto = await import('node:crypto');
     SocksProxyAgent = (await import('socks-proxy-agent'))['SocksProxyAgent'];
+}
+
+function getProxyAgent() {
+    if (process.env.SOCKS5_PROXY) {
+        return new SocksProxyAgent('socks5://' + process.env.SOCKS5_PROXY);
+    }
+    return undefined;
+}
+
+function isRateLimited(error: unknown): boolean {
+    if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        return status === 429 || status === 403;
+    }
+    return false;
+}
+
+async function triggerIpRotation(): Promise<void> {
+    // Reconnect WARP tunnel to get a new IP (faster than container restart)
+    try {
+        const { execSync } = await import('node:child_process');
+        try {
+            execSync('docker exec warp-socks warp-cli disconnect 2>/dev/null', { timeout: 5000 });
+            await new Promise((r) => setTimeout(r, 1000));
+            execSync('docker exec warp-socks warp-cli connect 2>/dev/null', { timeout: 5000 });
+        } catch {
+            // Fallback: full container restart
+            execSync('docker restart warp-socks 2>/dev/null', { timeout: 15000 });
+        }
+        await new Promise((r) => setTimeout(r, 5000));
+        console.log('[warp] IP rotated due to rate limit');
+    } catch {
+        console.warn('[warp] Could not trigger IP rotation (not in Docker or no permission)');
+    }
+}
+
+async function sleep(ms: number) {
+    return new Promise((r) => setTimeout(r, ms));
+}
+
+async function axiosWithRetry(config: Parameters<typeof axios.get>[1] & { url: string }, retries = MAX_RETRIES): Promise<any> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const { url, ...rest } = config;
+            const proxyAgent = getProxyAgent();
+            const response = await axios.get(url, {
+                ...rest,
+                httpAgent: proxyAgent,
+                httpsAgent: proxyAgent,
+            });
+            return response;
+        } catch (error) {
+            if (isRateLimited(error) && attempt < retries) {
+                console.warn(`[qobuz] Rate limited (attempt ${attempt + 1}/${retries + 1}), rotating IP...`);
+                await triggerIpRotation();
+                await sleep(RETRY_DELAY_MS * (attempt + 1));
+                continue;
+            }
+            throw error;
+        }
+    }
 }
 
 export function testForRequirements() {
@@ -52,18 +116,13 @@ export async function search(query: string, limit: number = 10, offset: number =
     url.searchParams.append('query', id || query);
     url.searchParams.append('limit', limit.toString());
     url.searchParams.append('offset', offset.toString());
-    let proxyAgent = undefined;
-    if (process.env.SOCKS5_PROXY) {
-        proxyAgent = new SocksProxyAgent('socks5://' + process.env.SOCKS5_PROXY);
-    }
-    const response = await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
+    const response = await axiosWithRetry({
+        url: process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(),
         headers: {
             'x-app-id': process.env.QOBUZ_APP_ID!,
             'x-user-auth-token': token,
             'User-Agent': process.env.CORS_PROXY ? 'Qobuz-DL' : undefined
         },
-        httpAgent: proxyAgent,
-        httpsAgent: proxyAgent,
         ...requestOptions
     });
     return {
@@ -78,20 +137,15 @@ export async function getArtist(artistId: string, options?: APIOptionProps): Pro
     const token = country ? getTokenForCountry(country) : getRandomToken();
 
     const url = new URL(process.env.QOBUZ_API_BASE + '/artist/page');
-    let proxyAgent = undefined;
-    if (process.env.SOCKS5_PROXY) {
-        proxyAgent = new SocksProxyAgent('socks5://' + process.env.SOCKS5_PROXY);
-    }
     return (
-        await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
+        await axiosWithRetry({
+            url: process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(),
             params: { artist_id: artistId, sort: 'release_date' },
             headers: {
                 'x-app-id': process.env.QOBUZ_APP_ID!,
                 'x-user-auth-token': token,
                 'User-Agent': process.env.CORS_PROXY ? 'Qobuz-DL' : undefined
             },
-            httpAgent: proxyAgent,
-            httpsAgent: proxyAgent,
             ...requestOptions
         })
     ).data;
@@ -116,18 +170,13 @@ export async function getArtistReleases(
     url.searchParams.append('offset', offset.toString());
     url.searchParams.append('track_size', track_size.toString());
     url.searchParams.append('sort', 'release_date');
-    let proxyAgent = undefined;
-    if (process.env.SOCKS5_PROXY) {
-        proxyAgent = new SocksProxyAgent('socks5://' + process.env.SOCKS5_PROXY);
-    }
-    const response = await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
+    const response = await axiosWithRetry({
+        url: process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(),
         headers: {
             'x-app-id': process.env.QOBUZ_APP_ID!,
             'x-user-auth-token': token,
             'User-Agent': process.env.CORS_PROXY ? 'Qobuz-DL' : undefined
         },
-        httpAgent: proxyAgent,
-        httpsAgent: proxyAgent,
         ...requestOptions
     });
     return response.data;
@@ -141,18 +190,13 @@ export async function getAlbumInfo(album_id: string, options?: APIOptionProps) {
     const url = new URL(process.env.QOBUZ_API_BASE + 'album/get');
     url.searchParams.append('album_id', album_id);
     url.searchParams.append('extra', 'track_ids');
-    let proxyAgent = undefined;
-    if (process.env.SOCKS5_PROXY) {
-        proxyAgent = new SocksProxyAgent('socks5://' + process.env.SOCKS5_PROXY);
-    }
-    const response = await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
+    const response = await axiosWithRetry({
+        url: process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(),
         headers: {
             'x-app-id': process.env.QOBUZ_APP_ID!,
             'x-user-auth-token': token,
             'User-Agent': process.env.CORS_PROXY ? 'Qobuz-DL' : undefined
         },
-        httpAgent: proxyAgent,
-        httpsAgent: proxyAgent,
         ...requestOptions
     });
     return response.data;
@@ -172,18 +216,13 @@ export async function getDownloadURL(trackID: number, quality: string, options?:
     url.searchParams.append('track_id', trackID.toString());
     url.searchParams.append('request_ts', timestamp.toString());
     url.searchParams.append('request_sig', r_sig_hashed);
-    let proxyAgent = undefined;
-    if (process.env.SOCKS5_PROXY) {
-        proxyAgent = new SocksProxyAgent('socks5://' + process.env.SOCKS5_PROXY);
-    }
-    const response = await axios.get(process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(), {
+    const response = await axiosWithRetry({
+        url: process.env.CORS_PROXY ? process.env.CORS_PROXY + encodeURIComponent(url.toString()) : url.toString(),
         headers: {
             'x-app-id': process.env.QOBUZ_APP_ID!,
             'x-user-auth-token': token,
             'User-Agent': process.env.CORS_PROXY ? 'Qobuz-DL' : undefined
         },
-        httpAgent: proxyAgent,
-        httpsAgent: proxyAgent,
         ...requestOptions
     });
     return response.data.url;

@@ -1,7 +1,64 @@
 services:
     qobuz-dl:
         container_name: qobuz-dl
-        image: qobuz-dl
+        build:
+            context: .
+            dockerfile: Dockerfile
         ports:
-            - 3000:3000
+            - '${PORT:-3000}:3000'
+        env_file: .env
+        environment:
+            - SOCKS5_PROXY=warp-socks:1080
+        depends_on:
+            warp-socks:
+                condition: service_healthy
         restart: unless-stopped
+        networks:
+            - qobuz-network
+
+    warp-socks:
+        image: monius/docker-warp-socks:latest
+        container_name: warp-socks
+        privileged: true
+        cap_add:
+            - NET_ADMIN
+            - SYS_MODULE
+        sysctls:
+            - net.ipv6.conf.all.disable_ipv6=0
+            - net.ipv4.conf.all.src_valid_mark=1
+        volumes:
+            - warp_data:/var/lib/cloudflare-warp
+        healthcheck:
+            test: ['CMD', 'curl', '-x', 'socks5h://localhost:1080', '-s', 'https://cloudflare.com/cdn-cgi/trace']
+            interval: 15s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+        restart: unless-stopped
+        networks:
+            - qobuz-network
+
+    # Rotaciona o IP do WARP periodicamente reiniciando o container
+    warp-rotator:
+        image: docker:cli
+        container_name: warp-rotator
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./scripts/rotate-ip.sh:/rotate-ip.sh:ro
+        entrypoint: /bin/sh
+        command: /rotate-ip.sh
+        environment:
+            - ROTATION_INTERVAL=${WARP_ROTATION_INTERVAL:-1800}
+        depends_on:
+            warp-socks:
+                condition: service_healthy
+        restart: unless-stopped
+        networks:
+            - qobuz-network
+
+networks:
+    qobuz-network:
+        driver: bridge
+
+volumes:
+    warp_data:
