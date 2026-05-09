@@ -12,6 +12,10 @@ const QOBUZ_ARTIST_URL_REGEX = /https:\/\/(play|open)\.qobuz\.com\/artist\/\d+/;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
 
+// Track temporarily blocked tokens (token -> unblock timestamp)
+const blockedTokens = new Map<string, number>();
+const TOKEN_BLOCK_DURATION_MS = 60_000; // block token for 60s after rate limit
+
 let crypto: any;
 let SocksProxyAgent: any;
 if (typeof window === 'undefined') {
@@ -50,23 +54,36 @@ async function sleep(ms: number) {
 }
 
 async function axiosWithRetry(config: Parameters<typeof axios.get>[1] & { url: string }, retries = MAX_RETRIES): Promise<any> {
+    const urlPath = new URL(config.url.includes('?url=') ? decodeURIComponent(config.url.split('?url=')[1] || config.url) : config.url).pathname;
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
             const { url, ...rest } = config;
             const proxyAgent = getProxyAgent();
+            const currentToken = rest.headers?.['x-user-auth-token'] as string;
+            console.log(`[req] ${urlPath} (token ...${currentToken?.slice(-6) || '?'}, attempt ${attempt + 1})`);
             const response = await axios.get(url, {
                 ...rest,
                 httpAgent: proxyAgent,
                 httpsAgent: proxyAgent,
             });
+            console.log(`[res] ${urlPath} → ${response.status}`);
             return response;
         } catch (error) {
             if (isRateLimited(error) && attempt < retries) {
-                console.warn(`[qobuz] Rate limited (attempt ${attempt + 1}/${retries + 1}), rotating IP...`);
+                const oldToken = config.headers?.['x-user-auth-token'] as string;
+                const status = (error as AxiosError).response?.status;
+                console.warn(`[qobuz] ${status} on ${urlPath} (attempt ${attempt + 1}/${retries + 1}), rotating token + IP...`);
+                // Block current token and pick a different one
+                if (oldToken) {
+                    markTokenBlocked(oldToken);
+                    config = { ...config, headers: { ...config.headers, 'x-user-auth-token': getRandomToken(oldToken) } };
+                }
                 await triggerIpRotation();
                 await sleep(RETRY_DELAY_MS * (attempt + 1));
                 continue;
             }
+            const status = (error as AxiosError).response?.status || 'ERR';
+            console.error(`[err] ${urlPath} → ${status}`);
             throw error;
         }
     }
@@ -80,9 +97,24 @@ export function testForRequirements() {
     return true;
 }
 
-export function getRandomToken() {
+export function getRandomToken(excludeToken?: string) {
     if (tokenCountriesMap.length > 0) return tokenCountriesMap[0].token;
-    return JSON.parse(process.env.QOBUZ_AUTH_TOKENS!)[Math.floor(Math.random() * JSON.parse(process.env.QOBUZ_AUTH_TOKENS!).length)] as string;
+    const allTokens: string[] = JSON.parse(process.env.QOBUZ_AUTH_TOKENS!);
+    const now = Date.now();
+    // Clean expired blocks
+    for (const [t, until] of blockedTokens) {
+        if (now > until) blockedTokens.delete(t);
+    }
+    // Filter out blocked + excluded tokens
+    let available = allTokens.filter(t => t !== excludeToken && !blockedTokens.has(t));
+    if (available.length === 0) available = allTokens.filter(t => t !== excludeToken);
+    if (available.length === 0) available = allTokens;
+    return available[Math.floor(Math.random() * available.length)] as string;
+}
+
+function markTokenBlocked(token: string) {
+    blockedTokens.set(token, Date.now() + TOKEN_BLOCK_DURATION_MS);
+    console.log(`[token] Blocked token ...${token.slice(-6)} for ${TOKEN_BLOCK_DURATION_MS / 1000}s (${blockedTokens.size} blocked)`);
 }
 
 export async function search(query: string, limit: number = 10, offset: number = 0, options?: APIOptionProps) {
