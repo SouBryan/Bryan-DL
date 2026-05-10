@@ -21,9 +21,9 @@ do_rotate() {
     echo "[warp-rotator] $(date -u '+%Y-%m-%d %H:%M:%S UTC') - IP: ${OLD_IP} - Rotacionando (${REASON})..."
 
     # Disconnect and reconnect WARP = new WireGuard handshake = new IP
-    docker exec warp-socks warp-cli disconnect 2>/dev/null
+    docker exec warp-socks warp-cli --accept-tos disconnect 2>/dev/null
     sleep 2
-    docker exec warp-socks warp-cli connect 2>/dev/null
+    docker exec warp-socks warp-cli --accept-tos connect 2>/dev/null
     sleep 5
 
     NEW_IP=$(get_current_ip)
@@ -31,9 +31,9 @@ do_rotate() {
     # If IP didn't change, try once more
     if [ "$OLD_IP" = "$NEW_IP" ] && [ "$OLD_IP" != "unknown" ]; then
         echo "[warp-rotator] IP não mudou, tentando novamente..."
-        docker exec warp-socks warp-cli disconnect 2>/dev/null
+        docker exec warp-socks warp-cli --accept-tos disconnect 2>/dev/null
         sleep 3
-        docker exec warp-socks warp-cli connect 2>/dev/null
+        docker exec warp-socks warp-cli --accept-tos connect 2>/dev/null
         sleep 5
         NEW_IP=$(get_current_ip)
     fi

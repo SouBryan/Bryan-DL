@@ -3,6 +3,9 @@ set -e
 
 SOCKS_PORT="${WARP_SOCKS_PORT:-9091}"
 
+# All warp-cli commands need --accept-tos in non-TTY environments
+WARP="warp-cli --accept-tos"
+
 # warp-svc needs D-Bus
 echo "[warp-socks] Starting D-Bus..."
 mkdir -p /run/dbus
@@ -14,7 +17,7 @@ warp-svc &
 
 # Wait for the daemon socket
 for i in $(seq 1 30); do
-    if warp-cli status 2>/dev/null | grep -q "Status"; then
+    if $WARP status 2>/dev/null | grep -q "Status"; then
         echo "[warp-socks] warp-svc is ready"
         break
     fi
@@ -23,23 +26,23 @@ for i in $(seq 1 30); do
 done
 
 # Register if not already registered
-if ! warp-cli registration show 2>/dev/null | grep -q "Account"; then
-    echo "[warp-socks] Accepting TOS and registering..."
-    warp-cli --accept-tos registration new
+if ! $WARP registration show 2>/dev/null | grep -q "Account"; then
+    echo "[warp-socks] Registering..."
+    $WARP registration new
 fi
 
 # Set proxy mode with SOCKS5 on the specified port
 echo "[warp-socks] Configuring proxy mode on port ${SOCKS_PORT}..."
-warp-cli mode proxy
-warp-cli proxy port "${SOCKS_PORT}"
+$WARP mode proxy
+$WARP proxy port "${SOCKS_PORT}"
 
 # Connect
 echo "[warp-socks] Connecting..."
-warp-cli connect
+$WARP connect
 
 # Wait for connection
 for i in $(seq 1 20); do
-    STATUS=$(warp-cli status 2>/dev/null || echo "unknown")
+    STATUS=$($WARP status 2>/dev/null || echo "unknown")
     if echo "$STATUS" | grep -q "Connected"; then
         echo "[warp-socks] Connected! SOCKS5 proxy available at localhost:${SOCKS_PORT}"
         break
