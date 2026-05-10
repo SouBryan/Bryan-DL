@@ -54,23 +54,35 @@ function getProxyAgent() {
     return undefined;
 }
 
+// Status codes that suggest IP-based blocking and warrant rotation
+const BLOCKING_STATUS_CODES = new Set([429, 403, 401, 503, 502]);
+
 function isRateLimited(error: unknown): boolean {
     if (error instanceof AxiosError) {
         const status = error.response?.status;
-        return status === 429 || status === 403;
+        return status !== undefined && BLOCKING_STATUS_CODES.has(status);
     }
     return false;
 }
 
-async function triggerIpRotation(): Promise<void> {
+async function triggerIpRotation(reason: string = 'rate limit'): Promise<void> {
     try {
         const { execSync } = await import('node:child_process');
         execSync('docker restart warp-socks 2>/dev/null', { timeout: 15000 });
         await new Promise((r) => setTimeout(r, 10000));
-        console.log('[warp] IP rotated due to rate limit');
+        console.log(`[warp] IP rotated (reason: ${reason})`);
     } catch {
         console.warn('[warp] Could not trigger IP rotation (not in Docker or no permission)');
     }
+}
+
+// Proactive IP rotation every 30 minutes regardless of errors
+const PROACTIVE_ROTATION_INTERVAL_MS = 30 * 60 * 1000;
+if (typeof window === 'undefined') {
+    setInterval(() => {
+        triggerIpRotation('scheduled 30min rotation');
+    }, PROACTIVE_ROTATION_INTERVAL_MS);
+    console.log('[warp] Proactive rotation scheduled every 30 minutes');
 }
 
 async function sleep(ms: number) {
@@ -104,7 +116,7 @@ async function axiosWithRetry(config: Parameters<typeof axios.get>[1] & { url: s
                     config = { ...config, headers: { ...config.headers, 'x-user-auth-token': newToken } };
                     setTokenContext(newToken);
                 }
-                await triggerIpRotation();
+                await triggerIpRotation(`HTTP ${status} on ${urlPath}`);
                 await sleep(RETRY_DELAY_MS * (attempt + 1));
                 continue;
             }
