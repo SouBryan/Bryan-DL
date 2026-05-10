@@ -122,8 +122,9 @@ export function testForRequirements() {
 }
 
 export function getRandomToken(excludeToken?: string) {
-    if (tokenCountriesMap.length > 0) return tokenCountriesMap[0].token;
-    const allTokens: string[] = JSON.parse(process.env.QOBUZ_AUTH_TOKENS!);
+    const allTokens: string[] = tokenCountriesMap.length > 0
+        ? tokenCountriesMap.map(t => t.token)
+        : JSON.parse(process.env.QOBUZ_AUTH_TOKENS!);
     const now = Date.now();
     // Clean expired blocks
     for (const [t, until] of blockedTokens) {
