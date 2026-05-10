@@ -1,5 +1,6 @@
 import { getTokenForCountry, tokenCountriesMap } from '@/config/token-countries';
 import { APIOptionProps, QobuzArtist, QobuzSearchResults } from './qobuz-dl';
+import { getCountryForToken } from './api-logger';
 import axios, { AxiosError } from 'axios';
 
 // Functions only to be used by servers
@@ -18,9 +19,32 @@ const TOKEN_BLOCK_DURATION_MS = 60_000; // block token for 60s after rate limit
 
 let crypto: any;
 let SocksProxyAgent: any;
+let AsyncLocalStorage: any;
 if (typeof window === 'undefined') {
     crypto = await import('node:crypto');
     SocksProxyAgent = (await import('socks-proxy-agent'))['SocksProxyAgent'];
+    AsyncLocalStorage = (await import('node:async_hooks')).AsyncLocalStorage;
+}
+
+// Request-scoped context to pass token info from deep server functions back to route handlers
+type TokenContext = { suffix: string; country: string };
+const tokenContextStore = AsyncLocalStorage ? new AsyncLocalStorage<TokenContext>() : null;
+
+export function runWithTokenContext<T>(fn: () => Promise<T>): Promise<T & { _tokenSuffix: string; _tokenCountry: string }> {
+    const ctx: TokenContext = { suffix: '', country: '??' };
+    if (!tokenContextStore) return fn().then((r) => ({ ...r as any, _tokenSuffix: ctx.suffix, _tokenCountry: ctx.country }));
+    return tokenContextStore.run(ctx, async () => {
+        const result = await fn();
+        return { ...result as any, _tokenSuffix: ctx.suffix, _tokenCountry: ctx.country };
+    });
+}
+
+function setTokenContext(token: string, country?: string) {
+    const store = tokenContextStore?.getStore();
+    if (store) {
+        store.suffix = token.slice(-6);
+        store.country = country || getCountryForToken(token);
+    }
 }
 
 function getProxyAgent() {
@@ -60,30 +84,30 @@ async function axiosWithRetry(config: Parameters<typeof axios.get>[1] & { url: s
             const { url, ...rest } = config;
             const proxyAgent = getProxyAgent();
             const currentToken = rest.headers?.['x-user-auth-token'] as string;
-            console.log(`[req] ${urlPath} (token ...${currentToken?.slice(-6) || '?'}, attempt ${attempt + 1})`);
+            // Store token info in request-scoped context for the route handler logger
+            setTokenContext(currentToken);
             const response = await axios.get(url, {
                 ...rest,
                 httpAgent: proxyAgent,
                 httpsAgent: proxyAgent,
             });
-            console.log(`[res] ${urlPath} → ${response.status}`);
             return response;
         } catch (error) {
             if (isRateLimited(error) && attempt < retries) {
                 const oldToken = config.headers?.['x-user-auth-token'] as string;
                 const status = (error as AxiosError).response?.status;
-                console.warn(`[qobuz] ${status} on ${urlPath} (attempt ${attempt + 1}/${retries + 1}), rotating token + IP...`);
+                console.warn(`[rate-limit] ${status} on ${urlPath} (attempt ${attempt + 1}/${retries + 1}), rotating token + IP...`);
                 // Block current token and pick a different one
                 if (oldToken) {
                     markTokenBlocked(oldToken);
-                    config = { ...config, headers: { ...config.headers, 'x-user-auth-token': getRandomToken(oldToken) } };
+                    const newToken = getRandomToken(oldToken);
+                    config = { ...config, headers: { ...config.headers, 'x-user-auth-token': newToken } };
+                    setTokenContext(newToken);
                 }
                 await triggerIpRotation();
                 await sleep(RETRY_DELAY_MS * (attempt + 1));
                 continue;
             }
-            const status = (error as AxiosError).response?.status || 'ERR';
-            console.error(`[err] ${urlPath} → ${status}`);
             throw error;
         }
     }

@@ -1,4 +1,5 @@
-import { getArtist } from '@/lib/qobuz-dl-server';
+import { getArtist, runWithTokenContext } from '@/lib/qobuz-dl-server';
+import { logRequest } from '@/lib/api-logger';
 import z from 'zod';
 
 const artistReleasesParamsSchema = z.object({
@@ -8,11 +9,19 @@ const artistReleasesParamsSchema = z.object({
 export async function GET(request: Request) {
     const country = request.headers.get('Token-Country');
     const params = Object.fromEntries(new URL(request.url).searchParams.entries());
+    const start = Date.now();
     try {
         const { artist_id } = artistReleasesParamsSchema.parse(params);
-        const artist = await getArtist(artist_id, country ? { country } : {});
-        return new Response(JSON.stringify({ success: true, data: { artist } }), { status: 200 });
+        const result = await runWithTokenContext(async () => {
+            const artist = await getArtist(artist_id, country ? { country } : {});
+            return { artist };
+        });
+        const { _tokenSuffix, _tokenCountry, artist } = result;
+        const res = new Response(JSON.stringify({ success: true, data: { artist } }), { status: 200 });
+        logRequest(request, 200, Date.now() - start, _tokenSuffix, _tokenCountry);
+        return res;
     } catch (error: any) {
+        logRequest(request, 400, Date.now() - start);
         return new Response(
             JSON.stringify({
                 success: false,

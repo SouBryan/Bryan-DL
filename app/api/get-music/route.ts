@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { search } from '@/lib/qobuz-dl-server';
+import { search, runWithTokenContext } from '@/lib/qobuz-dl-server';
+import { logRequest } from '@/lib/api-logger';
 import z from 'zod';
 
 const searchParamsSchema = z.object({
@@ -10,11 +11,16 @@ const searchParamsSchema = z.object({
 export async function GET(request: NextRequest) {
     const country = request.headers.get('Token-Country');
     const params = Object.fromEntries(new URL(request.url).searchParams.entries());
+    const start = Date.now();
     try {
         const { q, offset } = searchParamsSchema.parse(params);
-        const searchResults = await search(q, 10, offset, country ? { country } : {});
-        return new NextResponse(JSON.stringify({ success: true, data: searchResults }), { status: 200 });
+        const result = await runWithTokenContext(() => search(q, 10, offset, country ? { country } : {}));
+        const { _tokenSuffix, _tokenCountry, ...searchResults } = result;
+        const res = new NextResponse(JSON.stringify({ success: true, data: searchResults }), { status: 200 });
+        logRequest(request, 200, Date.now() - start, _tokenSuffix, _tokenCountry);
+        return res;
     } catch (error: any) {
+        logRequest(request, 400, Date.now() - start);
         return new NextResponse(
             JSON.stringify({
                 success: false,
