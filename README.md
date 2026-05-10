@@ -15,6 +15,20 @@ Qobuz-DL provides a fast and easy way to download music using Qobuz in a variety
 - Re-encode audio provided by Qobuz to a variety of different lossless and lossy codecs using FFmpeg.
 - Apply metadata to downloaded songs.
 
+## Security & Infrastructure
+
+This fork includes hardened production infrastructure:
+
+- **WARP Proxy**: All Qobuz API requests are routed through Cloudflare WARP (SOCKS5 proxy) for IP privacy. Custom Docker image with `warp-cli` + `socat` forwarding.
+- **IP Rotation**: Automatic IPv4 rotation every 30 minutes via `warp-cli disconnect/connect`, plus on-demand rotation triggered by 429/403/401/502/503 responses from Qobuz.
+- **Rate Limiting**: 60 requests/minute per IP via Next.js middleware.
+- **Bot Protection**: Blocks known scanner user-agents (sqlmap, nikto, zgrab, nuclei, etc.) and requests without a user-agent.
+- **Payload Validation**: Detects and blocks malicious payloads (eval, require, path traversal, XSS, `returnNaN` probes, `/let` attacks).
+- **Attack Path Blocking**: Returns 404 for known scanner paths (`/.env`, `/wp-admin`, `/phpmyadmin`, `/.git`, `/actuator`, etc.).
+- **IPGate Integration**: All API routes check incoming IPs against [FireHOL](https://github.com/firehol/blocklist-ipsets) blocklists (~612M blocked IPs) via Unix Domain Socket for O(1) lookup.
+- **IP Blocklist**: Hardcoded block for known persistent attacker IPs.
+- **Cloudflare Tunnel**: Service exposed via `cloudflared` tunnel — no open ports on the server.
+
 ## Table of Contents
 
 - [Installation](#installation)
@@ -39,7 +53,7 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/QobuzDL/Qobuz-DL.git
+git clone https://github.com/SouBryan/Qobuz-DL.git
 ```
 
 ### 2. Navigate to the project directory
@@ -65,7 +79,7 @@ npm run dev
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/QobuzDL/Qobuz-DL.git
+git clone https://github.com/SouBryan/Qobuz-DL.git
 ```
 
 ### 2. Navigate to the project directory
@@ -74,17 +88,16 @@ git clone https://github.com/QobuzDL/Qobuz-DL.git
 cd Qobuz-DL
 ```
 
-### 3. Dockerfile build
+### 3. Docker Compose (recommended)
 
 ```bash
-docker build -t qobuz-dl .
+docker compose up -d
 ```
 
-### 4. Docker compose
-
-```bash
-docker-compose up -d
-```
+This starts 3 services:
+- **qobuz-dl**: The Next.js app on port 3000
+- **warp-socks**: Cloudflare WARP SOCKS5 proxy for IP privacy
+- **warp-rotator**: Automatic IP rotation every 30 minutes
 
 ### Setup .env (IMPORTANT)
 

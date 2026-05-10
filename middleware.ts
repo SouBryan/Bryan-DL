@@ -58,6 +58,11 @@ const BLOCKED_UA_PATTERNS = [
     /java\/[0-9]/i,
 ];
 
+// Hardcoded blocked IPs (known attackers)
+const BLOCKED_IPS = new Set([
+    '2600:387:15:3613::1', // Residential proxy bot - returnNaN/let attacks
+]);
+
 function getClientIp(request: NextRequest): string {
     return (
         request.headers.get('cf-connecting-ip') ||
@@ -103,17 +108,22 @@ export function middleware(request: NextRequest) {
     const ip = getClientIp(request);
     const ua = request.headers.get('user-agent');
 
-    // 1. Block known attack probe paths
+    // 1. Block hardcoded attacker IPs
+    if (BLOCKED_IPS.has(ip)) {
+        return new NextResponse('Forbidden', { status: 403 });
+    }
+
+    // 2. Block known attack probe paths
     if (BLOCKED_PATHS.some((pattern) => pattern.test(pathname))) {
         return new NextResponse('Not Found', { status: 404 });
     }
 
-    // 2. Block known malicious bots (API routes only — pages need browsers)
+    // 3. Block known malicious bots (API routes only — pages need browsers)
     if (pathname.startsWith('/api/') && isBlockedBot(ua)) {
         return new NextResponse('Forbidden', { status: 403 });
     }
 
-    // 3. Rate limiting
+    // 4. Rate limiting
     if (isRateLimited(ip)) {
         return new NextResponse(JSON.stringify({ error: 'Too many requests' }), {
             status: 429,
@@ -121,14 +131,14 @@ export function middleware(request: NextRequest) {
         });
     }
 
-    // 4. Malicious payload detection (URL + query params + pathname)
+    // 5. Malicious payload detection (URL + query params + pathname)
     const params = request.nextUrl.searchParams;
     if (containsMaliciousPayload(request.url, params)) {
         console.warn(`[security] Blocked malicious request from ${ip}: ${request.url.slice(0, 200)}`);
         return new NextResponse('Bad Request', { status: 400 });
     }
 
-    // 5. Validate query params for search endpoints
+    // 6. Validate query params for search endpoints
     if (pathname === '/api/get-music') {
         const q = params.get('q');
         if (q && q.length > 500) {

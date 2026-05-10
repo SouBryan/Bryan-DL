@@ -85,7 +85,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                            <a href='https://github.com/QobuzDL/Qobuz-DL' target='_blank' rel='noopener noreferrer'>
+                                            <a href='https://github.com/SouBryan/Qobuz-DL' target='_blank' rel='noopener noreferrer'>
                                                 <Button variant='outline' size='icon'>
                                                     <FaGithub />
                                                 </Button>
