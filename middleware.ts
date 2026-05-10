@@ -25,6 +25,22 @@ const MALICIOUS_PATTERNS = [
     /\bopen\s*\(\s*['"`]let/i,
 ];
 
+// Paths that are clearly attack probes (not valid app routes)
+const BLOCKED_PATHS = [
+    /^\/let$/i,
+    /\/let$/i, // /dev/let, /app/let, /var/let, /etc/let
+    /^\/\.env/i,
+    /^\/wp-/i, // WordPress probes
+    /^\/admin/i,
+    /^\/phpmyadmin/i,
+    /^\/cgi-bin/i,
+    /^\/\.git/i,
+    /^\/config\.(php|yml|yaml|json|xml|ini)/i,
+    /^\/actuator/i, // Spring Boot probes
+    /^\/debug/i,
+    /^\/console/i,
+];
+
 // Bot user agents to block completely
 const BLOCKED_UA_PATTERNS = [
     /sqlmap/i,
@@ -75,20 +91,29 @@ function isBlockedBot(ua: string | null): boolean {
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Only apply to API routes
-    if (!pathname.startsWith('/api/')) {
+    // Skip static assets and Next.js internals
+    if (
+        pathname.startsWith('/_next/') ||
+        pathname.startsWith('/favicon') ||
+        pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff2?|ttf|map)$/)
+    ) {
         return NextResponse.next();
     }
 
     const ip = getClientIp(request);
     const ua = request.headers.get('user-agent');
 
-    // 1. Block known malicious bots
-    if (isBlockedBot(ua)) {
+    // 1. Block known attack probe paths
+    if (BLOCKED_PATHS.some((pattern) => pattern.test(pathname))) {
+        return new NextResponse('Not Found', { status: 404 });
+    }
+
+    // 2. Block known malicious bots (API routes only — pages need browsers)
+    if (pathname.startsWith('/api/') && isBlockedBot(ua)) {
         return new NextResponse('Forbidden', { status: 403 });
     }
 
-    // 2. Rate limiting
+    // 3. Rate limiting
     if (isRateLimited(ip)) {
         return new NextResponse(JSON.stringify({ error: 'Too many requests' }), {
             status: 429,
@@ -96,14 +121,14 @@ export function middleware(request: NextRequest) {
         });
     }
 
-    // 3. Malicious payload detection
+    // 4. Malicious payload detection (URL + query params + pathname)
     const params = request.nextUrl.searchParams;
     if (containsMaliciousPayload(request.url, params)) {
         console.warn(`[security] Blocked malicious request from ${ip}: ${request.url.slice(0, 200)}`);
         return new NextResponse('Bad Request', { status: 400 });
     }
 
-    // 4. Validate query params for search endpoints
+    // 5. Validate query params for search endpoints
     if (pathname === '/api/get-music') {
         const q = params.get('q');
         if (q && q.length > 500) {
@@ -115,5 +140,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: '/api/:path*',
+    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
