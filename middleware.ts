@@ -24,6 +24,7 @@ const VALID_PATHS = [
     /^\/manifest/,                  // PWA manifest
     /^\/flac\//,                    // public/flac
     /^\/logo\//,                    // public/logo
+    /^\/_next\/webpack-hmr/,        // HMR (dev only, harmless in prod)
 ];
 
 // --- Malicious Payload Detection ---
@@ -102,11 +103,11 @@ function isBlockedBot(ua: string | null): boolean {
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Skip Next.js internals and static assets — always allow
+    // Skip only static assets — matcher already excludes _next/static and _next/image
+    // DO NOT skip all /_next/ — attackers exploit /_next/data/BUILD_ID/returnNaN.json
     if (
-        pathname.startsWith('/_next/') ||
         pathname.startsWith('/favicon') ||
-        pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|css|js|woff2?|ttf|map)$/)
+        pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|css|woff2?|ttf|map)$/)
     ) {
         return NextResponse.next();
     }
@@ -162,6 +163,10 @@ export function middleware(request: NextRequest) {
     }
 
     // Pass through — add CORS headers to the response
+    // Log non-API pass-throughs to find attack vector
+    if (!pathname.startsWith('/api/')) {
+        console.log(`[middleware] Pass: ${ip} → ${request.method} ${pathname}${request.nextUrl.search || ''} | ${(ua || 'no-ua').slice(0, 80)}`);
+    }
     const response = NextResponse.next();
     for (const [key, value] of Object.entries(CORS_HEADERS)) {
         response.headers.set(key, value);
