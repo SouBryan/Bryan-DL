@@ -39,17 +39,19 @@ services:
         networks:
             - qobuz-network
 
-    # Rotaciona o IP do WARP periodicamente reiniciando o container
+    # Rotaciona o IP do WARP periodicamente recriando o container
     warp-rotator:
         image: docker:cli
         container_name: warp-rotator
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - ./scripts/rotate-ip.sh:/rotate-ip.sh:ro
+            - ./docker-compose.yml:/project/docker-compose.yml:ro
         entrypoint: /bin/sh
         command: /rotate-ip.sh
         environment:
             - ROTATION_INTERVAL=${WARP_ROTATION_INTERVAL:-1800}
+            - COMPOSE_DIR=/project
         depends_on:
             warp-socks:
                 condition: service_healthy
