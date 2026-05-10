@@ -3,6 +3,12 @@ set -e
 
 SOCKS_PORT="${WARP_SOCKS_PORT:-9091}"
 
+# warp-svc needs D-Bus
+echo "[warp-socks] Starting D-Bus..."
+mkdir -p /run/dbus
+dbus-daemon --system --nofork &
+sleep 1
+
 echo "[warp-socks] Starting warp-svc daemon..."
 warp-svc &
 
@@ -18,8 +24,8 @@ done
 
 # Register if not already registered
 if ! warp-cli registration show 2>/dev/null | grep -q "Account"; then
-    echo "[warp-socks] Registering new WARP account..."
-    warp-cli registration new
+    echo "[warp-socks] Accepting TOS and registering..."
+    warp-cli --accept-tos registration new
 fi
 
 # Set proxy mode with SOCKS5 on the specified port
@@ -42,6 +48,6 @@ for i in $(seq 1 20); do
     sleep 3
 done
 
-# Keep alive
+# Keep alive - follow warp-svc
 echo "[warp-socks] Running. SOCKS5 on :${SOCKS_PORT}"
-wait
+tail -f /dev/null

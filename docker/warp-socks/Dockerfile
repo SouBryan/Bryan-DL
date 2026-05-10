@@ -5,7 +5,7 @@ ENV WARP_SOCKS_PORT=9091
 
 # Install dependencies + Cloudflare WARP client
 RUN apt-get update && \
-    apt-get install -y curl gnupg lsb-release iproute2 && \
+    apt-get install -y curl gnupg lsb-release iproute2 dbus && \
     curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/cloudflare-client.list && \
     apt-get update && \
