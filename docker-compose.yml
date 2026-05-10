@@ -9,6 +9,7 @@ services:
         env_file: .env
         environment:
             - SOCKS5_PROXY=warp-socks:9091
+            - WARP_ROTATOR_URL=http://warp-rotator:7070/rotate
         depends_on:
             warp-socks:
                 condition: service_healthy

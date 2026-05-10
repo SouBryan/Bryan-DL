@@ -66,24 +66,19 @@ function isRateLimited(error: unknown): boolean {
 }
 
 async function triggerIpRotation(reason: string = 'rate limit'): Promise<void> {
+    const rotatorUrl = process.env.WARP_ROTATOR_URL;
+    if (!rotatorUrl) {
+        console.warn('[warp] WARP_ROTATOR_URL not set, cannot trigger IP rotation');
+        return;
+    }
     try {
-        const { execSync } = await import('node:child_process');
-        execSync('docker restart warp-socks 2>/dev/null', { timeout: 15000 });
-        await new Promise((r) => setTimeout(r, 10000));
-        console.log(`[warp] IP rotated (reason: ${reason})`);
+        await axios.get(rotatorUrl, { timeout: 30000 });
+        console.log(`[warp] IP rotation requested (reason: ${reason})`);
     } catch {
-        console.warn('[warp] Could not trigger IP rotation (not in Docker or no permission)');
+        console.warn(`[warp] Failed to trigger IP rotation via ${rotatorUrl}`);
     }
 }
-
-// Proactive IP rotation every 30 minutes regardless of errors
-const PROACTIVE_ROTATION_INTERVAL_MS = 30 * 60 * 1000;
-if (typeof window === 'undefined') {
-    setInterval(() => {
-        triggerIpRotation('scheduled 30min rotation');
-    }, PROACTIVE_ROTATION_INTERVAL_MS);
-    console.log('[warp] Proactive rotation scheduled every 30 minutes');
-}
+// Proactive rotation is handled by the warp-rotator container (every ROTATION_INTERVAL seconds)
 
 async function sleep(ms: number) {
     return new Promise((r) => setTimeout(r, ms));
