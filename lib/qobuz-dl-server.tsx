@@ -19,16 +19,16 @@ const TOKEN_BLOCK_DURATION_MS = 60_000; // block token for 60s after rate limit
 
 let crypto: any;
 let SocksProxyAgent: any;
-let AsyncLocalStorage: any;
+let _AsyncLocalStorage: typeof import('node:async_hooks').AsyncLocalStorage | null = null;
 if (typeof window === 'undefined') {
     crypto = await import('node:crypto');
     SocksProxyAgent = (await import('socks-proxy-agent'))['SocksProxyAgent'];
-    AsyncLocalStorage = (await import('node:async_hooks')).AsyncLocalStorage;
+    _AsyncLocalStorage = (await import('node:async_hooks')).AsyncLocalStorage;
 }
 
 // Request-scoped context to pass token info from deep server functions back to route handlers
 type TokenContext = { suffix: string; country: string };
-const tokenContextStore = AsyncLocalStorage ? new AsyncLocalStorage<TokenContext>() : null;
+const tokenContextStore = _AsyncLocalStorage ? new _AsyncLocalStorage<TokenContext>() : null;
 
 export function runWithTokenContext<T>(fn: () => Promise<T>): Promise<T & { _tokenSuffix: string; _tokenCountry: string }> {
     const ctx: TokenContext = { suffix: '', country: '??' };
