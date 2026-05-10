@@ -66,6 +66,7 @@ const BLOCKED_UA_PATTERNS = [
 const BLOCKED_IPS = new Set([
     '2600:387:15:3613::1', // Residential proxy bot - returnNaN/let attacks
     '2601:281:c800:1ab0:cca1:36cc:4524:60e7', // Mass album downloader bot (Opera)
+    '45.94.31.32', // WordPress scanner bot - 1337 Services GmbH NL (AbuseIPDB flagged)
 ]);
 
 function getClientIp(request: NextRequest): string {
