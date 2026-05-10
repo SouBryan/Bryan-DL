@@ -126,6 +126,7 @@ export function middleware(request: NextRequest) {
     // 2. WHITELIST — block any path that isn't a known valid route
     //    This kills returnNaN/let/directory-traversal attacks at the gate
     if (!VALID_PATHS.some((pattern) => pattern.test(pathname))) {
+        console.warn(`[middleware] Blocked: ${ip} → ${pathname}`);
         return corsResponse('Not Found', 404);
     }
 
