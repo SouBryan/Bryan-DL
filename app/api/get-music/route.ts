@@ -20,13 +20,16 @@ export async function GET(request: NextRequest) {
         logRequest(request, 200, Date.now() - start, _tokenSuffix, _tokenCountry);
         return res;
     } catch (error: any) {
-        logRequest(request, 400, Date.now() - start);
+        const status = error?.response?.status || 400;
+        const errMsg = error?.errors || error?.response?.data || error.message || 'An error occurred parsing the request.';
+        console.error(`[get-music] Error: ${JSON.stringify(errMsg)}`);
+        logRequest(request, status, Date.now() - start);
         return new NextResponse(
             JSON.stringify({
                 success: false,
-                error: error?.errors || error.message || 'An error occurred parsing the request.'
+                error: errMsg
             }),
-            { status: 400 }
+            { status }
         );
     }
 }
