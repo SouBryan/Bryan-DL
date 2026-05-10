@@ -1,5 +1,5 @@
 #!/bin/sh
-# Rotaciona o IP do WARP recriando o container warp-socks com nova registration
+# Rotaciona o IP do WARP via warp-cli disconnect/connect
 # a cada ROTATION_INTERVAL segundos (padrão: 1800 = 30 min)
 #
 # Também escuta na porta 7070 para rotações sob demanda (trigger HTTP)
@@ -7,7 +7,6 @@
 
 INTERVAL="${ROTATION_INTERVAL:-1800}"
 TRIGGER_PORT=7070
-COMPOSE_DIR="${COMPOSE_DIR:-/project}"
 
 echo "[warp-rotator] Iniciando rotação de IP a cada ${INTERVAL}s"
 echo "[warp-rotator] HTTP trigger escutando em :${TRIGGER_PORT}/rotate"
@@ -21,27 +20,24 @@ do_rotate() {
     OLD_IP=$(get_current_ip)
     echo "[warp-rotator] $(date -u '+%Y-%m-%d %H:%M:%S UTC') - IP: ${OLD_IP} - Rotacionando (${REASON})..."
 
-    # Stop container, remove WARP registration volume, recreate with fresh key
-    docker rm -f warp-socks 2>/dev/null
-    docker volume rm qobuz-dl_warp_data 2>/dev/null || docker volume rm warp_data 2>/dev/null
+    # Disconnect and reconnect WARP = new WireGuard handshake = new IP
+    docker exec warp-socks warp-cli disconnect 2>/dev/null
     sleep 2
-
-    # Recreate the container via docker compose
-    docker compose -f "${COMPOSE_DIR}/docker-compose.yml" up -d warp-socks 2>/dev/null \
-        || docker-compose -f "${COMPOSE_DIR}/docker-compose.yml" up -d warp-socks 2>/dev/null
-
-    # Wait for warp-socks to become healthy
-    echo "[warp-rotator] Aguardando warp-socks ficar healthy..."
-    for i in $(seq 1 20); do
-        sleep 5
-        STATUS=$(docker inspect --format='{{.State.Health.Status}}' warp-socks 2>/dev/null || echo "missing")
-        if [ "$STATUS" = "healthy" ]; then
-            break
-        fi
-        echo "[warp-rotator] ...status: ${STATUS} (tentativa ${i}/20)"
-    done
+    docker exec warp-socks warp-cli connect 2>/dev/null
+    sleep 5
 
     NEW_IP=$(get_current_ip)
+
+    # If IP didn't change, try once more
+    if [ "$OLD_IP" = "$NEW_IP" ] && [ "$OLD_IP" != "unknown" ]; then
+        echo "[warp-rotator] IP não mudou, tentando novamente..."
+        docker exec warp-socks warp-cli disconnect 2>/dev/null
+        sleep 3
+        docker exec warp-socks warp-cli connect 2>/dev/null
+        sleep 5
+        NEW_IP=$(get_current_ip)
+    fi
+
     echo "[warp-rotator] Rotação completa: ${OLD_IP} -> ${NEW_IP}"
 }
 
