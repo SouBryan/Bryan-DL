@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAlbumInfo, runWithTokenContext } from '@/lib/qobuz-dl-server';
 import { logRequest } from '@/lib/api-logger';
+import { checkIpGate } from '@/lib/ipgate';
 import z from 'zod';
 
 const albumInfoParamsSchema = z.object({
@@ -8,6 +9,8 @@ const albumInfoParamsSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const blocked = await checkIpGate(request);
+    if (blocked) return blocked;
     const country = request.headers.get('Token-Country');
     const params = Object.fromEntries(new URL(request.url).searchParams.entries());
     const start = Date.now();

@@ -1,5 +1,6 @@
 import { getArtist, runWithTokenContext } from '@/lib/qobuz-dl-server';
 import { logRequest } from '@/lib/api-logger';
+import { checkIpGate } from '@/lib/ipgate';
 import z from 'zod';
 
 const artistReleasesParamsSchema = z.object({
@@ -7,6 +8,8 @@ const artistReleasesParamsSchema = z.object({
 });
 
 export async function GET(request: Request) {
+    const blocked = await checkIpGate(request);
+    if (blocked) return blocked;
     const country = request.headers.get('Token-Country');
     const params = Object.fromEntries(new URL(request.url).searchParams.entries());
     const start = Date.now();
