@@ -2,6 +2,7 @@
 set -e
 
 SOCKS_PORT="${WARP_SOCKS_PORT:-9091}"
+INTERNAL_PORT=40000
 
 # All warp-cli commands need --accept-tos in non-TTY environments
 WARP="warp-cli --accept-tos"
@@ -32,9 +33,9 @@ if ! $WARP registration show 2>/dev/null | grep -q "Account"; then
 fi
 
 # Set proxy mode with SOCKS5 on the specified port
-echo "[warp-socks] Configuring proxy mode on port ${SOCKS_PORT}..."
+echo "[warp-socks] Configuring proxy mode on internal port ${INTERNAL_PORT}..."
 $WARP mode proxy
-$WARP proxy port "${SOCKS_PORT}"
+$WARP proxy port "${INTERNAL_PORT}"
 
 # Connect
 echo "[warp-socks] Connecting..."
@@ -51,6 +52,9 @@ for i in $(seq 1 20); do
     sleep 3
 done
 
-# Keep alive - follow warp-svc
-echo "[warp-socks] Running. SOCKS5 on :${SOCKS_PORT}"
+# socat: expose SOCKS proxy on 0.0.0.0 so other containers can reach it
+echo "[warp-socks] Starting socat forwarder on 0.0.0.0:${SOCKS_PORT} -> 127.0.0.1:${INTERNAL_PORT}..."
+socat TCP-LISTEN:${SOCKS_PORT},bind=0.0.0.0,reuseaddr,fork TCP:127.0.0.1:${INTERNAL_PORT} &
+
+echo "[warp-socks] Running. SOCKS5 on 0.0.0.0:${SOCKS_PORT}"
 tail -f /dev/null
