@@ -14,10 +14,30 @@ export async function GET(request: NextRequest) {
     const blocked = await checkIpGate(request);
     if (blocked) return blocked;
     const country = request.headers.get('Token-Country');
-    const params = Object.fromEntries(new URL(request.url).searchParams.entries());
     const start = Date.now();
     try {
-        const { q, offset } = searchParamsSchema.parse(params);
+        // Extract q from raw URL to handle unencoded '&' in search terms
+        // e.g. "?q=MYTH+&+ROID&offset=0" → q should be "MYTH & ROID"
+        const rawUrl = request.url;
+        const queryStart = rawUrl.indexOf('?');
+        const rawQuery = queryStart >= 0 ? rawUrl.slice(queryStart + 1) : '';
+
+        // Find q= value: everything between "q=" and "&offset=" (or end of string)
+        const qMatch = rawQuery.match(/(?:^|&)q=(.+?)(?:&offset=|$)/i);
+        const rawQ = qMatch ? decodeURIComponent(qMatch[1].replace(/\+/g, ' ')).trim() : '';
+
+        // Extract offset normally from searchParams
+        const offsetParam = new URL(rawUrl).searchParams.get('offset');
+        const offset = offsetParam != null && offsetParam !== '' ? parseInt(offsetParam) : 0;
+
+        if (!rawQ) {
+            return new NextResponse(JSON.stringify({ success: false, error: 'Query is required' }), { status: 400 });
+        }
+        if (offset < 0 || offset > 1000 || isNaN(offset)) {
+            return new NextResponse(JSON.stringify({ success: false, error: 'Invalid offset' }), { status: 400 });
+        }
+
+        const q = rawQ;
 
         // Detect ISRC pattern (2 letter country + 3 alphanum registrant + 2 digit year + 5 digit designation)
         const isIsrc = /^[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}$/i.test(q);
