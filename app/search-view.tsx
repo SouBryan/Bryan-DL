@@ -315,7 +315,7 @@ const SearchView = () => {
                         </DropdownMenu>
                         <div className='flex gap-2 items-center'>
                             <SourcePicker className='sm:hidden' />
-                            <CountryPicker className='sm:hidden' />
+                            {musicSource !== 'apple-music' && <CountryPicker className='sm:hidden' />}
                         </div>
                     </div>
                     {searchError && (

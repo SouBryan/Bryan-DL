@@ -23,6 +23,73 @@ export const createDownloadJob = async (
 ) => {
     if ((result as QobuzTrack).album) {
         const formattedTitle = formatCustomTitle(settings.trackName, result as QobuzTrack);
+        const isAppleMusic = String((result as QobuzTrack).id).startsWith('apple:');
+
+        // Apple Music tracks: skip FFmpeg, download M4A directly (already has metadata from gamdl)
+        if (isAppleMusic) {
+            await createJob(setStatusBar, formattedTitle, Disc3Icon, async () => {
+                return new Promise(async (resolve) => {
+                    try {
+                        const controller = new AbortController();
+                        const signal = controller.signal;
+                        let cancelled = false;
+                        setStatusBar((prev) => ({
+                            ...prev,
+                            progress: 0,
+                            title: `Downloading ${formatTitle(result)}`,
+                            description: `Fetching Apple Music track...`,
+                            onCancel: () => {
+                                cancelled = true;
+                                controller.abort();
+                            }
+                        }));
+                        const APIResponse = await axios.get('/api/download-music', {
+                            params: { track_id: (result as QobuzTrack).id },
+                            signal
+                        });
+                        const trackURL = APIResponse.data.data.url;
+                        const fileSizeResponse = await axios.head(trackURL, { signal });
+                        const fileSize = fileSizeResponse.headers['content-length'];
+                        const response = await axios.get(trackURL, {
+                            responseType: 'arraybuffer',
+                            onDownloadProgress: (progressEvent) => {
+                                setStatusBar((statusbar) => {
+                                    if (statusbar.processing && !cancelled)
+                                        return {
+                                            ...statusbar,
+                                            progress: Math.floor((progressEvent.loaded / fileSize) * 100),
+                                            description: `${formatBytes(progressEvent.loaded)} / ${formatBytes(fileSize)}`
+                                        };
+                                    else return statusbar;
+                                });
+                            },
+                            signal
+                        });
+                        const objectURL = URL.createObjectURL(new Blob([response.data]));
+                        const title = formattedTitle + '.m4a';
+                        proceedDownload(objectURL, title);
+                        resolve();
+                    } catch (e) {
+                        if (e instanceof AxiosError && e.code === 'ERR_CANCELED') resolve();
+                        else {
+                            toast({
+                                title: 'Error',
+                                description: e instanceof Error ? e.message : 'An unknown error occurred',
+                                action: (
+                                    <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>
+                                        Copy Stack
+                                    </ToastAction>
+                                )
+                            });
+                            resolve();
+                        }
+                    }
+                });
+            });
+            return;
+        }
+
+        // Qobuz tracks: full FFmpeg processing pipeline
         await createJob(setStatusBar, formattedTitle, Disc3Icon, async () => {
             return new Promise(async (resolve) => {
                 try {

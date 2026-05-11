@@ -11,6 +11,7 @@ import AutocompleteCard from './autocomplete-card';
 import { useCountry } from '@/lib/country-provider';
 import CountryPicker from '../country-picker';
 import SourcePicker from '../source-picker';
+import { useMusicSource } from '@/lib/music-source-provider';
 
 const SearchBar = ({
     onSearch,
@@ -27,6 +28,7 @@ const SearchBar = ({
     const [results, setResults] = useState<QobuzSearchResults | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [showCard, setShowCard] = useState(false);
+    const { musicSource } = useMusicSource();
     const [controller, setController] = useState<AbortController>(new AbortController());
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -125,7 +127,7 @@ const SearchBar = ({
                 />
                 <div className='flex gap-2'>
                     <SourcePicker className='hidden sm:flex' />
-                    <CountryPicker className='hidden sm:flex' />
+                    {musicSource !== 'apple-music' && <CountryPicker className='hidden sm:flex' />}
                 </div>
             </div>
             <Button
