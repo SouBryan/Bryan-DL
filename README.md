@@ -7,34 +7,36 @@
 > [!IMPORTANT]
 > This repository does not contain any copyrighted material, or code to illegaly download music. Downloads are provided by the Qobuz API and should only be initiated by the API token owner. The author is **not responsible for the usage of this repository nor endorses it**, nor is the author responsible for any copies, forks, re-uploads made by other users, or anything else related to Qobuz-DL. Any live demo found online of this project is not associated with the authors of this repo. This is the author's only account and repository.
 
-Qobuz-DL provides a fast and easy way to download music using Qobuz in a variety of codecs and formats entirely from the browser.
+Qobuz-DL provides a fast and easy way to download music from **Qobuz** and **Apple Music** in a variety of codecs and formats entirely from the browser. This fork adds Apple Music lossless (ALAC up to 24-bit/192kHz), WARP proxy for IP privacy, and security hardening.
 
 ## Features
 
-- Download any song or album from Qobuz.
-- Re-encode audio provided by Qobuz to a variety of different lossless and lossy codecs using FFmpeg.
-- Apply metadata to downloaded songs.
-- Cross-origin API with CORS headers — works as a backend for external clients like [Monochrome](https://github.com/user/monochrome).
+- Download any song or album from **Qobuz** (up to Hi-Res 24-bit/192kHz).
+- Download from **Apple Music** with full lossless support (ALAC 24-bit/192kHz via FairPlay wrapper).
+- Search both services in parallel with ISRC cross-matching.
+- Re-encode to FLAC, WAV, ALAC, AAC, MP3, or OPUS using FFmpeg.wasm in the browser.
+- Apply metadata and album art to downloaded songs.
+- Cloudflare WARP SOCKS5 proxy with automatic IP rotation every 30 minutes.
+- Cloudflare R2 cache for Apple Music tracks (5-day auto-delete).
+- Security middleware: route whitelist, bot detection, IPGate (~612M blocked IPs).
+- Cross-origin API with CORS headers — works as a backend for external clients.
 
 ## Architecture
 
 ```
-┌─────────────┐      ┌─────────────────┐      ┌──────────────┐
-│  Browser /   │ ───► │  Cloudflare     │ ───► │  Next.js App │
-│  Monochrome  │      │  Tunnel         │      │  (port 3000) │
-└─────────────┘      └─────────────────┘      └──────┬───────┘
-                                                      │
-                                               ┌──────▼───────┐
-                                               │  WARP SOCKS5  │
-                                               │  Proxy (9091) │
-                                               └──────┬───────┘
-                                                      │
-                                               ┌──────▼───────┐
-                                               │  Qobuz API    │
-                                               └──────────────┘
+Browser / Monochrome → Cloudflare Tunnel (bryanhifi.dpdns.org) → Next.js (:3000)
+                                                                       │
+                                                        ┌──────────────┼──────────────┐
+                                                        │              │              │
+                                                  WARP SOCKS5    Apple Music    Apple Music
+                                                   (:9091)        API (:8000)    Wrapper
+                                                        │              │         (10020/20020/30020)
+                                                        │              │              │
+                                                   Qobuz API     Cloudflare R2    FairPlay
+                                                              (cdn.bryanhifi.dpdns.org)  Decrypt
 ```
 
-**Stack**: Next.js 15 (standalone) · Docker Compose · Cloudflare WARP · Cloudflare Tunnel · IPGate
+**Stack**: Next.js 15.5.4 (standalone) · Docker Compose · gamdl 3.5.1 · Cloudflare WARP · Cloudflare Tunnel · Cloudflare R2 · IPGate
 
 ## Security
 
@@ -105,24 +107,27 @@ cp .env.example .env   # edit with your tokens
 docker compose up -d
 ```
 
-This starts 3 services:
+This starts 5 services:
 
 | Service | Description |
 |---|---|
 | **qobuz-dl** | Next.js app on port 3000 |
 | **warp-socks** | Cloudflare WARP SOCKS5 proxy for IP privacy |
 | **warp-rotator** | Automatic IP rotation every 30 minutes |
+| **apple-music-api** | FastAPI sidecar — downloads/decrypts/caches Apple Music via gamdl |
+| **apple-music-wrapper** | FairPlay wrapper for ALAC decryption (ARM64) |
 
 ## API Endpoints
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/get-music` | `GET` | Search for tracks. Query param: `q` |
-| `/api/download-music` | `GET` | Download/stream a track |
+| `/api/get-music` | `GET` | Search for tracks (Qobuz + Apple Music in parallel) |
+| `/api/download-music` | `GET` | Download/stream a track (Qobuz or Apple Music) |
 | `/api/get-album` | `GET` | Get album details |
 | `/api/get-artist` | `GET` | Get artist details |
 | `/api/get-releases` | `GET` | Get new releases |
 | `/api/get-countries` | `GET` | List available token countries |
+| `/api/get-apple-capabilities` | `GET` | Check Apple Music lossless availability |
 
 All endpoints return JSON and accept a `Token-Country` header for multi-region token selection.
 
@@ -130,20 +135,29 @@ All endpoints return JSON and accept a `Token-Country` header for multi-region t
 
 ```
 ├── app/                    # Next.js App Router
-│   ├── api/                # API route handlers
+│   ├── api/                # API route handlers (Qobuz + Apple Music)
 │   ├── page.tsx            # Home page (SearchView)
 │   ├── not-found.tsx       # 404 page (minimal, no SSR risk)
 │   └── layout.tsx          # Root layout
-├── middleware.ts            # Security middleware (whitelist, CORS, etc.)
+├── apple-music/            # FastAPI sidecar for Apple Music
+│   ├── main.py             # Download/decrypt/upload pipeline (gamdl 3.5.1)
+│   ├── Dockerfile          # Python image
+│   └── requirements.txt    # gamdl, httpx[socks], boto3
+├── middleware.ts           # Security middleware (whitelist, CORS, etc.)
 ├── lib/
-│   ├── ipgate.ts           # IPGate UDS client
-│   ├── qobuz-dl.tsx        # Qobuz API client
-│   └── qobuz-dl-server.tsx # Server-side Qobuz helpers
+│   ├── apple-music-server.ts  # Apple Music sidecar client
+│   ├── download-job.tsx       # Download pipeline (both sources)
+│   ├── ffmpeg-functions.tsx   # FFmpeg.wasm codec conversion
+│   ├── settings-provider.tsx  # User settings (7 output codecs)
+│   ├── ipgate.ts              # IPGate UDS client
+│   ├── qobuz-dl.tsx           # Qobuz API client
+│   └── qobuz-dl-server.tsx    # Server-side Qobuz helpers
 ├── docker/
-│   └── warp-socks/         # WARP proxy Docker image
+│   ├── apple-music-wrapper/   # FairPlay wrapper Docker image (ARM64)
+│   └── warp-socks/            # WARP proxy Docker image
 ├── scripts/
 │   └── rotate-ip.sh        # IP rotation script
-├── docker-compose.yml      # 3-service stack
+├── docker-compose.yml      # 5-service stack
 ├── Dockerfile              # Multi-stage Next.js standalone build
 └── next.config.ts          # CORS headers, standalone output
 ```

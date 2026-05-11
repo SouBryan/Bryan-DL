@@ -1,5 +1,58 @@
 [
     {
+        "title": "Apple Music Lossless (ALAC) + Output Codec Overhaul",
+        "date": "05-11-2026",
+        "changes": [
+            "Apple Music Lossless support via FairPlay wrapper — ALAC up to 24-bit/192kHz",
+            "Full ALAC decryption pipeline: wrapper → gamdl → R2 cache → browser",
+            "New output codec options: FLAC, WAV, ALAC, MP3, AAC (from ALAC), AAC (original 256kbps), OPUS",
+            "AAC (from ALAC) uses Max Download Quality selector instead of bitrate input",
+            "AAC (original) passes through Apple Music's native 256kbps without conversion",
+            "OPUS max bitrate raised to 510kbps (was 320)",
+            "Album Art settings now visible but disabled for OPUS/WAV (no cover art support)",
+            "Apple Music metadata applied server-side by gamdl — no FFmpeg.wasm needed for ALAC/AAC",
+            "Smart proxy transport: internal Docker traffic bypasses WARP SOCKS5",
+            "Wrapper healthcheck + retry logic with exponential backoff"
+        ]
+    },
+    {
+        "title": "Apple Music Integration",
+        "date": "05-10-2026",
+        "changes": [
+            "Search Apple Music in parallel with Qobuz, merged results",
+            "Music source selector: Qobuz / Apple Music / Both",
+            "ISRC cross-lookup between Qobuz and Apple Music catalogs",
+            "Apple Music downloads proxied through Next.js to avoid R2 CORS issues",
+            "FastAPI sidecar for Apple Music download/decrypt/upload to Cloudflare R2",
+            "Frontend dynamically detects lossless capability via /api/get-apple-capabilities"
+        ]
+    },
+    {
+        "title": "Security Hardening",
+        "date": "05-10-2026",
+        "changes": [
+            "Middleware rewritten with route whitelist — only valid paths allowed",
+            "Removed [catchall] route that was exploited for SSR injection attacks",
+            "Closed /_next/data/ bypass that allowed returnNaN/let SSR injection",
+            "Blocked POST on non-API routes to prevent body-based SSR injection",
+            "IPGate integration — 612M+ IPs blocked via FireHOL blocklists (O(1) lookup)",
+            "Bot UA detection for scanners (sqlmap, nikto, zgrab, nuclei)",
+            "Payload detection: eval(), require(), __proto__, path traversal, XSS",
+            "Blocked cryptominer dropper, WordPress scanner, mass downloader bot IPs"
+        ]
+    },
+    {
+        "title": "WARP Proxy & Token Rotation",
+        "date": "05-08-2026",
+        "changes": [
+            "Cloudflare WARP SOCKS5 proxy for IP privacy on all outbound requests",
+            "Automatic IP rotation every 30 minutes via warp-rotator service",
+            "Smart token rotation on Qobuz rate limits (429/403/401)",
+            "Custom warp-cli Docker image with socat for container networking",
+            "Rich request logging with client IP, browser info, and token tracking"
+        ]
+    },
+    {
         "title": "Native Country Support",
         "date": "09-27-2025",
         "changes": [

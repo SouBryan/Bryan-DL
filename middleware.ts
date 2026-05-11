@@ -66,6 +66,7 @@ const BLOCKED_IPS = new Set([
     '212.113.98.30', // Cryptominer dropper - POST / with base64 bash payload downloading from 78.153.140.16
     '34.246.163.208', // WordPress scanner bot - Tentou por muito tempo varios endpoints, como .env e outros
     '35.240.247.11', // WordPress scanner bot - (AbuseIPDB flagged)
+    '164.92.178.95', // .env & docker scanner bot - DigitalOcean droplet
 ]);
 
 function getClientIp(request: NextRequest): string {

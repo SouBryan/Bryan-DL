@@ -53,3 +53,4 @@ APPLE_MUSIC_PLAN.md
 applemusic_auth_cookies.json
 apple-music/cookies/
 apple-music/wrapper-data/
+main.py
