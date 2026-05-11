@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
                             ...searchResults,
                             tracks: {
                                 ...searchResults?.tracks,
-                                items: [...qobuzItems, ...appleFormatted.tracks.items],
+                                items: [...qobuzItems, ...appleFormatted.tracks.items] as any[],
                                 total: (searchResults?.tracks?.total || 0) + uniqueAppleSongs.length,
                             },
                         };
