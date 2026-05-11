@@ -140,8 +140,9 @@ async def init_gamdl():
             wrapper_account_url = f"http://{WRAPPER_HOST}:{WRAPPER_ACCOUNT_PORT}/"
             logger.info(f"Initializing gamdl with WRAPPER at {wrapper_account_url}")
 
-            # Retry wrapper connection with backoff (wrapper takes longer to start)
-            max_retries = 10
+            # Retry wrapper connection (Docker healthcheck ensures port is listening,
+            # but the API may need a moment after port opens)
+            max_retries = 5
             for attempt in range(1, max_retries + 1):
                 try:
                     apple_music_api = await AppleMusicApi.create_from_wrapper(
@@ -154,7 +155,7 @@ async def init_gamdl():
                     break
                 except Exception as e:
                     if attempt < max_retries:
-                        wait = min(attempt * 3, 15)  # 3s, 6s, 9s, ... up to 15s
+                        wait = 5
                         logger.warning(f"Wrapper attempt {attempt}/{max_retries} failed ({e}), retrying in {wait}s...")
                         await asyncio.sleep(wait)
                     else:

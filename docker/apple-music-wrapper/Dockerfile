@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Download prebuilt arm64 release (includes wrapper binary + rootfs + entrypoint)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends wget unzip ca-certificates && \
+    apt-get install -y --no-install-recommends wget unzip ca-certificates curl && \
     wget -q -O /tmp/wrapper.zip https://github.com/WorldObservationLog/wrapper/releases/download/wrapper.arm64.latest/Wrapper.arm64.latest.zip && \
     unzip -o /tmp/wrapper.zip -d /app && \
     chmod +x /app/wrapper /app/entrypoint.sh && \

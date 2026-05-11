@@ -76,7 +76,7 @@ services:
             warp-socks:
                 condition: service_healthy
             apple-music-wrapper:
-                condition: service_started
+                condition: service_healthy
         restart: unless-stopped
         networks:
             - qobuz-network
@@ -92,6 +92,12 @@ services:
         command: ["-H", "0.0.0.0"]
         volumes:
             - ./apple-music/wrapper-data:/app/rootfs/data
+        healthcheck:
+            test: ["CMD", "curl", "-sf", "http://127.0.0.1:30020/"]
+            interval: 5s
+            timeout: 3s
+            retries: 60
+            start_period: 30s
         restart: unless-stopped
         networks:
             - qobuz-network
