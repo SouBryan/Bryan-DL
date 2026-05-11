@@ -1,4 +1,4 @@
-gamdl==2.2.3
+gamdl==3.5.1
 fastapi==0.115.12
 uvicorn[standard]==0.34.2
 boto3==1.38.13
