@@ -26,6 +26,7 @@ export const createDownloadJob = async (
         const isAppleMusic = String((result as QobuzTrack).id).startsWith('apple:');
 
         // Apple Music tracks: skip FFmpeg, download M4A directly (already has metadata from gamdl)
+        // The API proxies the file from R2, so we get binary directly (no CORS issues)
         if (isAppleMusic) {
             await createJob(setStatusBar, formattedTitle, Disc3Icon, async () => {
                 return new Promise(async (resolve) => {
@@ -43,23 +44,21 @@ export const createDownloadJob = async (
                                 controller.abort();
                             }
                         }));
-                        const APIResponse = await axios.get('/api/download-music', {
+                        const response = await axios.get('/api/download-music', {
                             params: { track_id: (result as QobuzTrack).id },
-                            signal
-                        });
-                        const trackURL = APIResponse.data.data.url;
-                        const fileSizeResponse = await axios.head(trackURL, { signal });
-                        const fileSize = fileSizeResponse.headers['content-length'];
-                        const response = await axios.get(trackURL, {
                             responseType: 'arraybuffer',
                             onDownloadProgress: (progressEvent) => {
                                 setStatusBar((statusbar) => {
-                                    if (statusbar.processing && !cancelled)
+                                    if (statusbar.processing && !cancelled) {
+                                        const total = progressEvent.total || 0;
                                         return {
                                             ...statusbar,
-                                            progress: Math.floor((progressEvent.loaded / fileSize) * 100),
-                                            description: `${formatBytes(progressEvent.loaded)} / ${formatBytes(fileSize)}`
+                                            progress: total > 0 ? Math.floor((progressEvent.loaded / total) * 100) : 0,
+                                            description: total > 0
+                                                ? `${formatBytes(progressEvent.loaded)} / ${formatBytes(total)}`
+                                                : `${formatBytes(progressEvent.loaded)}`
                                         };
+                                    }
                                     else return statusbar;
                                 });
                             },

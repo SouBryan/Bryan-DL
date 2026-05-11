@@ -30,9 +30,24 @@ export async function GET(request: NextRequest) {
                     { status: 404 }
                 );
             }
-            const res = new NextResponse(JSON.stringify({ success: true, data: { url } }), { status: 200 });
+            // Proxy the file through our server to avoid CORS issues with R2
+            const fileResponse = await fetch(url);
+            if (!fileResponse.ok || !fileResponse.body) {
+                logRequest(request, 502, Date.now() - start);
+                return new NextResponse(
+                    JSON.stringify({ success: false, error: 'Failed to fetch file from storage' }),
+                    { status: 502 }
+                );
+            }
             logRequest(request, 200, Date.now() - start, undefined, undefined);
-            return res;
+            return new NextResponse(fileResponse.body, {
+                status: 200,
+                headers: {
+                    'Content-Type': 'audio/mp4',
+                    'Content-Length': fileResponse.headers.get('content-length') || '',
+                    'Content-Disposition': `attachment; filename="${appleId}.m4a"`,
+                },
+            });
         }
 
         // Qobuz track (numeric ID)
