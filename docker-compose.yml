@@ -70,6 +70,9 @@ services:
             - WRAPPER_DECRYPT_PORT=10020
             - WRAPPER_M3U8_PORT=20020
             - WRAPPER_ACCOUNT_PORT=30020
+            - APPLE_MUSIC_REQUEST_DELAY_MS=${APPLE_MUSIC_REQUEST_DELAY_MS:-500}
+            - APPLE_MUSIC_MAX_RETRIES_429=${APPLE_MUSIC_MAX_RETRIES_429:-5}
+            - APPLE_MUSIC_MAX_CONCURRENT_DOWNLOADS=${APPLE_MUSIC_MAX_CONCURRENT_DOWNLOADS:-2}
         volumes:
             - ./apple-music/cookies:/app/cookies:ro
         depends_on:

@@ -58,6 +58,11 @@ USE_WRAPPER = bool(WRAPPER_HOST)
 
 SOCKS5_PROXY = os.environ.get("SOCKS5_PROXY", "")
 
+# Rate limiting config
+REQUEST_DELAY_MS = int(os.environ.get("APPLE_MUSIC_REQUEST_DELAY_MS", "500"))
+MAX_RETRIES_429 = int(os.environ.get("APPLE_MUSIC_MAX_RETRIES_429", "5"))
+MAX_CONCURRENT_DOWNLOADS = int(os.environ.get("APPLE_MUSIC_MAX_CONCURRENT_DOWNLOADS", "2"))
+
 # ── Monkey-patch httpx to inject SOCKS5 proxy into all gamdl requests ──
 if SOCKS5_PROXY:
     import httpx
@@ -126,6 +131,45 @@ apple_music_interface: AppleMusicInterface | None = None
 s3_client = None
 _init_lock = asyncio.Lock()
 _wrapper_connected = False  # True only if wrapper was actually used (not cookie fallback)
+_last_request_time: float = 0.0  # monotonic timestamp of last API request
+_download_semaphore: asyncio.Semaphore | None = None  # limits concurrent downloads
+
+
+async def _throttle():
+    """Enforce minimum delay between Apple Music API requests."""
+    global _last_request_time
+    if REQUEST_DELAY_MS <= 0:
+        return
+    now = asyncio.get_event_loop().time()
+    elapsed_ms = (now - _last_request_time) * 1000
+    if elapsed_ms < REQUEST_DELAY_MS:
+        wait_s = (REQUEST_DELAY_MS - elapsed_ms) / 1000
+        logger.debug(f"Throttle: waiting {wait_s:.2f}s")
+        await asyncio.sleep(wait_s)
+    _last_request_time = asyncio.get_event_loop().time()
+
+
+async def _request_with_backoff(coro_factory, description: str = "request"):
+    """
+    Execute an async request with exponential backoff on 429/rate limit errors.
+    coro_factory is a callable that returns a new coroutine each time.
+    """
+    for attempt in range(1, MAX_RETRIES_429 + 1):
+        await _throttle()
+        try:
+            return await coro_factory()
+        except Exception as e:
+            error_str = str(e).lower()
+            is_rate_limit = "429" in error_str or "rate limit" in error_str or "too many" in error_str
+            if is_rate_limit and attempt < MAX_RETRIES_429:
+                backoff = min(2 ** attempt, 60)  # 2, 4, 8, 16, 32, max 60s
+                logger.warning(f"Rate limited on {description} (attempt {attempt}/{MAX_RETRIES_429}), "
+                               f"backing off {backoff}s...")
+                await asyncio.sleep(backoff)
+            else:
+                raise
+    # Should not reach here, but just in case
+    raise RuntimeError(f"Exhausted {MAX_RETRIES_429} retries for {description}")
 
 
 def get_s3_client():
@@ -248,6 +292,11 @@ async def init_gamdl():
             logger.warning(f"Failed to configure R2 CORS (may need manual config): {e}")
 
         os.makedirs(TEMP_DIR, exist_ok=True)
+
+        global _download_semaphore
+        _download_semaphore = asyncio.Semaphore(MAX_CONCURRENT_DOWNLOADS)
+        logger.info(f"Rate limiting: {REQUEST_DELAY_MS}ms delay, {MAX_RETRIES_429} retries on 429, "
+                    f"{MAX_CONCURRENT_DOWNLOADS} max concurrent downloads")
         logger.info("Apple Music API ready")
 
 
@@ -310,12 +359,13 @@ async def search(
         raise HTTPException(status_code=503, detail="Not initialized")
 
     try:
-        results = await apple_music_api.get_search_results(
-            term=term,
-            types=types,
-            limit=limit,
+        results = await _request_with_backoff(
+            lambda: apple_music_api.get_search_results(term=term, types=types, limit=limit),
+            description=f"search '{term}'",
         )
         return results
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Search failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -333,9 +383,13 @@ async def lookup_isrc(
         storefront = apple_music_api.storefront
         url = f"https://amp-api.music.apple.com/v1/catalog/{storefront}/songs"
         params = {"filter[isrc]": isrc}
-        response = await apple_music_api.client.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
+
+        async def _do_isrc_lookup():
+            resp = await apple_music_api.client.get(url, params=params)
+            resp.raise_for_status()
+            return resp.json()
+
+        data = await _request_with_backoff(_do_isrc_lookup, description=f"ISRC lookup '{isrc}'")
         # Wrap in search-like format for consistency
         songs = data.get("data", [])
         logger.info(f"ISRC lookup '{isrc}': {len(songs)} results")
@@ -368,85 +422,92 @@ async def download_track(song_id: str):
         logger.info(f"R2 cache hit: {song_id}")
         return {"url": url, "cached": True}
 
-    # 2. Download + decrypt
+    # 2. Download + decrypt (with concurrency limiter)
     logger.info(f"R2 cache miss, downloading: {song_id}")
-    work_dir = os.path.join(TEMP_DIR, song_id)
-    os.makedirs(work_dir, exist_ok=True)
+    if _download_semaphore is None:
+        raise HTTPException(status_code=503, detail="Not initialized")
 
-    try:
-        # Create downloader targeting work_dir
-        base_dl = AppleMusicBaseDownloader(
-            interface=apple_music_interface,
-            output_path=work_dir,
-            temp_path=work_dir,
-            **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if _wrapper_connected else {}),
-        )
-        song_dl = AppleMusicSongDownloader(base=base_dl)
-        mv_dl = AppleMusicMusicVideoDownloader(base=base_dl)
-        uv_dl = AppleMusicUploadedVideoDownloader(base=base_dl)
+    async with _download_semaphore:
+        work_dir = os.path.join(TEMP_DIR, song_id)
+        os.makedirs(work_dir, exist_ok=True)
 
-        downloader = AppleMusicDownloader(
-            song=song_dl,
-            music_video=mv_dl,
-            uploaded_video=uv_dl,
-            overwrite=True,
-            skip_cleanup=True,
-        )
+        try:
+            # Create downloader targeting work_dir
+            base_dl = AppleMusicBaseDownloader(
+                interface=apple_music_interface,
+                output_path=work_dir,
+                temp_path=work_dir,
+                **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if _wrapper_connected else {}),
+            )
+            song_dl = AppleMusicSongDownloader(base=base_dl)
+            mv_dl = AppleMusicMusicVideoDownloader(base=base_dl)
+            uv_dl = AppleMusicUploadedVideoDownloader(base=base_dl)
 
-        # Get the real Apple Music URL from catalog data
-        catalog_data = await apple_music_api.get_song(song_id)
-        song_url = catalog_data["data"][0]["attributes"]["url"]
-        logger.info(f"Resolved song URL: {song_url}")
+            downloader = AppleMusicDownloader(
+                song=song_dl,
+                music_video=mv_dl,
+                uploaded_video=uv_dl,
+                overwrite=True,
+                skip_cleanup=True,
+            )
 
-        downloaded_path = None
-        item_count = 0
-        async for download_item in downloader.get_download_item_from_url(song_url):
-            item_count += 1
-            has_error = download_item.media.error if hasattr(download_item.media, 'error') else None
-            is_partial = download_item.media.partial if hasattr(download_item.media, 'partial') else None
-            logger.info(f"Download item #{item_count}: partial={is_partial}, error={has_error}, "
-                        f"final_path={download_item.final_path}, staged_path={download_item.staged_path}")
+            # Get the real Apple Music URL from catalog data
+            catalog_data = await _request_with_backoff(
+                lambda: apple_music_api.get_song(song_id),
+                description=f"get_song {song_id}",
+            )
+            song_url = catalog_data["data"][0]["attributes"]["url"]
+            logger.info(f"Resolved song URL: {song_url}")
 
-            if has_error:
-                logger.error(f"Media error: {has_error}")
-                continue
+            downloaded_path = None
+            item_count = 0
+            async for download_item in downloader.get_download_item_from_url(song_url):
+                item_count += 1
+                has_error = download_item.media.error if hasattr(download_item.media, 'error') else None
+                is_partial = download_item.media.partial if hasattr(download_item.media, 'partial') else None
+                logger.info(f"Download item #{item_count}: partial={is_partial}, error={has_error}, "
+                            f"final_path={download_item.final_path}, staged_path={download_item.staged_path}")
 
-            if is_partial:
-                logger.warning(f"Media is partial (incomplete stream info), skipping")
-                continue
+                if has_error:
+                    logger.error(f"Media error: {has_error}")
+                    continue
 
-            await downloader.download(download_item)
-            if download_item.final_path and os.path.exists(download_item.final_path):
-                downloaded_path = str(download_item.final_path)
-                logger.info(f"Downloaded to final_path: {downloaded_path}")
-            break
+                if is_partial:
+                    logger.warning(f"Media is partial (incomplete stream info), skipping")
+                    continue
 
-        if not downloaded_path:
-            logger.info(f"Items yielded: {item_count}. Searching work_dir recursively for .m4a...")
-            for f in Path(work_dir).rglob("*.m4a"):
-                downloaded_path = str(f)
-                logger.info(f"Found .m4a: {downloaded_path}")
+                await downloader.download(download_item)
+                if download_item.final_path and os.path.exists(download_item.final_path):
+                    downloaded_path = str(download_item.final_path)
+                    logger.info(f"Downloaded to final_path: {downloaded_path}")
                 break
 
-        if not downloaded_path or not os.path.exists(downloaded_path):
-            all_files = list(Path(work_dir).rglob("*"))
-            logger.error(f"No .m4a found after {item_count} items. All files in work_dir: {all_files}")
-            raise HTTPException(status_code=404, detail=f"Track {song_id} not downloaded. Items yielded: {item_count}")
+            if not downloaded_path:
+                logger.info(f"Items yielded: {item_count}. Searching work_dir recursively for .m4a...")
+                for f in Path(work_dir).rglob("*.m4a"):
+                    downloaded_path = str(f)
+                    logger.info(f"Found .m4a: {downloaded_path}")
+                    break
 
-        # 3. Upload to R2
-        url = r2_upload_file(downloaded_path, r2_key)
-        logger.info(f"Uploaded to R2: {r2_key} ({os.path.getsize(downloaded_path)} bytes)")
+            if not downloaded_path or not os.path.exists(downloaded_path):
+                all_files = list(Path(work_dir).rglob("*"))
+                logger.error(f"No .m4a found after {item_count} items. All files in work_dir: {all_files}")
+                raise HTTPException(status_code=404, detail=f"Track {song_id} not downloaded. Items yielded: {item_count}")
 
-        return {"url": url, "cached": False}
+            # 3. Upload to R2
+            url = r2_upload_file(downloaded_path, r2_key)
+            logger.info(f"Uploaded to R2: {r2_key} ({os.path.getsize(downloaded_path)} bytes)")
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Download failed for {song_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        # Cleanup work_dir
-        shutil.rmtree(work_dir, ignore_errors=True)
+            return {"url": url, "cached": False}
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Download failed for {song_id}: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            # Cleanup work_dir
+            shutil.rmtree(work_dir, ignore_errors=True)
 
 
 @app.get("/track-info/{song_id}")
@@ -456,7 +517,10 @@ async def track_info(song_id: str):
         raise HTTPException(status_code=503, detail="Not initialized")
 
     try:
-        catalog_data = await apple_music_api.get_song(song_id)
+        catalog_data = await _request_with_backoff(
+            lambda: apple_music_api.get_song(song_id),
+            description=f"track-info {song_id}",
+        )
         if not catalog_data:
             raise HTTPException(status_code=404, detail=f"Track {song_id} not found")
         return catalog_data
