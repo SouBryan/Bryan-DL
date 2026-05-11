@@ -1,0 +1,901 @@
+ubuntu@oracle-vps-definitive:~/home-server/qobuz-dl$ cd ~/home-server/qobuz-dl
+git pull
+docker compose build --no-cache apple-music-wrapper
+remote: Enumerating objects: 9, done.
+remote: Counting objects: 100% (9/9), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 5 (delta 2), reused 5 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (5/5), 488 bytes | 488.00 KiB/s, done.
+From https://github.com/SouBryan/Qobuz-DL
+   92e3b2d..f768e13  main       -> origin/main
+Updating 92e3b2d..f768e13
+Fast-forward
+ docker/apple-music-wrapper/Dockerfile | 15 ++++-----------
+ 1 file changed, 4 insertions(+), 11 deletions(-)
+[+] Building 29.5s (9/9) FINISHED                                                                                                                                                                     
+ => [internal] load local bake definitions                                                                                                                                                       0.0s
+ => => reading from stdin 650B                                                                                                                                                                   0.0s
+ => [internal] load build definition from Dockerfile                                                                                                                                             0.0s
+ => => transferring dockerfile: 668B                                                                                                                                                             0.0s
+ => [internal] load metadata for docker.io/library/debian:13.2                                                                                                                                   0.4s
+ => [internal] load .dockerignore                                                                                                                                                                0.0s
+ => => transferring context: 2B                                                                                                                                                                  0.0s
+ => [1/3] FROM docker.io/library/debian:13.2@sha256:c71b05eac0b20adb4cdcc9f7b052227efd7da381ad10bb92f972e8eae7c6cdc9                                                                             0.0s
+ => => resolve docker.io/library/debian:13.2@sha256:c71b05eac0b20adb4cdcc9f7b052227efd7da381ad10bb92f972e8eae7c6cdc9                                                                             0.0s
+ => CACHED [2/3] WORKDIR /app                                                                                                                                                                    0.0s
+ => [3/3] RUN apt-get update &&     apt-get install -y --no-install-recommends wget unzip ca-certificates &&     wget -q -O /tmp/wrapper.zip https://github.com/WorldObservationLog/wrapper/re  22.8s
+ => exporting to image                                                                                                                                                                           6.1s 
+ => => exporting layers                                                                                                                                                                          5.3s 
+ => => exporting manifest sha256:3a07029c0c5b58af9844c61da5901d778aad6360cba8c3236a903f5f7caeb2b7                                                                                                0.0s 
+ => => exporting config sha256:f2dfa09a83f37e847f1a36c5a626bbd1342f7d0a3f41560387db1c5bb992de32                                                                                                  0.0s 
+ => => exporting attestation manifest sha256:5f06bf910d5bf7dbcdf9fbcc84bf50281c61f516736358c5602413c4718ea5ea                                                                                    0.0s 
+ => => exporting manifest list sha256:846e7ea6cc027344236f07a1da41f2f0a1b39a7b16198b257a1238ae6ffc89bb                                                                                           0.0s 
+ => => naming to docker.io/library/qobuz-dl-apple-music-wrapper:latest                                                                                                                           0.0s
+ => => unpacking to docker.io/library/qobuz-dl-apple-music-wrapper:latest                                                                                                                        0.6s
+ => resolving provenance for metadata file                                                                                                                                                       0.0s
+[+] build 1/1
+ ✔ Image qobuz-dl-apple-music-wrapper Built                                                                                                                                                      29.6s
+ubuntu@oracle-vps-definitive:~/home-server/qobuz-dl$ docker run --privileged --rm -it \
+  -v $(pwd)/apple-music/wrapper-data:/app/rootfs/data \
+  --entrypoint ./wrapper \
+  qobuz-dl-apple-music-wrapper \
+  -L "sneak-easel-duller@duck.com:%UyKg7Zi3if#" -H 0.0.0.0
+WARNING: linker: ./wrapper: unused DT entry: type 0x1d arg 0x21b4
+WARNING: linker: Unsupported flags DT_FLAGS_1=0x8000001
+WARNING: linker: ./wrapper: unused DT entry: type 0x6ffffef5 arg 0x1718
+WARNING: linker: ./wrapper: unused DT entry: type 0x6ffffffe arg 0x16f4
+WARNING: linker: ./wrapper: unused DT entry: type 0x6fffffff arg 0x1
+WARNING: linker: libc++_shared.so: unused DT entry: type 0x6ffffef5 arg 0x46b0
+WARNING: linker: libc++_shared.so: unused DT entry: type 0x6ffffffe arg 0x32720
+WARNING: linker: libc++_shared.so: unused DT entry: type 0x6fffffff arg 0x2
+WARNING: linker: libandroidappmusic.so: unused DT entry: type 0x6ffffef5 arg 0x110c8
+WARNING: linker: libandroidappmusic.so: unused DT entry: type 0x6ffffffe arg 0x1122d8
+WARNING: linker: libandroidappmusic.so: unused DT entry: type 0x6fffffff arg 0x3
+WARNING: linker: libstoreservicescore.so: unused DT entry: type 0x6ffffef5 arg 0xe730
+WARNING: linker: libstoreservicescore.so: unused DT entry: type 0x6ffffffe arg 0xe6f0
+WARNING: linker: libstoreservicescore.so: unused DT entry: type 0x6fffffff arg 0x2
+WARNING: linker: libmediaplatform.so: unused DT entry: type 0x6ffffef5 arg 0xe448
+WARNING: linker: libmediaplatform.so: unused DT entry: type 0x6ffffffe arg 0xe3e4
+WARNING: linker: libmediaplatform.so: unused DT entry: type 0x6fffffff arg 0x3
+WARNING: linker: libcurl.so: unused DT entry: type 0x6ffffffe arg 0x4df48
+WARNING: linker: libcurl.so: unused DT entry: type 0x6fffffff arg 0x2
+WARNING: linker: libCoreFoundation.so: unused DT entry: type 0x6ffffffe arg 0x27d88
+WARNING: linker: libCoreFoundation.so: unused DT entry: type 0x6fffffff arg 0x4
+WARNING: linker: libdispatch.so: unused DT entry: type 0x6ffffef5 arg 0x1f00
+WARNING: linker: libdispatch.so: unused DT entry: type 0x6ffffffe arg 0x1edc
+WARNING: linker: libdispatch.so: unused DT entry: type 0x6fffffff arg 0x1
+WARNING: linker: libBlocksRuntime.so: unused DT entry: type 0x6ffffffe arg 0x810
+WARNING: linker: libBlocksRuntime.so: unused DT entry: type 0x6fffffff arg 0x1
+WARNING: linker: libicuuc_sv_apple.so: unused DT entry: type 0x6ffffffe arg 0x38770
+WARNING: linker: libicuuc_sv_apple.so: unused DT entry: type 0x6fffffff arg 0x3
+WARNING: linker: libicui18n_sv_apple.so: unused DT entry: type 0x6ffffffe arg 0x93b00
+WARNING: linker: libicui18n_sv_apple.so: unused DT entry: type 0x6fffffff arg 0x2
+WARNING: linker: libxml2.so: unused DT entry: type 0x6ffffffe arg 0x17b50
+WARNING: linker: libxml2.so: unused DT entry: type 0x6fffffff arg 0x3
+WARNING: linker: libCoreFP.so: unused DT entry: type 0x6ffffef5 arg 0x29ce78
+WARNING: linker: libCoreFP.so: unused DT entry: type 0x6ffffffe arg 0x29ce38
+WARNING: linker: libCoreFP.so: unused DT entry: type 0x6fffffff arg 0x2
+WARNING: linker: libCoreADI.so: unused DT entry: type 0x6ffffef5 arg 0x46718
+WARNING: linker: libCoreADI.so: unused DT entry: type 0x6ffffffe arg 0x466f8
+WARNING: linker: libCoreADI.so: unused DT entry: type 0x6fffffff arg 0x1
+WARNING: linker: libCoreLSKD.so: unused DT entry: type 0x6ffffef5 arg 0xc9d40
+WARNING: linker: libCoreLSKD.so: unused DT entry: type 0x6ffffffe arg 0xc9cfc
+WARNING: linker: libCoreLSKD.so: unused DT entry: type 0x6fffffff arg 0x2
+WARNING: linker: libdaapkit.so: unused DT entry: type 0x6ffffef5 arg 0x1440
+WARNING: linker: libdaapkit.so: unused DT entry: type 0x6ffffffe arg 0x1400
+WARNING: linker: libdaapkit.so: unused DT entry: type 0x6fffffff arg 0x2
+WARNING: linker: libmedialibrarycore.so: unused DT entry: type 0x6ffffef5 arg 0x44180
+WARNING: linker: libmedialibrarycore.so: unused DT entry: type 0x6ffffffe arg 0x44140
+WARNING: linker: libmedialibrarycore.so: unused DT entry: type 0x6fffffff arg 0x2
+WARNING: linker: [vdso]: unused DT entry: type 0x6ffffef5 arg 0x118
+[+] starting...
+[SVStoreServices] FootHillConfig::config() id: dc28071e981c439e
+[MediaPlatform] FairPlayConfig::config() id: dc28071e981c439e
+[MediaPlatform] FairPlayConfig::config() configuring...
+[MediaPlatform] FairPlayConfig::config() config success
+[MediaPlatform] DeviceGUID::configure() id: dc28071e981c439e serial:  apiNum: 29 forceConfig: 1
+[MediaPlatform] DeviceGUID::configure() forcing fairplay configuration...
+[MediaPlatform] FairPlayConfig::config() id: dc28071e981c439e
+[MediaPlatform] DeviceGUID::configure() forcing configuration success
+[MediaPlatform] DeviceGUID::configure() F1Len: 18
+[MediaPlatform] DeviceGUID::configure() F1: b30e72341b879d2047f6ea35b941de1e8d37
+[MediaPlatform] DeviceGUID::configure() F2Len: 7
+[MediaPlatform] DeviceGUID::configure() F2: 1e96e695376f1f
+[MediaPlatform] DeviceGUID::configure() F3: 00000000000000.
+[MediaPlatform] DeviceGUID::configure() F4 ANDROID_ID: dc28071e981c439e
+[MediaPlatform] DeviceGUID::configure() F4 hashed ANDROID_ID: 1f81a7d5b3a999cd7e4e44289fc262ff4937a22b
+[MediaPlatform] DeviceGUID::configure() F4 truncating: 26 bytes
+[MediaPlatform] DeviceGUID::configure() F4: c262ff4937a22b.
+[MediaPlatform] DeviceGUID::configure() dataLen: 111
+[MediaPlatform] DeviceGUID::configure() data: b30e72341b879d2047f6ea35b941de1e8d37.1e96e695376f1f.00000000000000.c262ff4937a22b.00000000000000.00000000000000
+[+] initializing ctx...
+[MediaPlatform] Opening database at path /data/data/com.apple.android.music/files/accounts.sqlitedb with flags 0x6...
+[MediaPlatform] Successfully opened accounts.sqlitedb
+[MediaPlatform] AccountsMigrator::migrate() IN userVersion: 0 schemaVersion: 4
+[MediaPlatform] AccountsMigrator::migrate() OUT userVersion: 4 schemaVersion: 4
+[MediaPlatform] Opening database at path /data/data/com.apple.android.music/files/accounts.sqlitedb with flags 0x6...
+[MediaPlatform] Successfully opened accounts.sqlitedb
+[MediaPlatform] AccountsMigrator::migrate() IN userVersion: 4 schemaVersion: 4
+[MediaPlatform] AccountsMigrator::migrate() OUT userVersion: 4 schemaVersion: 4
+[MediaPlatform] Opening database at path /data/data/com.apple.android.music/files/httpcache.sqlitedb with flags 0x6...
+[MediaPlatform] Successfully opened httpcache.sqlitedb
+[MediaPlatform] RequestContext::resetCache() resetHttpCache: 0
+[MediaPlatform] Opening database at path /data/data/com.apple.android.music/files/cookies.sqlitedb with flags 0x6...
+[MediaPlatform] Successfully opened cookies.sqlitedb
+[MediaPlatform] CookieStorage::_initializeDatabase() version: 0
+[MediaPlatform] CookieStorage::isEmpty() numOfTables: 0
+[MediaPlatform] CookieStorage::isEmpty() isEmpty missing cookies table
+[MediaPlatform] Opening database at path /data/data/com.apple.android.music/files/kvs.sqlitedb with flags 0x6...
+[MediaPlatform] Successfully opened kvs.sqlitedb
+[SVStoreServices] Android presentation interface constructed
+[SVStoreServices] setDialogHandler() called: 0xc844ac2d17c8
+[SVStoreServices] setCredentialsHandler() called: 0xc844ac2d197c
+[+] logging in...
+[SVStoreServices] showDialog()
+[SVStoreServices] passing given dialog and result handler to dialog handler id: 277518028883864
+[.] dialogHandler: {title: Sign In, message: }
+[SVStoreServices] handleProtocolDialogResponse() FOUND id: 277518028883864
+[SVStoreServices] done calling dialog handler
+[MediaPlatform] AuthenticateFlow::_authenticateUsingExistingAccount() IN
+[MediaPlatform] AuthenticateFlow::_authenticateUsingExistingAccount() attemptNumber: 0
+[SVStoreServices] promptForCredentials()
+[SVStoreServices] promptForCredentials() extract responseHandler
+[SVStoreServices] promptForCredentials() found VALID reponseHandler
+[.] credentialHandler: {title: , message: , 2FA: false}
+[SVStoreServices] handleCredentialsResponse()
+[SVStoreServices] promptForCredentials() credentials request consumed
+[MediaPlatform] AuthenticateFlow::_authenticateUsingExistingAccount() credentialsResponseType: 2
+[MediaPlatform] AuthenticateFlow::_authenticateUsingExistingAccount() Success
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 2
+[MediaPlatform] URLBagCache::bagForCacheKey() no found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() start the new request
+[MediaPlatform] URLRequest: preparing request: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US cacheBehavior: 1
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 3
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 1
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] URLRequest: starting request: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US timeout: 30s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US timeout: 30s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] HTTPRequest_Curl::start() url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US withTimeOut: 30s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+__bionic_open_tzdata_path: ANDROID_ROOT not set!
+__bionic_open_tzdata_path: ANDROID_ROOT not set!
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US, status = 200 bodySize = 210239
+[MediaPlatform] URLRequest: from body processing Cookies for DSID: 0
+[MediaPlatform] URLRequest: processing Cookies for DSID: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 2
+[MediaPlatform] URLRequest::_performActionsForResponse() actionType: setstorefront shouldPerform: 1
+[MediaPlatform] URLRequest::_performActionsForResponse() actionType: pingurl shouldPerform: 0
+[MediaPlatform] URLBagCache::addBag() IN
+[MediaPlatform] URLBagCache::addBag() adding bag to cache
+[MediaPlatform] URLBagCache::addBag() OUT
+[MediaPlatform] URLRequest: preparing request: https://xp.apple.com/register cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() no found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLRequest: preparing request: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 3
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 1
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://xp.apple.com/register
+[MediaPlatform] URLRequest: starting request: https://xp.apple.com/register timeout: 20s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://xp.apple.com/register timeout: 20s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() no found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() start the new request
+[MediaPlatform] URLRequest: preparing request: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US cacheBehavior: 1
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 3
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 1
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] URLRequest: starting request: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US timeout: 30s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US timeout: 30s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] HTTPRequest_Curl::start() url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US withTimeOut: 30s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://xp.apple.com/register withTimeOut: 20s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://init.itunes.apple.com/bag.xml?ix=6&locale=en-US, status = 200 bodySize = 201481
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] URLRequest: from body processing Cookies for DSID: 0
+[MediaPlatform] URLRequest: processing Cookies for DSID: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 1
+[MediaPlatform] URLRequest::_performActionsForResponse() actionType: pingurl shouldPerform: 0
+[MediaPlatform] URLBagCache::addBag() IN
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::addBag() replacing bag in cache
+[MediaPlatform] URLBagCache::addBag() OUT
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://xp.apple.com/register result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://xp.apple.com/register
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://xp.apple.com/register, status = 200 bodySize = 268
+[MediaPlatform] URLRequest: from body processing Cookies for DSID: 0
+[MediaPlatform] URLRequest: processing Cookies for DSID: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] URLRequest: preparing request: https://xp.apple.com/register cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] FairPlay::FairPlay() deviceID: b30e72341b879d2047f6ea35b941de1e8d37
+[MediaPlatform] FairPlay::FairPlay() deviceIDDataLen: 18
+[MediaPlatform] FairPlay::FairPlay() deviceIDDataLen: 18
+[MediaPlatform] FairPlay::setFileDirectoryPath setting path: /data/data/com.apple.android.music/files
+[MediaPlatform] FairPlay::contextIdentifierWithPath() path: /data/data/com.apple.android.music/files
+[MediaPlatform] FairPlayInitContext: 0
+[MediaPlatform] FairPlay::setFileDirectoryPath defaultContext: 75075995
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 3
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 1
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://xp.apple.com/register
+[MediaPlatform] URLRequest: starting request: https://xp.apple.com/register timeout: 20s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://xp.apple.com/register timeout: 20s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest status: -45061
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest ERROR retrieving machineData headers
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 1 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() signatureBodyLen: 619
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() url: https://xp.apple.com/register
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] HTTPRequest_Curl::start() url: https://xp.apple.com/register withTimeOut: 20s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://xp.apple.com/register
+[MediaPlatform] URLRequest: preparing request: https://s.mzstatic.com/sap/setupCert.plist cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://xp.apple.com/register
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 0 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() Fallback to trying mescal prime
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://s.mzstatic.com/sap/setupCert.plist
+[MediaPlatform] URLRequest: starting request: https://s.mzstatic.com/sap/setupCert.plist timeout: 30s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://s.mzstatic.com/sap/setupCert.plist timeout: 30s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://s.mzstatic.com/sap/setupCert.plist
+[MediaPlatform] HTTPRequest_Curl::start() url: https://s.mzstatic.com/sap/setupCert.plist
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://s.mzstatic.com/sap/setupCert.plist withTimeOut: 30s
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://s.mzstatic.com/sap/setupCert.plist
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://s.mzstatic.com/sap/setupCert.plist
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://xp.apple.com/register result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://xp.apple.com/register
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://xp.apple.com/register, status = 200 bodySize = 2
+[MediaPlatform] URLRequest: from body processing Cookies for DSID: 0
+[MediaPlatform] URLRequest: processing Cookies for DSID: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://s.mzstatic.com/sap/setupCert.plist result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://s.mzstatic.com/sap/setupCert.plist
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://s.mzstatic.com/sap/setupCert.plist
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://s.mzstatic.com/sap/setupCert.plist, status = 200 bodySize = 3257
+[MediaPlatform] URLRequest: from body processing Cookies for DSID: 0
+[MediaPlatform] URLRequest: processing Cookies for DSID: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] FairPlaySAPInit: 0
+[MediaPlatform] FairPlaySAPExchange: 0
+[MediaPlatform] URLRequest: preparing request: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 0 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() Fallback to trying mescal prime
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy
+[MediaPlatform] URLRequest: starting request: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy timeout: 30s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy timeout: 30s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy
+[MediaPlatform] HTTPRequest_Curl::start() url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy withTimeOut: 30s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://fpinit.itunes.apple.com/v1/signSapSetup/legacy, status = 200 bodySize = 1982
+[MediaPlatform] URLRequest: from body processing Cookies for DSID: 0
+[MediaPlatform] URLRequest: processing Cookies for DSID: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] FairPlaySAPExchange: 0
+[MediaPlatform] FairPlaySAPSign: 0
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate
+[MediaPlatform] URLRequest: starting request: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate timeout: 300s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate timeout: 300s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate
+[MediaPlatform] HTTPRequest_Curl::start() url: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate withTimeOut: 300s
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 302
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 302 url: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] redirectUrl() requestUrl: https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate location: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] Will not cache 'https://buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate' because x-apple-lokamai-no-cache present.
+[MediaPlatform] redirectUrl() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] Schedule Proposing redirection with method 'POST' to 'https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14'
+[MediaPlatform] Start Proposing redirection with method 'POST' to 'https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14'
+[MediaPlatform] URLRequest: redirection handler signaled
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest status: -45061
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest ERROR retrieving machineData headers
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 1 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() signatureBodyLen: 619
+[MediaPlatform] FairPlaySAPSign: 0
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] After client update, continuing redirection with method 'POST' to 'https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14'
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] HTTPRequest_Curl::start() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14 withTimeOut: 300s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] Completed Proposing redirection with method 'POST' to 'https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14'
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14 result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] Will not cache 'https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14' because x-apple-lokamai-no-cache present.
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14, status = 200 bodySize = 901
+[MediaPlatform] URLRequest: from body processing Cookies for DSID: 0
+[MediaPlatform] URLRequest: processing Cookies for DSID: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 1
+[MediaPlatform] URLRequest::_performActionsForResponse() actionType: anisette shouldPerform: 1
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] MachineDataProvisioningRequest: Run with accountID: 18446744073709551615, base URL: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish
+[MediaPlatform] URLRequest: preparing request: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest status: -45061
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest ERROR retrieving machineData headers
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 0 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() Fallback to trying mescal prime
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish
+[MediaPlatform] URLRequest: starting request: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish timeout: 30s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish timeout: 30s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish
+[MediaPlatform] HTTPRequest_Curl::start() url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish withTimeOut: 30s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://auth.itunes.apple.com/auth/v1/otp/1.5/finish, status = 200 bodySize = 797
+[MediaPlatform] URLRequest: from body processing Cookies for DSID: 0
+[MediaPlatform] URLRequest: processing Cookies for DSID: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] URLRequest::_performActionsForResponse() anisetteAction result: 1 machineDataSyncStateLen: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 1
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest status: 0
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest status: 0
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 1 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() signatureBodyLen: 619
+[MediaPlatform] FairPlaySAPSign: 0
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] URLRequest: starting request: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14 timeout: 300s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14 timeout: 300s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] HTTPRequest_Curl::start() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14 withTimeOut: 300s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14 result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] Will not cache 'https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14' because x-apple-lokamai-no-cache present.
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://p14-buy.itunes.apple.com/WebObjects/MZFinance.woa/wa/authenticate?Pod=14&PRH=14, status = 200 bodySize = 4021
+[MediaPlatform] CreateAccountProtocolAction() dsid: 19283480439
+[MediaPlatform] CreateAccountProtocolAction() Account
+[MediaPlatform] URLRequest: processing Cookies ProtocolActionTypeCreateAccount...
+[MediaPlatform] URLRequest: processing Cookies ProtocolActionTypeCreateAccount with DSID: 19283480439
+[MediaPlatform] URLRequest: processing Cookies for DSID: 19283480439
+[MediaPlatform] CreateAccountProtocolAction() dsid: 19283480439
+[MediaPlatform] CreateAccountProtocolAction() Account
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 2
+[MediaPlatform] CreateAccountProtocolAction() dsid: 19283480439
+[MediaPlatform] CreateAccountProtocolAction() Account
+[MediaPlatform] URLRequest::_performActionsForResponse() actionType: setstorefront shouldPerform: 1
+[MediaPlatform] URLRequest::_performActionsForResponse() actionType: createaccount shouldPerform: 1
+[MediaPlatform] CreateAccountProtocolAction() dsid: 19283480439
+[MediaPlatform] CreateAccountProtocolAction() Account
+[MediaPlatform] AuthenticateFlow::_saveAuthHeaders() header: Accept-Language value: en-US
+[MediaPlatform] AuthenticateFlow::_saveAuthHeaders() header: X-Apple-AMD value: AAAABAAAABCOwFvvaOj3vXMO11O3LhHY
+[MediaPlatform] AuthenticateFlow::_saveAuthHeaders() header: X-Apple-AMD-M value: bOAwoR+B4lXh8KtcEh5ZCpDI2n3c1vHx4tyc5UjQTNRtULq2/elbNyTguFbixCmP0FJyRadCPqCajxFq
+[MediaPlatform] AuthenticateFlow::_saveAuthHeaders() header: X-Apple-Store-Front value: 143503-2,31 t:music31
+[MediaPlatform] AuthenticateFlow::_saveAuthHeaders() header: X-Dsid value: 19283480439
+[MediaPlatform] AuthenticateFlow::_saveAuthHeaders() header: X-Token value: AwIAAAFCAACfxAAAAABqAi/LITeoUN1r63CKso1stkU52lc/DkA=
+[.] response type 6
+[SVAudioRendererNative] SVPlaybackLeaseManager::SVPlaybackLeaseManager()
+[SVAudioRendererNative] SVPlaybackLeaseManager::SVPlaybackLeaseManager() VALID REQUEST CONTEXT
+[MediaPlatform] PlaybackLeaseSession::setRefreshesAutomatically() newValue: 0 oldValue: 1
+[MediaPlatform] PlaybackLeaseSession::setRefreshesAutomatically() numOfOperations: 0
+[MediaPlatform] PlaybackLeaseSession::setRefreshesAutomatically() numOfOperationsCanceled: 0/0
+[MediaPlatform] PlaybackLeaseSession::setRefreshesAutomatically() newValue: 1 oldValue: 0
+[MediaPlatform] PlaybackLeaseSession: notifyObserver state: executing
+[MediaPlatform] PlaybackLeaseSession: notifyObserver OUT
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] URLBagCache::bagForCacheKey() no found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() start the new request
+[MediaPlatform] URLRequest: preparing request: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US cacheBehavior: 1
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 3
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 1
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US
+[MediaPlatform] URLRequest: starting request: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US timeout: 30s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US timeout: 30s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US
+[MediaPlatform] HTTPRequest_Curl::start() url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US withTimeOut: 30s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://init.itunes.apple.com/bag.xml?ix=6&dsid=19283480439&locale=en-US, status = 200 bodySize = 203126
+[MediaPlatform] URLRequest: processing Cookies for DSID: 19283480439
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 1
+[MediaPlatform] URLRequest::_performActionsForResponse() actionType: pingurl shouldPerform: 0
+[MediaPlatform] URLBagCache::addBag() IN
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] URLBagCache::addBag() adding bag to cache
+[MediaPlatform] URLBagCache::addBag() OUT
+[MediaPlatform] URLRequest: preparing request: https://xp.apple.com/register cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] PlaybackLeaseRequest::_loadCertificate() IN
+[MediaPlatform] URLRequest: preparing request: https://s.mzstatic.com/skdtool_2021_certbundle.bin cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 3
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 1
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://xp.apple.com/register
+[MediaPlatform] URLRequest: starting request: https://xp.apple.com/register timeout: 20s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://xp.apple.com/register timeout: 20s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 0 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() Fallback to trying mescal prime
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://s.mzstatic.com/skdtool_2021_certbundle.bin
+[MediaPlatform] URLRequest: starting request: https://s.mzstatic.com/skdtool_2021_certbundle.bin timeout: 300s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://s.mzstatic.com/skdtool_2021_certbundle.bin timeout: 300s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://s.mzstatic.com/skdtool_2021_certbundle.bin
+[MediaPlatform] HTTPRequest_Curl::start() url: https://s.mzstatic.com/skdtool_2021_certbundle.bin
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://s.mzstatic.com/skdtool_2021_certbundle.bin withTimeOut: 300s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://s.mzstatic.com/skdtool_2021_certbundle.bin
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() url: https://xp.apple.com/register
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://xp.apple.com/register withTimeOut: 20s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://s.mzstatic.com/skdtool_2021_certbundle.bin
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://s.mzstatic.com/skdtool_2021_certbundle.bin result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://s.mzstatic.com/skdtool_2021_certbundle.bin
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://s.mzstatic.com/skdtool_2021_certbundle.bin
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://s.mzstatic.com/skdtool_2021_certbundle.bin, status = 200 bodySize = 2598
+[MediaPlatform] URLRequest: processing Cookies for DSID: 19283480439
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] PlaybackLeaseRequest::_loadCertificate() OUT
+[MediaPlatform] URLRequest: preparing request: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest status: 0
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 0 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() Fallback to trying mescal prime
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch
+[MediaPlatform] PlaybackLeaseRequest::_prepareRequestMessage() fpsCertLen: 2598
+[MediaPlatform] FairPlayGenerateSubscriptionRequest accountID: 19283480439 transactionType: 308 certLen: 2598
+[MediaPlatform] FairPlay::defaultContextIdentifier() _defaultContextID: 75075995
+[MediaPlatform] FairPlay::defaultContextIdentifier() contextID: 75075995
+[MediaPlatform] FairPlayGenerateSubscriptionRequest: 0
+[MediaPlatform] PlaybackLeaseRequest::_prepareRequestMessage ERROR invalid SPC
+[MediaPlatform] URLRequest: starting request: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch timeout: 5s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch timeout: 5s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch
+[MediaPlatform] HTTPRequest_Curl::start() url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch withTimeOut: 5s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://xp.apple.com/register result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://xp.apple.com/register
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://xp.apple.com/register
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://xp.apple.com/register, status = 200 bodySize = 569
+[MediaPlatform] URLRequest: processing Cookies for DSID: 19283480439
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/subPlaybackDispatch, status = 200 bodySize = 3662
+[MediaPlatform] PlaybackLeaseRequest::runWithTimeout() preprocessing response....
+[MediaPlatform] URLRequest: processing Cookies for DSID: 19283480439
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] PlaybackLeaseSession: notifyObserver state: finished
+[MediaPlatform] PlaybackLeaseSession: notifyObserver OUT
+[MediaPlatform] PlaybackLeaseSession: setCompletionCallback IN
+[MediaPlatform] FairPlay::defaultContextIdentifier() _defaultContextID: 75075995
+[MediaPlatform] FairPlay::defaultContextIdentifier() contextID: 75075995
+[MediaPlatform] FairPlayImportSubscriptionResponse() err: 0
+[MediaPlatform] FairPlay::defaultContextIdentifier() _defaultContextID: 75075995
+[MediaPlatform] FairPlay::defaultContextIdentifier() contextID: 75075995
+[MediaPlatform] FairPlayGetSubscriptionStatus infoListLength: 2
+[MediaPlatform] FPSubscriptionInfo[0] accoundID: 18446744072820276975 state:1
+[MediaPlatform] FPSubscriptionInfo[1] accoundID: 19283480439 state:1
+[MediaPlatform] PlaybackLeaseSession: _logFairPlaySubscriptionStatus subscriptionStatus FairPlaySubscriptionStatus  kFPSubscriptionCanStreamContent: The account can play online only
+[MediaPlatform] PlaybackLeaseSession: _logFairPlaySubscriptionStatus subscriptionStatus FairPlaySubscriptionStatus  kFPSubscriptionCanStreamContent: The account can play online only
+[MediaPlatform] PlaybackLeaseSession: setCompletionCallback OUT
+[MediaPlatform] PlaybackLeaseSession: leaseDuration: 900
+[MediaPlatform] PlaybackLeaseSession: requestingOfflineSlot isOfflineSlotAvailable: 1 needToGetSubscriptionStatus: 0
+[MediaPlatform] FairPlay::defaultContextIdentifier() _defaultContextID: 75075995
+[MediaPlatform] FairPlay::defaultContextIdentifier() contextID: 75075995
+[SVAudioRendererNative] SVFootHillSessionCtrl::SVFootHillSessionCtrl()
+[MediaPlatform] FairPlay::defaultContextIdentifier() _defaultContextID: 75075995
+[MediaPlatform] FairPlayGetSubscriptionStatus infoListLength: 2
+[MediaPlatform] FPSubscriptionInfo[0] accoundID: 18446744072820276975 state:1
+[MediaPlatform] FPSubscriptionInfo[1] accoundID: 19283480439 state:1
+[MediaPlatform] FairPlay::defaultContextIdentifier() contextID: 75075995
+[MediaPlatform] PlaybackLeaseSession: subscriptionStatus FairPlaySubscriptionStatus  kFPSubscriptionCanStreamContent: The account can play online only
+[MediaPlatform] PlaybackLeaseSession: subscriptionStatus FairPlaySubscriptionStatus  kFPSubscriptionCanStreamContent: The account can play online only
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] URLRequest: preparing request: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] FairPlayGetSubscriptionStatus infoListLength: 2
+[MediaPlatform] FPSubscriptionInfo[0] accoundID: 18446744072820276975 state:1
+[MediaPlatform] FPSubscriptionInfo[1] accoundID: 19283480439 state:1
+[MediaPlatform] URLRequest: preparing request: https://sf-api-token-service.itunes.apple.com/apiToken cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 3
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 0 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() Fallback to trying mescal prime
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest status: 0
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] FairPlay::defaultContextIdentifier() _defaultContextID: 75075995
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 0 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 1
+[MediaPlatform] URLBag::stringToSignWithApiTokenURLRequest() signatureString: 143503-2,31 t:music31bOAwoR+B4lXh8KtcEh5ZCpDI2n3c1vHx4tyc5UjQTNRtULq2/elbNyTguFbixCmP0FJyRadCPqCajxFq19283480439musicAndroid
+[MediaPlatform] URLRequest::_adjustedRequest() apiToken signatureString: 143503-2,31 t:music31bOAwoR+B4lXh8KtcEh5ZCpDI2n3c1vHx4tyc5UjQTNRtULq2/elbNyTguFbixCmP0FJyRadCPqCajxFq19283480439musicAndroid
+[MediaPlatform] FairPlay::defaultContextIdentifier() contextID: 75075995
+[MediaPlatform] Mescal::sign(string - 143503-2,31 t:music31bOAwoR+B4lXh8KtcEh5ZCpDI2n3c1vHx4tyc5UjQTNRtULq2/elbNyTguFbixCmP0FJyRadCPqCajxFq19283480439musicAndroid) with 124 bytes
+[MediaPlatform] FairPlaySAPSign: 0
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1
+[MediaPlatform] URLRequest: starting request: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1 timeout: 300s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1 timeout: 300s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] FairPlayGenerateSubscriptionBagRequest: 0
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] URLRequest: starting request: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus timeout: 60s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus timeout: 60s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1
+[MediaPlatform] HTTPRequest_Curl::start() url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1 withTimeOut: 300s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus
+[MediaPlatform] HTTPRequest_Curl::start() url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus withTimeOut: 60s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://p14-buy.itunes.apple.com/commerce/music/subscriptionStatus, status = 200 bodySize = 663
+[MediaPlatform] URLRequest: processing Cookies for DSID: 19283480439
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] FairPlay::defaultContextIdentifier() _defaultContextID: 75075995
+[MediaPlatform] FairPlay::defaultContextIdentifier() contextID: 75075995
+[MediaPlatform] FairPlayImportSubscriptionResponse() err: 0
+[MediaPlatform] FairPlay::defaultContextIdentifier() _defaultContextID: 75075995
+[MediaPlatform] FairPlay::defaultContextIdentifier() contextID: 75075995
+[MediaPlatform] FairPlayGetSubscriptionStatus infoListLength: 2
+[MediaPlatform] FPSubscriptionInfo[0] accoundID: 18446744072820276975 state:1
+[MediaPlatform] FPSubscriptionInfo[1] accoundID: 19283480439 state:1
+[MediaPlatform] PlaybackLeaseSession: _logFairPlaySubscriptionStatus subscriptionStatus FairPlaySubscriptionStatus  kFPSubscriptionCanStreamContent: The account can play online only
+[MediaPlatform] PlaybackLeaseSession: _logFairPlaySubscriptionStatus subscriptionStatus FairPlaySubscriptionStatus  kFPSubscriptionCanStreamContent: The account can play online only
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1 result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://sf-api-token-service.itunes.apple.com/apiToken?clientId=musicAndroid&version=1, status = 200 bodySize = 322
+[MediaPlatform] URLRequest: processing Cookies for DSID: 19283480439
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[MediaPlatform] URLRequest: preparing request: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken cacheBehavior: 0
+[MediaPlatform] URLRequest::_adjustedRequest() IN
+[MediaPlatform] URLBagCache::bagForCacheKey() IN cacheOptions: 0
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() DIFF accountIdentifier 0 , 19283480439
+[MediaPlatform] [URLBag] URLBag::matchesCacheKey() match found!!
+[MediaPlatform] URLBagCache::bagForCacheKey() found match!
+[MediaPlatform] URLBagCache::bagForCacheKey() OUT
+[MediaPlatform] URLBagRequest::runWithTimeout() found in cache
+[MediaPlatform] Url Request Add Headers - Accept Language en-US 
+[MediaPlatform] URLRequest::_adjustedRequest() machineDataStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() anisetteRequest status: 0
+[MediaPlatform] URLRequest::_adjustedRequest() _mescalStyle: 0
+[MediaPlatform] URLRequest::_adjustedRequest() shouldSignMescalRequests: 0 shouldSignMescalMusicRequests: 0 shouldSignMescalApiTokenRequest: 0
+[MediaPlatform] URLRequest::_adjustedRequest() Fallback to trying mescal prime
+[MediaPlatform] URLRequest::_adjustedRequest() OUT
+[MediaPlatform] URLRequest: preparing adjustedRequest: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken
+[MediaPlatform] URLRequest: starting request: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken timeout: 300s
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() IN url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken timeout: 300s
+[MediaPlatform] HTTPRequest_Curl::reset()
+[MediaPlatform] URLRequest: waiting for request to complete....
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken
+[MediaPlatform] HTTPRequest_Curl::start() url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken
+[+] hooked curl_easy_setopt 81
+[+] hooked curl_easy_setopt 64
+[MediaPlatform] HTTPRequest_Curl::start() url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken withTimeOut: 300s
+[MediaPlatform] HTTPRequest::_uncachedStartRequestWithTimeout() OUT url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken
+[MediaPlatform] HTTPRequest_Curl::start() invokeAsync curl_easy_perform url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync curl_easy_perform url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken result: 0
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE httpStatusCode: 200
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE invokeAsync....
+[MediaPlatform] HTTPRequest::loadDidFinish() IN status: 200 url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken
+[MediaPlatform] HTTPRequest::_requestComplete() url: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken
+[MediaPlatform] URLRequest: response handler signaled
+[MediaPlatform] URLRequest: request completed
+[MediaPlatform] URLRequest: finished request: https://play.itunes.apple.com/WebObjects/MZPlay.woa/wa/createMusicToken, status = 200 bodySize = 263
+[MediaPlatform] URLRequest: processing Cookies for DSID: 19283480439
+[MediaPlatform] HTTPRequest_Curl::start() COMPLETE curl_easy_cleanup
+[MediaPlatform] URLRequest::_performActionsForResponse() numOfProtocolActions: 0
+[+] account info cached successfully
+[+] StoreFront ID: 143503-2,31
+[+] Music-Token: AtGJ2KnsmoJra2...
+[!] listening m3u8 request on 0.0.0.0:20020
+[!] listening 0.0.0.0:10020
+[!] listening account info request on 0.0.0.0:30020
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() invokeAfter...
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() invokeAfter...
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() invokeAfter...
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() invokeAfter...
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() invokeAfter...
+[MediaPlatform] HTTPRequest::startRequestWithTimeout() invokeAfter...
