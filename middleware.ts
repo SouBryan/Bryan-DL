@@ -68,6 +68,7 @@ const BLOCKED_IPS = new Set([
     '2600:387:15:3613::1', // Residential proxy bot - returnNaN/let attacks
     '2601:281:c800:1ab0:cca1:36cc:4524:60e7', // Mass album downloader bot (Opera)
     '45.94.31.32', // WordPress scanner bot - 1337 Services GmbH NL (AbuseIPDB flagged)
+    '45.205.1.43', // SSR injection bot - POST / with returnNaN payload, rotating UAs
 ]);
 
 function getClientIp(request: NextRequest): string {
@@ -115,6 +116,11 @@ export function middleware(request: NextRequest) {
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
         return corsResponse(null, 204);
+    }
+
+    // Block non-GET/HEAD methods on non-API routes (POST / is used for SSR injection)
+    if (!pathname.startsWith('/api/') && request.method !== 'GET' && request.method !== 'HEAD') {
+        return corsResponse('Method Not Allowed', 405);
     }
 
     const ip = getClientIp(request);
