@@ -55,6 +55,28 @@ services:
         networks:
             - qobuz-network
 
+    # Apple Music sidecar — internal service (not exposed)
+    apple-music-api:
+        build:
+            context: ./apple-music
+            dockerfile: Dockerfile
+        container_name: apple-music-api
+        env_file: .env
+        environment:
+            - SOCKS5_PROXY=warp-socks:9091
+            - APPLE_MUSIC_COOKIES_PATH=/app/cookies/cookies.txt
+        volumes:
+            - apple-music-cookies:/app/cookies
+        depends_on:
+            warp-socks:
+                condition: service_healthy
+        restart: unless-stopped
+        networks:
+            - qobuz-network
+
 networks:
     qobuz-network:
         driver: bridge
+
+volumes:
+    apple-music-cookies:
