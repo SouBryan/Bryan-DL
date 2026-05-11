@@ -202,7 +202,7 @@ async def init_gamdl():
 
         base_interface = await AppleMusicBaseInterface.create(
             apple_music_api=apple_music_api,
-            **({"wrapper_m3u8_ip": f"{WRAPPER_HOST}:{WRAPPER_M3U8_PORT}"} if _wrapper_connected else {}),
+            **({"use_wrapper": True, "wrapper_m3u8_ip": f"{WRAPPER_HOST}:{WRAPPER_M3U8_PORT}"} if _wrapper_connected else {}),
         )
 
         # With wrapper: ALAC first (lossless), fallback to AAC. Without: AAC only.
