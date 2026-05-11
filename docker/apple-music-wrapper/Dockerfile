@@ -2,25 +2,21 @@ FROM debian:13.2
 
 WORKDIR /app
 
-# Download prebuilt arm64 wrapper binary from GitHub release
-RUN apt-get update && apt-get install -y wget && \
-    wget -q -O /app/wrapper https://github.com/WorldObservationLog/wrapper/releases/download/wrapper.arm64.latest/wrapper && \
+# Download prebuilt arm64 release (wrapper binary + rootfs + entrypoint)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget unzip ca-certificates git && \
+    wget -q -O /tmp/wrapper.zip https://github.com/WorldObservationLog/wrapper/releases/download/wrapper.arm64.latest/Wrapper.arm64.latest.zip && \
+    unzip -o /tmp/wrapper.zip -d /app && \
     chmod +x /app/wrapper && \
-    apt-get purge -y wget && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-
-# Clone only the rootfs directory from the repo
-RUN apt-get update && apt-get install -y git && \
+    rm /tmp/wrapper.zip && \
+    # Get rootfs and entrypoint from main branch
     git clone --depth 1 --filter=blob:none --sparse https://github.com/WorldObservationLog/wrapper.git /tmp/wrapper-repo && \
-    cd /tmp/wrapper-repo && git sparse-checkout set rootfs && \
+    cd /tmp/wrapper-repo && git sparse-checkout set rootfs entrypoint.sh && \
     cp -r /tmp/wrapper-repo/rootfs /app/rootfs && \
-    rm -rf /tmp/wrapper-repo && \
-    apt-get purge -y git && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-
-# Copy entrypoint from repo
-RUN apt-get update && apt-get install -y wget && \
-    wget -q -O /app/entrypoint.sh https://raw.githubusercontent.com/WorldObservationLog/wrapper/main/entrypoint.sh && \
+    cp /tmp/wrapper-repo/entrypoint.sh /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh && \
-    apt-get purge -y wget && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+    rm -rf /tmp/wrapper-repo && \
+    apt-get purge -y wget unzip git && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 10020 20020 30020
 
