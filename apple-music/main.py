@@ -93,6 +93,7 @@ apple_music_api: AppleMusicApi | None = None
 apple_music_interface: AppleMusicInterface | None = None
 s3_client = None
 _init_lock = asyncio.Lock()
+_wrapper_connected = False  # True only if wrapper was actually used (not cookie fallback)
 
 
 def get_s3_client():
@@ -134,20 +135,32 @@ async def init_gamdl():
             return
 
         # Initialize gamdl — try wrapper first (ALAC/lossless), fall back to cookies (AAC only)
+        global _wrapper_connected
         if USE_WRAPPER:
             wrapper_account_url = f"http://{WRAPPER_HOST}:{WRAPPER_ACCOUNT_PORT}/"
             logger.info(f"Initializing gamdl with WRAPPER at {wrapper_account_url}")
-            try:
-                apple_music_api = await AppleMusicApi.create_from_wrapper(
-                    wrapper_account_url=wrapper_account_url,
-                )
-                logger.info(f"Wrapper connected! Subscription: {apple_music_api.active_subscription}")
-                logger.info(f"Storefront: {apple_music_api.storefront}")
-                logger.info("ALAC/lossless codec available via wrapper")
-            except Exception as e:
-                logger.warning(f"Wrapper connection failed ({e}), falling back to cookies...")
-                apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
-                logger.info(f"Cookies fallback — Subscription: {apple_music_api.active_subscription}")
+
+            # Retry wrapper connection with backoff (wrapper takes longer to start)
+            max_retries = 10
+            for attempt in range(1, max_retries + 1):
+                try:
+                    apple_music_api = await AppleMusicApi.create_from_wrapper(
+                        wrapper_account_url=wrapper_account_url,
+                    )
+                    _wrapper_connected = True
+                    logger.info(f"Wrapper connected on attempt {attempt}! Subscription: {apple_music_api.active_subscription}")
+                    logger.info(f"Storefront: {apple_music_api.storefront}")
+                    logger.info("ALAC/lossless codec available via wrapper")
+                    break
+                except Exception as e:
+                    if attempt < max_retries:
+                        wait = min(attempt * 3, 15)  # 3s, 6s, 9s, ... up to 15s
+                        logger.warning(f"Wrapper attempt {attempt}/{max_retries} failed ({e}), retrying in {wait}s...")
+                        await asyncio.sleep(wait)
+                    else:
+                        logger.error(f"Wrapper failed after {max_retries} attempts ({e}), falling back to cookies...")
+                        apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
+                        logger.info(f"Cookies fallback — Subscription: {apple_music_api.active_subscription}")
         else:
             logger.info(f"Initializing gamdl with cookies from {COOKIES_PATH}")
             apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
@@ -156,11 +169,11 @@ async def init_gamdl():
 
         base_interface = await AppleMusicBaseInterface.create(
             apple_music_api=apple_music_api,
-            **({"wrapper_m3u8_ip": f"{WRAPPER_HOST}:{WRAPPER_M3U8_PORT}"} if USE_WRAPPER else {}),
+            **({"wrapper_m3u8_ip": f"{WRAPPER_HOST}:{WRAPPER_M3U8_PORT}"} if _wrapper_connected else {}),
         )
 
         # With wrapper: ALAC first (lossless), fallback to AAC. Without: AAC only.
-        if USE_WRAPPER:
+        if _wrapper_connected:
             codec_priority = [SongCodec.ALAC, SongCodec.AAC_LEGACY]
         else:
             codec_priority = [SongCodec.AAC_LEGACY]
@@ -228,9 +241,9 @@ async def health():
         "status": "ok",
         "subscription": apple_music_api.active_subscription,
         "storefront": apple_music_api.storefront,
-        "wrapper_active": USE_WRAPPER,
-        "lossless_available": USE_WRAPPER,
-        "codec": "alac" if USE_WRAPPER else "aac-legacy",
+        "wrapper_active": _wrapper_connected,
+        "lossless_available": _wrapper_connected,
+        "codec": "alac" if _wrapper_connected else "aac-legacy",
     }
 
 
@@ -333,7 +346,7 @@ async def download_track(song_id: str):
             interface=apple_music_interface,
             output_path=work_dir,
             temp_path=work_dir,
-            **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if USE_WRAPPER else {}),
+            **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if _wrapper_connected else {}),
         )
         song_dl = AppleMusicSongDownloader(base=base_dl)
         mv_dl = AppleMusicMusicVideoDownloader(base=base_dl)
