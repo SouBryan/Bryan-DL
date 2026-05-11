@@ -16,6 +16,8 @@ import { useSettings } from '@/lib/settings-provider';
 import { useTheme } from 'next-themes';
 import CountryPicker from '@/components/country-picker';
 import { useCountry } from '@/lib/country-provider';
+import { useMusicSource } from '@/lib/music-source-provider';
+import SourcePicker from '@/components/source-picker';
 
 export const filterData: FilterDataType = [
     {
@@ -45,6 +47,7 @@ const SearchView = () => {
     const [searchError, setSearchError] = useState<string>('');
     const { settings } = useSettings();
     const { country } = useCountry();
+    const { musicSource } = useMusicSource();
 
     useEffect(() => {
         console.log(`%c${process.env.NEXT_PUBLIC_APPLICATION_NAME}`, 'font-size: 25px; font-weight: bold;');
@@ -66,7 +69,7 @@ const SearchView = () => {
         const filter = filterData.find((fd) => fd.value == searchField) || filterData[0];
         if (filter.searchRoute) {
             axios
-                .get('/api/' + filter.searchRoute + `?q=${query}&offset=${results![searchField].items.length}`, { headers: { 'Token-Country': country } })
+                .get('/api/' + filter.searchRoute + `?q=${query}&offset=${results![searchField].items.length}`, { headers: { 'Token-Country': country, 'Music-Source': musicSource } })
                 .then((response) => {
                     if (response.status === 200) {
                         response.data.data[searchField].items.length = Math.max(
@@ -86,7 +89,7 @@ const SearchView = () => {
                     }
                 });
         } else {
-            axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`, { headers: { 'Token-Country': country } }).then((response) => {
+            axios.get(`/api/get-music?q=${query}&offset=${results![searchField].items.length}`, { headers: { 'Token-Country': country, 'Music-Source': musicSource } }).then((response) => {
                 if (response.status === 200) {
                     let newResults = {
                         ...results!,
@@ -215,7 +218,8 @@ const SearchView = () => {
         try {
             const response = await axios.get(`/api/${filter.searchRoute ? filter.searchRoute : 'get-music'}?q=${query}&offset=0`, {
                 headers: {
-                    'Token-Country': country
+                    'Token-Country': country,
+                    'Music-Source': musicSource
                 }
             });
             if (response.status === 200) {
@@ -246,6 +250,11 @@ const SearchView = () => {
     useEffect(() => {
         if (country && query) onSearch(query);
     }, [country]);
+
+    useEffect(() => {
+        if (musicSource === 'apple-music') setSearchField('tracks');
+        if (query) onSearch(query, musicSource === 'apple-music' ? 'tracks' : searchField);
+    }, [musicSource]);
 
     return (
         <>
@@ -304,7 +313,10 @@ const SearchView = () => {
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <CountryPicker className='sm:hidden' />
+                        <div className='flex gap-2 items-center'>
+                            <SourcePicker className='sm:hidden' />
+                            <CountryPicker className='sm:hidden' />
+                        </div>
                     </div>
                     {searchError && (
                         <p className='text-destructive w-full text-center font-semibold'>

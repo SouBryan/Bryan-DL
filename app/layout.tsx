@@ -14,6 +14,7 @@ import { StatusBarProvider } from '@/lib/status-bar/context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { CountryProvider } from '@/lib/country-provider';
+import { MusicSourceProvider } from '@/lib/music-source-provider';
 import './globals.css';
 
 const inter = Inter({
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <html lang='en' suppressHydrationWarning>
             <body className={`${inter.className} antialiased`} suppressHydrationWarning>
                 <FFmpegProvider>
+                    <MusicSourceProvider>
                     <CountryProvider>
                         <StatusBarProvider>
                             <SettingsProvider>
@@ -105,6 +107,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                         <script src='https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.9.7/dist/ffmpeg.min.js'></script>
                         <script src='https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js'></script>
                     </CountryProvider>
+                    </MusicSourceProvider>
                 </FFmpegProvider>
             </body>
         </html>

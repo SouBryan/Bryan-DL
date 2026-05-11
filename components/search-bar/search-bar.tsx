@@ -10,6 +10,7 @@ import { QobuzSearchResults } from '@/lib/qobuz-dl';
 import AutocompleteCard from './autocomplete-card';
 import { useCountry } from '@/lib/country-provider';
 import CountryPicker from '../country-picker';
+import SourcePicker from '../source-picker';
 
 const SearchBar = ({
     onSearch,
@@ -122,7 +123,8 @@ const SearchBar = ({
                         setSearchInput(event.currentTarget.value);
                     }}
                 />
-                <div className='flex'>
+                <div className='flex gap-2'>
+                    <SourcePicker className='hidden sm:flex' />
                     <CountryPicker className='hidden sm:flex' />
                 </div>
             </div>

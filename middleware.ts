@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const CORS_HEADERS: Record<string, string> = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Token-Country',
+    'Access-Control-Allow-Headers': 'Content-Type, Token-Country, Music-Source',
 };
 
 function corsResponse(body: string | null, status: number, extra?: Record<string, string>): NextResponse {

@@ -112,59 +112,50 @@ O `media-user-token` (necessário para stream URLs) só é emitido para assinant
 
 ---
 
-## Fase 1 — Sidecar FastAPI (Apple Music Bridge)
+## Fase 1 — Sidecar FastAPI (Apple Music Bridge) ✅ IMPLEMENTADA
 
 **Objetivo**: Criar o serviço Python que o Next.js vai chamar via HTTP interno. O sidecar faz **busca + download + decrypt** e serve áudio limpo.
 
-### 1.1 — Criar `apple-music/main.py` (FastAPI)
+### 1.1 — Criar `apple-music/main.py` (FastAPI) ✅
 
 Serviço HTTP interno (não exposto ao público):
 
 ```
-Endpoints:
+Endpoints implementados:
   GET  /search?term=...&limit=10          → JSON com resultados de busca
-  GET  /download/{song_id}                 → Stream HTTP do arquivo .m4a decriptado
-  GET  /album/{album_id}                   → JSON com detalhes do álbum
-  GET  /artist/{artist_id}                 → JSON com detalhes do artista
+  GET  /download/{song_id}                 → Download+decrypt → upload R2 → retorna URL
+  GET  /track-info/{song_id}              → Metadata do catálogo Apple Music
   GET  /health                             → JSON com {status, subscription, storefront}
-  POST /refresh-cookies                    → Força refresh dos cookies
 ```
 
-**Endpoint `/download/{song_id}` — fluxo detalhado:**
+**Endpoint `/download/{song_id}` — fluxo implementado:**
 1. Recebe song_id da Apple Music
-2. Usa gamdl para obter media info (webplayback → stream URL + decryption key)
+2. Checa cache R2 (`apple/{song_id}.m4a`) — se já existe, retorna URL imediatamente
 3. Usa gamdl `downloader.download()` para baixar HLS + decriptar → arquivo `.m4a` temp
-4. Upload do `.m4a` limpo para Cloudflare R2 (bucket `apple-music-cache`, key `apple/{song_id}.m4a`)
+4. Upload do `.m4a` limpo para Cloudflare R2 (bucket `media-cache`, key `apple/{song_id}.m4a`)
 5. Retorna JSON: `{ "url": "https://cdn.bryanhifi.dpdns.org/apple/{song_id}.m4a" }`
 6. Deleta arquivo temp local
 
-- [ ] Inicializar gamdl com cookies do volume Docker
-- [ ] Implementar cada endpoint
-- [ ] Upload para R2 via boto3/S3 API (R2 é S3-compatível)
-- [ ] Diretório temp para processamento (`/tmp/apple-music-processing/`)
-- [ ] R2 lifecycle rule: auto-delete após 5 dias
-- [ ] Error handling com status codes HTTP (200, 404, 401, 429)
+- [x] Inicializar gamdl com cookies do bind mount (`./apple-music/cookies/cookies.txt`)
+- [x] Implementar endpoints: `/health`, `/search`, `/download/{song_id}`, `/track-info/{song_id}`
+- [x] Upload para R2 via boto3/S3 API (R2 é S3-compatível)
+- [x] Diretório temp para processamento (`/tmp/apple-music-processing/`)
+- [x] Error handling com status codes HTTP (200, 404, 401, 503)
+- [x] Dockerfile: Python 3.12-slim + ffmpeg + gamdl + fastapi + uvicorn + boto3
+- [x] Docker Compose: serviço `apple-music-api` (interno, rede `qobuz-network`)
+- [x] R2 lifecycle rule: auto-delete após 5 dias (**ação manual no Cloudflare Dashboard**)
 
-### 1.2 — Multi-storefront (multi-país)
+### 1.2 — Multi-storefront (multi-país) — ⏳ FUTURO
 
-Mesma lógica do Qobuz: múltiplos tokens de países diferentes.
-
-```env
-# .env
-APPLE_MUSIC_ACCOUNTS=[
-  {"storefront":"us","email":"...","password":"..."},
-  {"storefront":"jp","email":"...","password":"..."},
-  {"storefront":"gb","email":"...","password":"..."}
-]
-```
+Mesma lógica do Qobuz: múltiplos tokens de países diferentes. **Não implementado na v1** — começa com um storefront só.
 
 - [ ] Cada conta gera um par `(devToken, media-user-token)` para seu storefront
 - [ ] O bridge mantém instâncias gamdl por storefront
 - [ ] Storefront `jp` é crítico — é o principal caso de uso (músicas japonesas)
 
-### 1.3 — Cookie refresh automático
+### 1.3 — Cookie refresh automático — ⏳ FUTURO
 
-O `media-user-token` expira. O `main.py` do Discord faz o login completo via SRP.
+O `media-user-token` expira. Na v1, refresh é manual via SFTP.
 
 - [ ] Adaptar `main.py` como módulo: `apple-music/auth.py`
 - [ ] Função `refresh_cookies(email, password, storefront) → {devToken, media_user_token, cookies}`
@@ -183,81 +174,44 @@ A Apple é mais agressiva que o Qobuz com rate limits.
 
 ---
 
-## Fase 2 — Camada TypeScript (integração Next.js)
+## Fase 2 — Camada TypeScript (integração Next.js) ✅ IMPLEMENTADA
 
 **Objetivo**: Integrar o sidecar FastAPI (Fase 1) nos endpoints existentes do Next.js. O Monochrome **não é tocado** — tudo é transparente.
 
-### 2.1 — Criar `lib/apple-music-server.ts`
+### 2.1 — Criar `lib/apple-music-server.ts` ✅
 
 Cliente HTTP TypeScript que chama o sidecar:
 
-- [ ] `searchAppleMusic(term, limit, storefront)` → resultados **já convertidos para formato Qobuz**
-- [ ] `downloadAppleMusicTrack(songId)` → URL pública do R2 (string) ou null se falhar
-- [ ] Checa R2 antes de chamar sidecar (HEAD request no objeto)
-- [ ] Conversão Apple Music → formato `QobuzSearchResults` / `QobuzTrack`:
-  - `media_id` → `track_id` (prefixado com `apple:`)
-  - `attributes.name` → `title`
-  - `attributes.artistName` → `performer.name`
-  - `attributes.albumName` → `album.title`
-  - `attributes.durationInMillis` → `duration`
-  - `attributes.artwork.url` → `album.image`
-  - etc.
-- [ ] Token context (AsyncLocalStorage) para logging
-- [ ] Retry com backoff (mesma lógica do `axiosWithRetry` do Qobuz)
+- [x] `searchAppleMusic(term, limit)` → chama sidecar `/search`
+- [x] `downloadAppleMusicTrack(songId)` → checa R2 cache (HEAD) → se miss, chama sidecar `/download/{songId}` → retorna URL R2
+- [x] `convertAppleMusicToQobuzFormat(songs)` → converte para formato Qobuz (IDs com `apple:` prefix)
+- [x] `extractSongsFromAppleResponse(response)` → extrai array de songs da resposta Apple Music
+- [x] `getAppleMusicHealth()` → health check do sidecar
+- [x] Timeout configurado: 15s (search), 60s (download), 3s (health/HEAD)
 
-### 2.3 — Modificar rotas existentes (fallback transparente)
+### 2.3 — Modificar rotas existentes (fallback transparente) ✅
 
-**Nenhuma rota nova é criada.** Os endpoints existentes ganham fallback:
+**Nenhuma rota nova criada.** Os endpoints existentes ganharam fallback:
 
-#### `/api/get-music/route.ts`
+#### `/api/get-music/route.ts` ✅
 
-```typescript
-// Fluxo atual:
-const qobuzResults = await search(q, 10, offset);
-return qobuzResults;
+- [x] Modificar `app/api/get-music/route.ts` com fallback Apple Music
+- [x] Se Qobuz retorna 0 tracks → busca Apple Music → converte → retorna no mesmo formato
+- [x] A resposta continua no formato `QobuzSearchResults` — Monochrome não percebe
+- [x] Tracks Apple Music têm `track_id` prefixado: `"apple:1624945512"`
 
-// Fluxo novo:
-const qobuzResults = await search(q, 10, offset);
-if (qobuzResults.tracks.items.length === 0) {
-    // Fallback: buscar na Apple Music e converter pro formato Qobuz
-    const appleResults = await searchAppleMusic(q, 10);
-    return mergeResults(qobuzResults, appleResults);
-}
-return qobuzResults;
-```
+#### `/api/download-music/route.ts` ✅
 
-- [ ] Modificar `app/api/get-music/route.ts` com fallback Apple Music
-- [ ] A resposta continua no formato `QobuzSearchResults` — Monochrome não percebe
-- [ ] Tracks Apple Music têm `track_id` prefixado: `"apple:1624945512"`
+- [x] Schema Zod alterado: `track_id` agora é `z.string()` (aceita `apple:XXX` e numéricos)
+- [x] Se `track_id` começa com `apple:` → checa R2 cache, se miss chama sidecar
+- [x] Se numérico puro → fluxo Qobuz existente (sem mudança)
+- [x] Resposta: `{ success: true, data: { url: "https://cdn.bryanhifi.dpdns.org/apple/XXX.m4a" } }`
+- [x] Formato **idêntico ao Qobuz** — confirmado no código do Monochrome
 
-#### `/api/download-music/route.ts`
+### 2.4 — Middleware update ✅
 
-```typescript
-// Fluxo novo:
-const { track_id } = params;
-if (typeof track_id === 'string' && track_id.startsWith('apple:')) {
-    const appleId = track_id.replace('apple:', '');
-    // 1. Checa cache R2
-    // 2. Se não existe: chama sidecar → download+decrypt → upload R2
-    // 3. Retorna URL do R2 (formato idêntico ao Qobuz)
-    const url = await downloadAppleMusicTrack(appleId);
-    return NextResponse.json({ success: true, data: { url } });
-} else {
-    // fluxo Qobuz existente (sem mudança)
-}
-```
-
-- [ ] Modificar `app/api/download-music/route.ts` com detecção de source
-- [ ] Se `track_id` começa com `apple:` → checa R2 cache, se miss chama sidecar
-- [ ] Se numérico puro → fluxo Qobuz existente (sem mudança)
-- [ ] Resposta: `{ success: true, data: { url: "https://cdn.bryanhifi.dpdns.org/apple/XXX.m4a" } }`
-- [ ] Formato **idêntico ao Qobuz** — confirmado no código do Monochrome (`getQobuzStreamUrl`, L1774-1797)
-- [ ] Latência: ~3-8s (1º request) / instantâneo (cache hit R2)
-
-### 2.4 — Middleware update
-
-- [ ] Não precisa de rotas novas na whitelist (usamos os mesmos endpoints)
-- [ ] Não precisa de proxy HLS — o sidecar faz download+decrypt internamente
+- [x] Não precisa de rotas novas na whitelist (usamos os mesmos endpoints)
+- [x] Não precisa de proxy HLS — o sidecar faz download+decrypt internamente
 
 ---
 
@@ -278,10 +232,10 @@ if (typeof track_id === 'string' && track_id.startsWith('apple:')) {
 
 ---
 
-## Ordem de Execução Recomendada
+## Ordem de Execução
 
 ```
-Fase 0 ✅ CONCLUÍDA  →  Fase 1 (sidecar FastAPI + R2)  →  Fase 2 (Next.js integration)  →  Fase 3 (Docker deploy + R2 setup)
+Fase 0 ✅ CONCLUÍDA  →  Fase 1 ✅ IMPLEMENTADA  →  Fase 2 ✅ IMPLEMENTADA  →  Fase 3 (Deploy VPS)
 ```
 
 **Fase 0 concluída**: DRM confirmado. Abordagem: download+decrypt → upload R2 → retorna URL.
@@ -298,72 +252,73 @@ Qualquer URL HTTP que retorne áudio funciona. R2 URL é perfeita.
 
 ---
 
-## Estrutura de Arquivos Final (projeção)
+## Estrutura de Arquivos (implementada)
 
 ```
 qobuz-dl/
 ├── app/api/
-│   ├── download-music/route.ts   # MODIFICADO (+ detecção apple: prefix + R2 cache)
-│   ├── get-music/route.ts        # MODIFICADO (+ fallback Apple Music)
+│   ├── download-music/route.ts   # ✅ MODIFICADO (+ detecção apple: prefix + R2 cache)
+│   ├── get-music/route.ts        # ✅ MODIFICADO (+ fallback Apple Music)
 │   ├── get-album/route.ts        # existente (sem mudança)
 │   ├── get-artist/route.ts       # existente (sem mudança)
 │   ├── get-releases/route.ts     # existente (sem mudança)
 │   └── get-countries/route.ts    # existente (sem mudança)
 ├── lib/
-│   ├── apple-music-server.ts     # NOVO — cliente HTTP pro sidecar + R2 check + conversão formato
-│   ├── r2-client.ts              # NOVO — cliente S3/R2 (HEAD check + upload)
+│   ├── apple-music-server.ts     # ✅ NOVO — cliente HTTP pro sidecar + R2 check + conversão formato
 │   ├── qobuz-dl-server.tsx       # existente (sem mudança)
 │   └── ...
-├── apple-music/                  # NOVO — sidecar FastAPI (container separado)
-│   ├── Dockerfile
-│   ├── requirements.txt          # gamdl, fastapi, uvicorn, boto3
-│   ├── main.py                   # FastAPI app (search, download+decrypt+upload R2, health)
-│   ├── auth.py                   # Login SRP (adaptado do main.py do Discord)
-│   └── cookies/                  # Volume Docker: cookies por storefront
-│       ├── us.txt
-│       ├── jp.txt
-│       └── gb.txt
+├── apple-music/                  # ✅ NOVO — sidecar FastAPI (container separado)
+│   ├── Dockerfile                # ✅ Python 3.12-slim + ffmpeg + gamdl
+│   ├── requirements.txt          # ✅ gamdl, fastapi, uvicorn, boto3
+│   ├── main.py                   # ✅ FastAPI app (search, download+decrypt+upload R2, health)
+│   └── cookies/                  # ✅ Bind mount — colocar cookies.txt via SFTP
+│       └── .gitkeep
 ├── config/
 │   └── token-countries.ts        # existente (Qobuz, sem mudança)
-├── docker-compose.yml            # MODIFICADO (+apple-music-api service)
+├── docker-compose.yml            # ✅ MODIFICADO (+apple-music-api service, bind mount cookies)
+├── .env                          # ✅ MODIFICADO (+R2 vars) — NÃO no git
+├── .env.example                  # ✅ MODIFICADO (+R2 vars vazias, sem dados reais)
 ├── middleware.ts                  # existente (sem mudança — mesmos endpoints)
-└── APPLE_MUSIC_PLAN.md           # este arquivo
+└── APPLE_MUSIC_PLAN.md           # este arquivo (no .gitignore)
 ```
 
 ### Setup Cloudflare R2 (manual, uma vez)
 
-1. **Criar bucket** no Cloudflare Dashboard: `apple-music-cache`
-2. **Custom domain**: `r2.bryanhifi.dpdns.org` → apontar pro bucket (Dashboard > R2 > Settings > Public Access > Custom Domain)
-3. **Lifecycle rule** via S3 API ou Dashboard:
-   ```json
-   {
-     "Rules": [{
-       "ID": "auto-delete-5-days",
-       "Status": "Enabled",
-       "Expiration": { "Days": 5 }
-     }]
-   }
-   ```
-4. **API token** com permissão R2 (read/write) → `.env`: ✅ CONFIGURADO
-   ```env
-   R2_ACCOUNT_ID=4c37251dab5d9850c7bbdfb85ea0ea7a
-   R2_ACCESS_KEY_ID=***
-   R2_SECRET_ACCESS_KEY=***
-   R2_BUCKET_NAME=media-cache
-   R2_PUBLIC_URL=https://cdn.bryanhifi.dpdns.org
-   R2_ENDPOINT_URL=https://4c37251dab5d9850c7bbdfb85ea0ea7a.r2.cloudflarestorage.com
-   ```
+1. ✅ **Criar bucket** no Cloudflare Dashboard: `media-cache`
+2. ✅ **Custom domain**: `cdn.bryanhifi.dpdns.org` → ativo
+3. ✅ **Lifecycle rule** (auto-delete 5 dias): Cloudflare Dashboard > R2 > `media-cache` > Settings > Object lifecycle
+4. ✅ **API token** R2 (read/write) → configurado no `.env`
+
+### Deploy na VPS (checklist)
+
+```bash
+# 1. Upload cookies via SFTP
+# Colocar o arquivo apple_cookies_netscape.txt em:
+#   ~/home-server/qobuz-dl/apple-music/cookies/cookies.txt
+
+# 2. Conferir .env na VPS (adicionar R2 vars se não existem)
+# R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
+# R2_BUCKET_NAME, R2_PUBLIC_URL, R2_ENDPOINT_URL
+
+# 3. Pull + rebuild
+cd ~/home-server/qobuz-dl
+git pull
+docker compose up -d --build
+```
 
 ### Resumo de mudanças por arquivo
 
-| Arquivo | Mudança |
-|---|---|
-| `app/api/get-music/route.ts` | +20 linhas — fallback Apple Music quando Qobuz retorna vazio |
-| `app/api/download-music/route.ts` | +15 linhas — detecção `apple:` prefix + R2 cache check |
-| `lib/apple-music-server.ts` | NOVO — ~150 linhas, cliente HTTP sidecar + conversão formato |
-| `lib/r2-client.ts` | NOVO — ~50 linhas, HEAD check + upload R2 via S3 API |
-| `apple-music/*` | NOVO — sidecar FastAPI (~350 linhas total, inclui R2 upload) |
-| `docker-compose.yml` | +15 linhas — novo serviço |
-| `.env` | +4 variáveis Apple Music + 5 variáveis R2 |
-| `middleware.ts` | Sem mudança |
-| **Monochrome** | **Sem mudança** |
+| Arquivo | Status | Mudança |
+|---|---|---|
+| `app/api/get-music/route.ts` | ✅ | +20 linhas — fallback Apple Music quando Qobuz retorna vazio |
+| `app/api/download-music/route.ts` | ✅ | +20 linhas — detecção `apple:` prefix + R2 cache check |
+| `lib/apple-music-server.ts` | ✅ | NOVO — ~160 linhas, cliente HTTP sidecar + conversão formato |
+| `apple-music/main.py` | ✅ | NOVO — ~280 linhas, FastAPI sidecar (search, download, R2) |
+| `apple-music/Dockerfile` | ✅ | NOVO — Python 3.12 + ffmpeg + gamdl |
+| `apple-music/requirements.txt` | ✅ | NOVO — gamdl, fastapi, uvicorn, boto3 |
+| `docker-compose.yml` | ✅ | +15 linhas — serviço apple-music-api, bind mount, env var |
+| `.env` | ✅ | +6 variáveis R2 (não commitado) |
+| `.env.example` | ✅ | +6 vars R2 vazias (seguro no repo público) |
+| `.gitignore` | ✅ | +1 linha (apple-music/cookies/) |
+| `middleware.ts` | — | Sem mudança |
+| **Monochrome** | — | **Sem mudança** |

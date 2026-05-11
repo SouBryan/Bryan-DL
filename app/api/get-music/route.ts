@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const blocked = await checkIpGate(request);
     if (blocked) return blocked;
     const country = request.headers.get('Token-Country');
+    const musicSource = request.headers.get('Music-Source') || 'both';
     const start = Date.now();
     try {
         // Extract q from raw URL to handle unencoded '&' in search terms
@@ -42,12 +43,17 @@ export async function GET(request: NextRequest) {
         // Detect ISRC pattern (2 letter country + 3 alphanum registrant + 2 digit year + 5 digit designation)
         const isIsrc = /^[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}$/i.test(q);
 
-        // Search Qobuz and Apple Music in parallel
+        // Search Qobuz and/or Apple Music based on Music-Source header
+        const searchQobuz = musicSource === 'qobuz' || musicSource === 'both';
+        const searchApple = musicSource === 'apple-music' || musicSource === 'both';
+
         const [qobuzResult, appleResult] = await Promise.all([
-            runWithTokenContext(() => search(q, 10, offset, country ? { country } : {})),
-            offset === 0
+            searchQobuz
+                ? runWithTokenContext(() => search(q, 10, offset, country ? { country } : {}))
+                : Promise.resolve({ _tokenSuffix: '', _tokenCountry: '', tracks: { items: [], total: 0, offset: 0, limit: 10 }, albums: { items: [], total: 0, offset: 0, limit: 10 }, artists: { items: [], total: 0, offset: 0, limit: 10 }, query: q }),
+            searchApple && offset === 0
                 ? (isIsrc ? lookupAppleMusicByIsrc(q) : searchAppleMusic(q, 10)).catch((err) => { console.error('[get-music] Apple Music search failed:', err); return null; })
-                : Promise.resolve(null), // Only search Apple Music on first page
+                : Promise.resolve(null),
         ]);
 
         const { _tokenSuffix, _tokenCountry, ...searchResults } = qobuzResult;
