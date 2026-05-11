@@ -15,7 +15,7 @@ function corsResponse(body: string | null, status: number, extra?: Record<string
 // Everything else gets 404 immediately (no SSR rendering = no returnNaN/let exploits)
 const VALID_PATHS = [
     /^\/$/,                         // home page
-    /^\/api\/(get-music|download-music|get-album|get-artist|get-releases|get-countries)(\/|$)/,
+    /^\/api\/(get-music|download-music|get-album|get-artist|get-releases|get-countries|get-apple-capabilities)(\/|$)/,
     /^\/manifest/,                  // PWA manifest
     /^\/flac\//,                    // public/flac
     /^\/logo\//,                    // public/logo

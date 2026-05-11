@@ -3,16 +3,17 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 
 export type MusicSource = 'qobuz' | 'apple-music' | 'both';
 
-const MusicSourceContext = createContext<
-    | {
-          musicSource: MusicSource;
-          setMusicSource: React.Dispatch<React.SetStateAction<MusicSource>>;
-      }
-    | undefined
->(undefined);
+interface MusicSourceContextType {
+    musicSource: MusicSource;
+    setMusicSource: React.Dispatch<React.SetStateAction<MusicSource>>;
+    appleLossless: boolean;
+}
+
+const MusicSourceContext = createContext<MusicSourceContextType | undefined>(undefined);
 
 export const MusicSourceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [musicSource, setMusicSource] = useState<MusicSource>('both');
+    const [appleLossless, setAppleLossless] = useState(false);
 
     useEffect(() => {
         const saved = localStorage.getItem('musicSource') as MusicSource | null;
@@ -23,7 +24,17 @@ export const MusicSourceProvider: React.FC<{ children: ReactNode }> = ({ childre
         localStorage.setItem('musicSource', musicSource);
     }, [musicSource]);
 
-    return <MusicSourceContext.Provider value={{ musicSource, setMusicSource }}>{children}</MusicSourceContext.Provider>;
+    // Check Apple Music capabilities when source includes Apple Music
+    useEffect(() => {
+        if (musicSource === 'apple-music' || musicSource === 'both') {
+            fetch('/api/get-apple-capabilities')
+                .then((res) => res.json())
+                .then((data) => setAppleLossless(data.lossless === true))
+                .catch(() => setAppleLossless(false));
+        }
+    }, [musicSource]);
+
+    return <MusicSourceContext.Provider value={{ musicSource, setMusicSource, appleLossless }}>{children}</MusicSourceContext.Provider>;
 };
 
 export const useMusicSource = () => {

@@ -22,21 +22,21 @@ const qualityMap = {
     '6': [16, 44.1]
 };
 
-const appleOnlyCodecs = ['AAC', 'MP3', 'OPUS'] as const;
-
 const SettingsForm = () => {
     const { settings, setSettings, resetSettings } = useSettings();
-    const { musicSource } = useMusicSource();
+    const { musicSource, appleLossless } = useMusicSource();
     const isAppleOnly = musicSource === 'apple-music';
+    // Block lossless codecs only when Apple Music is selected AND wrapper is NOT active
+    const blockLossless = isAppleOnly && !appleLossless;
 
     const [open, setOpen] = useState(false);
 
-    // When switching to Apple Music only, force codec to lossy if currently lossless
+    // When switching to Apple Music only without lossless, force codec to lossy
     useEffect(() => {
-        if (isAppleOnly && losslessCodecs.includes(settings.outputCodec)) {
+        if (blockLossless && losslessCodecs.includes(settings.outputCodec)) {
             setSettings((prev) => ({ ...prev, outputCodec: 'AAC', bitrate: undefined }));
         }
-    }, [isAppleOnly]);
+    }, [blockLossless]);
 
     const bitrateInput = useRef<HTMLInputElement | null>(null);
 
@@ -166,8 +166,11 @@ const SettingsForm = () => {
                                 </div>
                             </div>
                             <p className='font-medium text-sm'>Output Codec</p>
-                            {isAppleOnly && (
-                                <p className='text-xs text-muted-foreground'>Apple Music delivers AAC 256kbps. Lossless codecs are unavailable.</p>
+                            {blockLossless && (
+                                <p className='text-xs text-muted-foreground'>Apple Music delivers AAC 256kbps. Lossless codecs are unavailable without the wrapper.</p>
+                            )}
+                            {isAppleOnly && appleLossless && (
+                                <p className='text-xs text-muted-foreground'>Apple Music Lossless (ALAC up to 24-bit/192kHz) is available.</p>
                             )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -203,17 +206,17 @@ const SettingsForm = () => {
                                             }
                                         }}
                                     >
-                                        {!isAppleOnly && <DropdownMenuRadioItem value='FLAC'>FLAC (recommended)</DropdownMenuRadioItem>}
-                                        {!isAppleOnly && <DropdownMenuRadioItem value='WAV'>WAV</DropdownMenuRadioItem>}
-                                        {!isAppleOnly && <DropdownMenuRadioItem value='ALAC'>ALAC</DropdownMenuRadioItem>}
+                                        {!blockLossless && <DropdownMenuRadioItem value='FLAC'>FLAC{isAppleOnly ? '' : ' (recommended)'}</DropdownMenuRadioItem>}
+                                        {!blockLossless && <DropdownMenuRadioItem value='WAV'>WAV</DropdownMenuRadioItem>}
+                                        {!blockLossless && <DropdownMenuRadioItem value='ALAC'>ALAC{isAppleOnly && appleLossless ? ' (original, lossless)' : ''}</DropdownMenuRadioItem>}
                                         <DropdownMenuRadioItem value='MP3'>MP3</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value='AAC'>AAC{isAppleOnly ? ' (original, 256kbps)' : ''}</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value='AAC'>AAC{blockLossless ? ' (original, 256kbps)' : ''}</DropdownMenuRadioItem>
                                         <DropdownMenuRadioItem value='OPUS'>OPUS</DropdownMenuRadioItem>
                                     </DropdownMenuRadioGroup>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
-                        {losslessCodecs.includes(settings.outputCodec) && !isAppleOnly ? (
+                        {losslessCodecs.includes(settings.outputCodec) && !blockLossless ? (
                             <div className='space-y-2'>
                                 <p className='font-medium text-sm'>Max Download Quality</p>
                                 <DropdownMenu>

@@ -49,6 +49,13 @@ R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
 R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "media-cache")
 R2_PUBLIC_URL = os.environ.get("R2_PUBLIC_URL", "")
 
+# Wrapper config (for ALAC/lossless support)
+WRAPPER_HOST = os.environ.get("WRAPPER_HOST", "")
+WRAPPER_DECRYPT_PORT = int(os.environ.get("WRAPPER_DECRYPT_PORT", "10020"))
+WRAPPER_M3U8_PORT = int(os.environ.get("WRAPPER_M3U8_PORT", "20020"))
+WRAPPER_ACCOUNT_PORT = int(os.environ.get("WRAPPER_ACCOUNT_PORT", "30020"))
+USE_WRAPPER = bool(WRAPPER_HOST)
+
 SOCKS5_PROXY = os.environ.get("SOCKS5_PROXY", "")
 
 # ── Monkey-patch httpx to inject SOCKS5 proxy into all gamdl requests ──
@@ -126,16 +133,42 @@ async def init_gamdl():
         if apple_music_api is not None:
             return
 
-        logger.info(f"Initializing gamdl with cookies from {COOKIES_PATH}")
-        apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
-        logger.info(f"Subscription active: {apple_music_api.active_subscription}")
-        logger.info(f"Storefront: {apple_music_api.storefront}")
+        # Initialize gamdl — try wrapper first (ALAC/lossless), fall back to cookies (AAC only)
+        if USE_WRAPPER:
+            wrapper_account_url = f"http://{WRAPPER_HOST}:{WRAPPER_ACCOUNT_PORT}/"
+            logger.info(f"Initializing gamdl with WRAPPER at {wrapper_account_url}")
+            try:
+                apple_music_api = await AppleMusicApi.create_from_wrapper(
+                    wrapper_account_url=wrapper_account_url,
+                )
+                logger.info(f"Wrapper connected! Subscription: {apple_music_api.active_subscription}")
+                logger.info(f"Storefront: {apple_music_api.storefront}")
+                logger.info("ALAC/lossless codec available via wrapper")
+            except Exception as e:
+                logger.warning(f"Wrapper connection failed ({e}), falling back to cookies...")
+                apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
+                logger.info(f"Cookies fallback — Subscription: {apple_music_api.active_subscription}")
+        else:
+            logger.info(f"Initializing gamdl with cookies from {COOKIES_PATH}")
+            apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
+            logger.info(f"Subscription active: {apple_music_api.active_subscription}")
+            logger.info(f"Storefront: {apple_music_api.storefront}")
 
-        base_interface = await AppleMusicBaseInterface.create(apple_music_api=apple_music_api)
+        base_interface = await AppleMusicBaseInterface.create(
+            apple_music_api=apple_music_api,
+            **({"wrapper_m3u8_ip": f"{WRAPPER_HOST}:{WRAPPER_M3U8_PORT}"} if USE_WRAPPER else {}),
+        )
+
+        # With wrapper: ALAC first (lossless), fallback to AAC. Without: AAC only.
+        if USE_WRAPPER:
+            codec_priority = [SongCodec.ALAC, SongCodec.AAC_LEGACY]
+        else:
+            codec_priority = [SongCodec.AAC_LEGACY]
+        logger.info(f"Codec priority: {[c.value for c in codec_priority]}")
 
         song_interface = AppleMusicSongInterface(
             base=base_interface,
-            codec_priority=[SongCodec.AAC_LEGACY],
+            codec_priority=codec_priority,
         )
         mv_interface = AppleMusicMusicVideoInterface(base=base_interface)
         uv_interface = AppleMusicUploadedVideoInterface(base=base_interface)
@@ -195,6 +228,9 @@ async def health():
         "status": "ok",
         "subscription": apple_music_api.active_subscription,
         "storefront": apple_music_api.storefront,
+        "wrapper_active": USE_WRAPPER,
+        "lossless_available": USE_WRAPPER,
+        "codec": "alac" if USE_WRAPPER else "aac-legacy",
     }
 
 
@@ -297,6 +333,7 @@ async def download_track(song_id: str):
             interface=apple_music_interface,
             output_path=work_dir,
             temp_path=work_dir,
+            **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if USE_WRAPPER else {}),
         )
         song_dl = AppleMusicSongDownloader(base=base_dl)
         mv_dl = AppleMusicMusicVideoDownloader(base=base_dl)
