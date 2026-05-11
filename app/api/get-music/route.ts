@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         const [qobuzResult, appleResult] = await Promise.all([
             searchQobuz
                 ? runWithTokenContext(() => search(q, 10, offset, country ? { country } : {}))
-                : Promise.resolve({ _tokenSuffix: '', _tokenCountry: '', tracks: { items: [], total: 0, offset: 0, limit: 10 }, albums: { items: [], total: 0, offset: 0, limit: 10 }, artists: { items: [], total: 0, offset: 0, limit: 10 }, query: q }),
+                : Promise.resolve({ _tokenSuffix: '', _tokenCountry: '', tracks: { items: [] as any[], total: 0, offset: 0, limit: 10 }, albums: { items: [] as any[], total: 0, offset: 0, limit: 10 }, artists: { items: [] as any[], total: 0, offset: 0, limit: 10 }, query: q, switchTo: null } as any),
             searchApple && offset === 0
                 ? (isIsrc ? lookupAppleMusicByIsrc(q) : searchAppleMusic(q, 10)).catch((err) => { console.error('[get-music] Apple Music search failed:', err); return null; })
                 : Promise.resolve(null),
