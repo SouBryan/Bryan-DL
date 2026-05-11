@@ -3,3 +3,5 @@ fastapi==0.115.12
 uvicorn[standard]==0.34.2
 boto3==1.38.13
 httpx[socks]
+requests[socks]
+beautifulsoup4

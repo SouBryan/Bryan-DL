@@ -10,13 +10,17 @@ import os
 import tempfile
 import shutil
 import logging
+import functools
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
+
+from auth import refresh_cookies_sync, cookies_json_to_netscape
 
 from gamdl.api import AppleMusicApi
 from gamdl.downloader import (
@@ -57,6 +61,12 @@ WRAPPER_ACCOUNT_PORT = int(os.environ.get("WRAPPER_ACCOUNT_PORT", "30020"))
 USE_WRAPPER = bool(WRAPPER_HOST)
 
 SOCKS5_PROXY = os.environ.get("SOCKS5_PROXY", "")
+
+# Cookie auto-refresh config
+APPLE_MUSIC_EMAIL = os.environ.get("APPLE_MUSIC_EMAIL", "")
+APPLE_MUSIC_PASSWORD = os.environ.get("APPLE_MUSIC_PASSWORD", "")
+COOKIE_REFRESH_INTERVAL_H = int(os.environ.get("APPLE_MUSIC_COOKIE_REFRESH_HOURS", "12"))
+COOKIE_REFRESH_ENABLED = bool(APPLE_MUSIC_EMAIL and APPLE_MUSIC_PASSWORD)
 
 # Rate limiting config
 REQUEST_DELAY_MS = int(os.environ.get("APPLE_MUSIC_REQUEST_DELAY_MS", "500"))
@@ -133,6 +143,8 @@ _init_lock = asyncio.Lock()
 _wrapper_connected = False  # True only if wrapper was actually used (not cookie fallback)
 _last_request_time: float = 0.0  # monotonic timestamp of last API request
 _download_semaphore: asyncio.Semaphore | None = None  # limits concurrent downloads
+_cookie_refresh_task: asyncio.Task | None = None
+_last_cookie_refresh: str = "never"  # ISO timestamp of last successful refresh
 
 
 async def _throttle():
@@ -152,6 +164,7 @@ async def _throttle():
 async def _request_with_backoff(coro_factory, description: str = "request"):
     """
     Execute an async request with exponential backoff on 429/rate limit errors.
+    Also triggers cookie refresh on 401 (expired auth).
     coro_factory is a callable that returns a new coroutine each time.
     """
     for attempt in range(1, MAX_RETRIES_429 + 1):
@@ -161,7 +174,18 @@ async def _request_with_backoff(coro_factory, description: str = "request"):
         except Exception as e:
             error_str = str(e).lower()
             is_rate_limit = "429" in error_str or "rate limit" in error_str or "too many" in error_str
-            if is_rate_limit and attempt < MAX_RETRIES_429:
+            is_auth_error = "401" in error_str or "unauthorized" in error_str
+
+            if is_auth_error and attempt == 1 and COOKIE_REFRESH_ENABLED and not _wrapper_connected:
+                logger.warning(f"Auth error on {description}, triggering cookie refresh...")
+                refreshed = await _do_cookie_refresh()
+                if refreshed:
+                    logger.info("Cookies refreshed after 401, reinitializing gamdl...")
+                    await _reinit_gamdl_cookies()
+                    continue
+                else:
+                    raise
+            elif is_rate_limit and attempt < MAX_RETRIES_429:
                 backoff = min(2 ** attempt, 60)  # 2, 4, 8, 16, 32, max 60s
                 logger.warning(f"Rate limited on {description} (attempt {attempt}/{MAX_RETRIES_429}), "
                                f"backing off {backoff}s...")
@@ -180,6 +204,59 @@ def get_s3_client():
         aws_secret_access_key=R2_SECRET_ACCESS_KEY,
         region_name="auto",
     )
+
+
+async def _do_cookie_refresh() -> bool:
+    """Run cookie refresh in thread pool. Returns True on success."""
+    global _last_cookie_refresh
+    if not COOKIE_REFRESH_ENABLED:
+        return False
+    try:
+        proxy_url = f"socks5://{SOCKS5_PROXY}" if SOCKS5_PROXY and "://" not in SOCKS5_PROXY else SOCKS5_PROXY or None
+        logger.info(f"Starting cookie refresh for {APPLE_MUSIC_EMAIL}...")
+        loop = asyncio.get_event_loop()
+        cookies = await loop.run_in_executor(
+            None,
+            functools.partial(refresh_cookies_sync, APPLE_MUSIC_EMAIL, APPLE_MUSIC_PASSWORD, proxy_url),
+        )
+        cookies_json_to_netscape(cookies, COOKIES_PATH)
+        _last_cookie_refresh = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        logger.info(f"Cookie refresh succeeded — {len(cookies)} cookies written to {COOKIES_PATH}")
+        return True
+    except Exception as e:
+        logger.error(f"Cookie refresh failed: {e}", exc_info=True)
+        return False
+
+
+async def _reinit_gamdl_cookies():
+    """Reinitialize gamdl API from refreshed cookies (cookies-only path)."""
+    global apple_music_api, apple_music_interface
+    try:
+        apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
+        logger.info(f"gamdl reinitialized from cookies — Subscription: {apple_music_api.active_subscription}")
+
+        base_interface = await AppleMusicBaseInterface.create(apple_music_api=apple_music_api)
+        song_interface = AppleMusicSongInterface(
+            base=base_interface,
+            codec_priority=[SongCodec.AAC_LEGACY],
+        )
+        apple_music_interface = AppleMusicInterface(
+            song=song_interface,
+            music_video=AppleMusicMusicVideoInterface(base=base_interface),
+            uploaded_video=AppleMusicUploadedVideoInterface(base=base_interface),
+        )
+    except Exception as e:
+        logger.error(f"gamdl reinit from cookies failed: {e}", exc_info=True)
+
+
+async def _cookie_refresh_loop():
+    """Background task: refresh cookies periodically."""
+    interval_s = COOKIE_REFRESH_INTERVAL_H * 3600
+    logger.info(f"Cookie refresh background task started (every {COOKIE_REFRESH_INTERVAL_H}h)")
+    while True:
+        await asyncio.sleep(interval_s)
+        logger.info("Scheduled cookie refresh triggered")
+        await _do_cookie_refresh()
 
 
 def r2_object_exists(key: str) -> bool:
@@ -303,8 +380,17 @@ async def init_gamdl():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_gamdl()
+    # Start background cookie refresh if credentials are configured
+    global _cookie_refresh_task
+    if COOKIE_REFRESH_ENABLED:
+        _cookie_refresh_task = asyncio.create_task(_cookie_refresh_loop())
+        logger.info(f"Cookie auto-refresh enabled (every {COOKIE_REFRESH_INTERVAL_H}h)")
+    else:
+        logger.info("Cookie auto-refresh disabled (no APPLE_MUSIC_EMAIL/PASSWORD configured)")
     yield
-    # Cleanup temp dir on shutdown
+    # Cleanup
+    if _cookie_refresh_task:
+        _cookie_refresh_task.cancel()
     if os.path.exists(TEMP_DIR):
         shutil.rmtree(TEMP_DIR, ignore_errors=True)
 
@@ -326,7 +412,26 @@ async def health():
         "wrapper_active": _wrapper_connected,
         "lossless_available": _wrapper_connected,
         "codec": "alac" if _wrapper_connected else "aac-legacy",
+        "cookie_refresh": {
+            "enabled": COOKIE_REFRESH_ENABLED,
+            "interval_hours": COOKIE_REFRESH_INTERVAL_H,
+            "last_refresh": _last_cookie_refresh,
+        },
     }
+
+
+@app.post("/refresh-cookies")
+async def refresh_cookies_endpoint():
+    """Manually trigger a cookie refresh. Only works if credentials are configured."""
+    if not COOKIE_REFRESH_ENABLED:
+        raise HTTPException(status_code=400, detail="Cookie refresh not configured (missing APPLE_MUSIC_EMAIL/PASSWORD)")
+    success = await _do_cookie_refresh()
+    if not success:
+        raise HTTPException(status_code=500, detail="Cookie refresh failed — check logs")
+    # Reinit gamdl if not using wrapper
+    if not _wrapper_connected:
+        await _reinit_gamdl_cookies()
+    return {"status": "ok", "last_refresh": _last_cookie_refresh}
 
 
 @app.get("/check-ip")
