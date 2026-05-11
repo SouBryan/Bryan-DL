@@ -47,6 +47,9 @@ next-env.d.ts
 # project context (local only)
 CONTEXT.md
 
+# qobuz appid secret tool
+Qobuz-AppID-Secret-Tool
+
 # apple music
 apple_cookies_netscape.txt
 APPLE_MUSIC_PLAN.md
