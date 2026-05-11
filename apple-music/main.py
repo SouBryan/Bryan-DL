@@ -120,6 +120,25 @@ async def init_gamdl():
         s3_client = get_s3_client()
         logger.info("R2 client initialized")
 
+        # Configure CORS on R2 bucket to allow frontend downloads
+        try:
+            s3_client.put_bucket_cors(
+                Bucket=R2_BUCKET_NAME,
+                CORSConfiguration={
+                    "CORSRules": [
+                        {
+                            "AllowedOrigins": ["*"],
+                            "AllowedMethods": ["GET", "HEAD"],
+                            "AllowedHeaders": ["*"],
+                            "MaxAgeSeconds": 86400,
+                        }
+                    ]
+                },
+            )
+            logger.info("R2 CORS configured successfully")
+        except Exception as e:
+            logger.warning(f"Failed to configure R2 CORS (may need manual config): {e}")
+
         os.makedirs(TEMP_DIR, exist_ok=True)
         logger.info("Apple Music API ready")
 
