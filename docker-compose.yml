@@ -89,7 +89,7 @@ services:
         entrypoint: ./wrapper
         command: ["-H", "0.0.0.0"]
         volumes:
-            - wrapper-data:/app/rootfs/data
+            - ./apple-music/wrapper-data:/app/rootfs/data
         restart: unless-stopped
         networks:
             - qobuz-network
@@ -97,6 +97,3 @@ services:
 networks:
     qobuz-network:
         driver: bridge
-
-volumes:
-    wrapper-data:
