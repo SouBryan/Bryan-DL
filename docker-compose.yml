@@ -12,6 +12,7 @@ services:
         environment:
             - SOCKS5_PROXY=warp-socks:9091
             - WARP_ROTATOR_URL=http://warp-rotator:7070/rotate
+            - APPLE_MUSIC_API_URL=http://apple-music-api:8000
         depends_on:
             warp-socks:
                 condition: service_healthy
@@ -66,7 +67,7 @@ services:
             - SOCKS5_PROXY=warp-socks:9091
             - APPLE_MUSIC_COOKIES_PATH=/app/cookies/cookies.txt
         volumes:
-            - apple-music-cookies:/app/cookies
+            - ./apple-music/cookies:/app/cookies:ro
         depends_on:
             warp-socks:
                 condition: service_healthy
@@ -77,6 +78,3 @@ services:
 networks:
     qobuz-network:
         driver: bridge
-
-volumes:
-    apple-music-cookies:

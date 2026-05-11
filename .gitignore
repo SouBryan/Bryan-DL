@@ -44,3 +44,9 @@ next-env.d.ts
 
 # project context (local only)
 CONTEXT.md
+
+# apple music
+apple_cookies_netscape.txt
+APPLE_MUSIC_PLAN.md
+applemusic_auth_cookies.json
+apple-music/cookies/
