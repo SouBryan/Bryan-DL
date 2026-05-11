@@ -15,6 +15,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Slider } from './slider';
 
 const losslessCodecs = ['FLAC', 'ALAC', 'WAV'];
+// Codecs that show quality dropdown instead of bitrate (includes AAC from ALAC)
+const qualityBasedCodecs = ['FLAC', 'ALAC', 'WAV', 'AAC'];
 const noAlbumArtCodecs = ['OPUS', 'WAV'];
 
 const qualityMap = {
@@ -196,6 +198,13 @@ const SettingsForm = () => {
                                                     outputQuality: '6' as const,
                                                     bitrate: undefined
                                                 }));
+                                            } else if (codec === 'AAC') {
+                                                // AAC (from ALAC): quality-based, no bitrate
+                                                setSettings((settings) => ({
+                                                    ...settings,
+                                                    outputQuality: settings.outputQuality === '5' ? ('6' as const) : settings.outputQuality,
+                                                    bitrate: undefined
+                                                }));
                                             } else if (!losslessCodecs.includes(codec)) {
                                                 setSettings((settings) => ({
                                                     ...settings,
@@ -232,9 +241,12 @@ const SettingsForm = () => {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
-                        {losslessCodecs.includes(settings.outputCodec) && !blockLossless ? (
+                        {(losslessCodecs.includes(settings.outputCodec) || settings.outputCodec === 'AAC') && !blockLossless ? (
                             <div className='space-y-2'>
                                 <p className='font-medium text-sm'>Max Download Quality</p>
+                                {settings.outputCodec === 'AAC' && (
+                                    <p className='text-xs text-muted-foreground'>Converted from Apple Music Lossless (ALAC) source.</p>
+                                )}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant='outline' className='flex gap-2 items-center'>
@@ -252,11 +264,13 @@ const SettingsForm = () => {
                                                 }));
                                             }}
                                         >
-                                            <DropdownMenuRadioItem value={'27'}>
-                                                <p>24-bit</p>
-                                                <DotIcon />
-                                                <p>192kHz</p>
-                                            </DropdownMenuRadioItem>
+                                            {settings.outputCodec !== 'AAC' && (
+                                                <DropdownMenuRadioItem value={'27'}>
+                                                    <p>24-bit</p>
+                                                    <DotIcon />
+                                                    <p>192kHz</p>
+                                                </DropdownMenuRadioItem>
+                                            )}
                                             <DropdownMenuRadioItem value={'7'}>
                                                 <p>24-bit</p>
                                                 <DotIcon />
@@ -278,7 +292,10 @@ const SettingsForm = () => {
                         ) : (
                             <>
                                 <p className='text-xs text-muted-foreground text-center'>
-                                    Lossy codec selected. All music will be downloaded at {maxBitrate}kbps. You can specify a bitrate to rencode to below.
+                                    {settings.outputCodec === 'MP3'
+                                        ? `MP3 supports up to 320kbps.${isAppleOnly ? ' Source: AAC 256kbps.' : ''}`
+                                        : `OPUS supports up to 510kbps.`
+                                    }
                                 </p>
                                 <div className='flex items-center gap-2 w-full justify-center'>
                                     <Input ref={bitrateInput} max={maxBitrate} min={24} className='w-fit' type='number' defaultValue={settings.bitrate} />
@@ -339,14 +356,12 @@ const SettingsForm = () => {
                             />
                         </div>
                     </SheetHeader>
-                    {!['OPUS', 'WAV'].includes(settings.outputCodec) && (
-                    <>
                     <Separator />
                     <SheetHeader>
                         <div className='flex flex-col items-center gap-2'>
                             <div className='flex flex-col'>
-                                <p className='font-medium'>Max Album Art Size</p>
-                                <p className='text-xs text-muted-foreground'>If apply metadata is enabled, album art will be resized to this size.</p>
+                                <p className={cn('font-medium', noAlbumArtCodecs.includes(settings.outputCodec) && 'text-muted-foreground')}>Max Album Art Size</p>
+                                <p className={cn('text-xs', noAlbumArtCodecs.includes(settings.outputCodec) ? 'text-muted-foreground/50' : 'text-muted-foreground')}>If apply metadata is enabled, album art will be resized to this size.</p>
                             </div>
                             <Slider
                                 min={100}
@@ -354,8 +369,9 @@ const SettingsForm = () => {
                                 step={100}
                                 value={[settings.albumArtSize]}
                                 onValueChange={(value: number[]) => setSettings((settings) => ({ ...settings, albumArtSize: value[0] }))}
+                                disabled={noAlbumArtCodecs.includes(settings.outputCodec)}
                             />
-                            <p>
+                            <p className={cn(noAlbumArtCodecs.includes(settings.outputCodec) && 'text-muted-foreground')}>
                                 {settings.albumArtSize}x{settings.albumArtSize}
                             </p>
                         </div>
@@ -364,8 +380,8 @@ const SettingsForm = () => {
                     <SheetHeader>
                         <div className='flex flex-col items-center gap-2'>
                             <div className='flex flex-col'>
-                                <p className='font-medium'>Album Art Quality</p>
-                                <p className='text-xs text-muted-foreground'>
+                                <p className={cn('font-medium', noAlbumArtCodecs.includes(settings.outputCodec) && 'text-muted-foreground')}>Album Art Quality</p>
+                                <p className={cn('text-xs', noAlbumArtCodecs.includes(settings.outputCodec) ? 'text-muted-foreground/50' : 'text-muted-foreground')}>
                                     If apply metadata is enabled, album art will be compressed to this quality. 100% is lossless.
                                 </p>
                             </div>
@@ -375,11 +391,15 @@ const SettingsForm = () => {
                                 step={1}
                                 value={[settings.albumArtQuality * 100]}
                                 onValueChange={(value: number[]) => setSettings((settings) => ({ ...settings, albumArtQuality: value[0] / 100 }))}
+                                disabled={noAlbumArtCodecs.includes(settings.outputCodec)}
                             />
-                            <p>{Math.round(settings.albumArtQuality * 100)}%</p>
+                            <p className={cn(noAlbumArtCodecs.includes(settings.outputCodec) && 'text-muted-foreground')}>{Math.round(settings.albumArtQuality * 100)}%</p>
                         </div>
                     </SheetHeader>
-                    </>
+                    {noAlbumArtCodecs.includes(settings.outputCodec) && (
+                        <p className='text-xs text-destructive font-semibold text-center'>
+                            {settings.outputCodec === 'OPUS' ? 'OGG (OPUS) files do not support album art.' : 'WAV files do not support album art.'}
+                        </p>
                     )}
                     <Button variant='destructive' onClick={resetSettings}>
                         Reset Settings
