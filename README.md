@@ -14,24 +14,48 @@ Qobuz-DL provides a fast and easy way to download music using Qobuz in a variety
 - Download any song or album from Qobuz.
 - Re-encode audio provided by Qobuz to a variety of different lossless and lossy codecs using FFmpeg.
 - Apply metadata to downloaded songs.
+- Cross-origin API with CORS headers — works as a backend for external clients like [Monochrome](https://github.com/user/monochrome).
 
-## Security & Infrastructure
+## Architecture
 
-This fork includes hardened production infrastructure:
+```
+┌─────────────┐      ┌─────────────────┐      ┌──────────────┐
+│  Browser /   │ ───► │  Cloudflare     │ ───► │  Next.js App │
+│  Monochrome  │      │  Tunnel         │      │  (port 3000) │
+└─────────────┘      └─────────────────┘      └──────┬───────┘
+                                                      │
+                                               ┌──────▼───────┐
+                                               │  WARP SOCKS5  │
+                                               │  Proxy (9091) │
+                                               └──────┬───────┘
+                                                      │
+                                               ┌──────▼───────┐
+                                               │  Qobuz API    │
+                                               └──────────────┘
+```
 
-- **WARP Proxy**: All Qobuz API requests are routed through Cloudflare WARP (SOCKS5 proxy) for IP privacy. Custom Docker image with `warp-cli` + `socat` forwarding.
-- **IP Rotation**: Automatic IPv4 rotation every 30 minutes via `warp-cli disconnect/connect`, plus on-demand rotation triggered by 429/403/401/502/503 responses from Qobuz.
-- **Rate Limiting**: 60 requests/minute per IP via Next.js middleware.
-- **Bot Protection**: Blocks known scanner user-agents (sqlmap, nikto, zgrab, nuclei, etc.) and requests without a user-agent.
-- **Payload Validation**: Detects and blocks malicious payloads (eval, require, path traversal, XSS, `returnNaN` probes, `/let` attacks).
-- **Attack Path Blocking**: Returns 404 for known scanner paths (`/.env`, `/wp-admin`, `/phpmyadmin`, `/.git`, `/actuator`, etc.).
-- **IPGate Integration**: All API routes check incoming IPs against [FireHOL](https://github.com/firehol/blocklist-ipsets) blocklists (~612M blocked IPs) via Unix Domain Socket for O(1) lookup.
-- **IP Blocklist**: Hardcoded block for known persistent attacker IPs.
-- **Cloudflare Tunnel**: Service exposed via `cloudflared` tunnel — no open ports on the server.
+**Stack**: Next.js 15 (standalone) · Docker Compose · Cloudflare WARP · Cloudflare Tunnel · IPGate
+
+## Security
+
+The middleware (`middleware.ts`) implements a layered defense:
+
+| Layer | What it does |
+|---|---|
+| **Route Whitelist** | Only known valid paths are allowed (`/`, `/api/*`, `/manifest`, `/flac/*`, `/logo/*`). Everything else → 404. Prevents SSR injection via arbitrary routes. |
+| **HTTP Method Lock** | Only `GET`/`HEAD`/`OPTIONS` on non-API routes. `POST /` (used for SSR injection) → 405. |
+| **IP Blocklist** | Hardcoded `Set` of known attacker IPs (residential proxies, scanner bots, cryptominer droppers). |
+| **Bot UA Detection** | Blocks known scanner user-agents (sqlmap, nikto, zgrab, nuclei, etc.) on API routes. |
+| **Payload Detection** | Regex-based detection of `eval()`, `require()`, `__proto__`, path traversal, XSS, `returnNaN` probes. |
+| **Query Validation** | Max 500 chars on `/api/get-music` search queries. |
+| **CORS** | `Access-Control-Allow-Origin: *` on all responses for cross-origin clients. |
+| **IPGate** | Host-level firewall checking ~612M IPs from FireHOL blocklists via Unix Domain Socket (O(1) lookup). |
 
 ## Table of Contents
 
 - [Installation](#installation)
+- [Docker Installation](#docker-installation)
+- [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -48,25 +72,23 @@ Before you begin, ensure you have the following installed:
     npm -v
     ```
 
-## Getting Started
-
 ### 1. Clone the repo
 
 ```bash
 git clone https://github.com/SouBryan/Qobuz-DL.git
 ```
 
-### 2. Navigate to the project directory
+### 2. Install Dependencies
 
 ```bash
-cd Qobuz-DL
+cd Qobuz-DL && npm i
 ```
 
-### 3. Install Dependencies
+### 3. Configure .env
 
-```bash
-npm i
-```
+Copy `.env.example` to `.env` and set:
+- `QOBUZ_APP_ID` / `QOBUZ_SECRET` — use [this tool](https://github.com/QobuzDL/Qobuz-AppID-Secret-Tool)
+- `QOBUZ_TOKEN_*` — from `localuser.token` in localStorage on [play.qobuz.com](https://play.qobuz.com/) (paying members only)
 
 ### 4. Run the development server
 
@@ -76,33 +98,55 @@ npm run dev
 
 ## Docker Installation
 
-### 1. Clone the repo
-
 ```bash
 git clone https://github.com/SouBryan/Qobuz-DL.git
-```
-
-### 2. Navigate to the project directory
-
-```bash
 cd Qobuz-DL
-```
-
-### 3. Docker Compose (recommended)
-
-```bash
+cp .env.example .env   # edit with your tokens
 docker compose up -d
 ```
 
 This starts 3 services:
-- **qobuz-dl**: The Next.js app on port 3000
-- **warp-socks**: Cloudflare WARP SOCKS5 proxy for IP privacy
-- **warp-rotator**: Automatic IP rotation every 30 minutes
 
-### Setup .env (IMPORTANT)
+| Service | Description |
+|---|---|
+| **qobuz-dl** | Next.js app on port 3000 |
+| **warp-socks** | Cloudflare WARP SOCKS5 proxy for IP privacy |
+| **warp-rotator** | Automatic IP rotation every 30 minutes |
 
-Before you can use Qobuz-DL, you need to change the .env file in the root directory. The default configuration will NOT work. QOBUZ_APP_ID and QOBUZ_SECRET must be set to the correct values. To find these you can use [this tool](https://github.com/QobuzDL/Qobuz-AppID-Secret-Tool).
-Additionally, in order to download files longer than 30 seconds, a valid Qobuz token is needed. This can be found in the localuser.token key of localstorage on the [official Qobuz website](https://play.qobuz.com/) for any paying members.
+## API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/get-music` | `GET` | Search for tracks. Query param: `q` |
+| `/api/download-music` | `GET` | Download/stream a track |
+| `/api/get-album` | `GET` | Get album details |
+| `/api/get-artist` | `GET` | Get artist details |
+| `/api/get-releases` | `GET` | Get new releases |
+| `/api/get-countries` | `GET` | List available token countries |
+
+All endpoints return JSON and accept a `Token-Country` header for multi-region token selection.
+
+## Project Structure
+
+```
+├── app/                    # Next.js App Router
+│   ├── api/                # API route handlers
+│   ├── page.tsx            # Home page (SearchView)
+│   ├── not-found.tsx       # 404 page (minimal, no SSR risk)
+│   └── layout.tsx          # Root layout
+├── middleware.ts            # Security middleware (whitelist, CORS, etc.)
+├── lib/
+│   ├── ipgate.ts           # IPGate UDS client
+│   ├── qobuz-dl.tsx        # Qobuz API client
+│   └── qobuz-dl-server.tsx # Server-side Qobuz helpers
+├── docker/
+│   └── warp-socks/         # WARP proxy Docker image
+├── scripts/
+│   └── rotate-ip.sh        # IP rotation script
+├── docker-compose.yml      # 3-service stack
+├── Dockerfile              # Multi-stage Next.js standalone build
+└── next.config.ts          # CORS headers, standalone output
+```
 
 ## Contributing
 

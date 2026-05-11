@@ -41,3 +41,6 @@ next-env.d.ts
 # environment
 .env*
 !.env.example
+
+# project context (local only)
+CONTEXT.md
