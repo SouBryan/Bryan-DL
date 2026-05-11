@@ -63,7 +63,17 @@ if SOCKS5_PROXY:
     import httpx
     _proxy_url = SOCKS5_PROXY if "://" in SOCKS5_PROXY else f"socks5://{SOCKS5_PROXY}"
 
-    # Patch AsyncHTTPTransport to inject proxy (covers RetryTransport's internal transport)
+    # Internal Docker hostnames that must NOT go through the SOCKS5 proxy
+    _NO_PROXY_HOSTS = {
+        "apple-music-wrapper",
+        "warp-socks",
+        "localhost",
+        "127.0.0.1",
+    }
+
+    # 1) Patch AsyncHTTPTransport to inject proxy by default.
+    #    This covers RetryTransport (used by gamdl's main client) which
+    #    internally creates an AsyncHTTPTransport without proxy.
     _original_transport_init = httpx.AsyncHTTPTransport.__init__
 
     def _patched_transport_init(self, *args, **kwargs):
@@ -73,17 +83,39 @@ if SOCKS5_PROXY:
 
     httpx.AsyncHTTPTransport.__init__ = _patched_transport_init
 
-    # Patch AsyncClient for cases where no custom transport is used (static methods)
+    class _SmartProxyTransport(httpx.AsyncBaseTransport):
+        """Routes requests through SOCKS5 proxy unless target is an internal Docker host."""
+
+        def __init__(self):
+            # Create proxy transport (uses patched init, gets proxy automatically)
+            self._proxy = httpx.AsyncHTTPTransport()
+            # Create direct transport bypassing the patch
+            self._direct = httpx.AsyncHTTPTransport.__new__(httpx.AsyncHTTPTransport)
+            _original_transport_init(self._direct)
+
+        async def handle_async_request(self, request):
+            host = request.url.host or ""
+            if host in _NO_PROXY_HOSTS:
+                return await self._direct.handle_async_request(request)
+            return await self._proxy.handle_async_request(request)
+
+        async def aclose(self):
+            await self._proxy.aclose()
+            await self._direct.aclose()
+
+    # 2) Patch AsyncClient to use SmartProxyTransport for short-lived clients
+    #    (wrapper, cover downloads, etc). This routes per-request based on hostname.
     _original_client_init = httpx.AsyncClient.__init__
 
     def _patched_client_init(self, *args, **kwargs):
         if "proxy" not in kwargs and "transport" not in kwargs:
-            kwargs["proxy"] = _proxy_url
+            kwargs["transport"] = _SmartProxyTransport()
         _original_client_init(self, *args, **kwargs)
 
     httpx.AsyncClient.__init__ = _patched_client_init
 
-    logger.info(f"httpx monkey-patched with proxy: {_proxy_url}")
+    logger.info(f"httpx monkey-patched with smart proxy: {_proxy_url}")
+    logger.info(f"No-proxy hosts (bypass SOCKS5): {_NO_PROXY_HOSTS}")
 else:
     logger.warning("No SOCKS5_PROXY configured — Apple Music requests will use direct connection")
 
