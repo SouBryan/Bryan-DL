@@ -83,7 +83,8 @@ services:
 
     # Apple Music Wrapper — decrypts ALAC/lossless via Apple's native libraries
     apple-music-wrapper:
-        image: ghcr.io/worldobservationlog/wrapper:local
+        build:
+            context: https://github.com/WorldObservationLog/wrapper.git#main
         container_name: apple-music-wrapper
         privileged: true
         entrypoint: ./wrapper
