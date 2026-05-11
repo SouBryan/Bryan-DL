@@ -216,6 +216,7 @@ async def download_track(song_id: str):
             music_video=mv_dl,
             uploaded_video=uv_dl,
             overwrite=True,
+            skip_cleanup=True,
         )
 
         # Get the real Apple Music URL from catalog data
@@ -224,21 +225,39 @@ async def download_track(song_id: str):
         logger.info(f"Resolved song URL: {song_url}")
 
         downloaded_path = None
+        item_count = 0
         async for download_item in downloader.get_download_item_from_url(song_url):
+            item_count += 1
+            has_error = download_item.media.error if hasattr(download_item.media, 'error') else None
+            is_partial = download_item.media.partial if hasattr(download_item.media, 'partial') else None
+            logger.info(f"Download item #{item_count}: partial={is_partial}, error={has_error}, "
+                        f"final_path={download_item.final_path}, staged_path={download_item.staged_path}")
+
+            if has_error:
+                logger.error(f"Media error: {has_error}")
+                continue
+
+            if is_partial:
+                logger.warning(f"Media is partial (incomplete stream info), skipping")
+                continue
+
             await downloader.download(download_item)
-            # Find the downloaded file
-            if hasattr(download_item, "final_path") and download_item.final_path:
+            if download_item.final_path and os.path.exists(download_item.final_path):
                 downloaded_path = str(download_item.final_path)
-            break  # Only download the first item
+                logger.info(f"Downloaded to final_path: {downloaded_path}")
+            break
 
         if not downloaded_path:
-            # Search work_dir for any .m4a file
+            logger.info(f"Items yielded: {item_count}. Searching work_dir recursively for .m4a...")
             for f in Path(work_dir).rglob("*.m4a"):
                 downloaded_path = str(f)
+                logger.info(f"Found .m4a: {downloaded_path}")
                 break
 
         if not downloaded_path or not os.path.exists(downloaded_path):
-            raise HTTPException(status_code=404, detail=f"Track {song_id} could not be downloaded")
+            all_files = list(Path(work_dir).rglob("*"))
+            logger.error(f"No .m4a found after {item_count} items. All files in work_dir: {all_files}")
+            raise HTTPException(status_code=404, detail=f"Track {song_id} not downloaded. Items yielded: {item_count}")
 
         # 3. Upload to R2
         url = r2_upload_file(downloaded_path, r2_key)
