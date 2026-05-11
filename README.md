@@ -179,7 +179,7 @@ This project uses the following third-party tools for Apple Music functionality:
 | [gamdl](https://github.com/glomatico/gamdl) | [@glomatico](https://github.com/glomatico) | Apple Music download, decryption, and metadata tagging (AAC 256kbps + ALAC lossless) | [MIT](https://github.com/glomatico/gamdl/blob/main/LICENSE) |
 | [wrapper](https://github.com/WorldObservationLog/wrapper) | [@WorldObservationLog](https://github.com/WorldObservationLog) | FairPlay decryption server enabling ALAC lossless downloads (up to 24-bit/192kHz) | No license specified |
 
-Additionally, this project is a fork of [Monochrome-DL/qobuz-dl](https://github.com/kiraleos/qobuz-dl) (MIT License).
+Additionally, this project is a fork of [QobuzDL/Qobuz-DL](https://github.com/QobuzDL/Qobuz-DL) (MIT License).
 
 ## Disclaimer
 
