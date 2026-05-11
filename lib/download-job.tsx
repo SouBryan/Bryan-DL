@@ -37,7 +37,8 @@ export const createDownloadJob = async (
                         // Input from sidecar is .m4a (ALAC or AAC depending on wrapper)
                         // If output codec matches container (AAC→AAC or ALAC→ALAC), no reencode needed
                         const needsRencode = settings.outputCodec !== 'AAC' && settings.outputCodec !== 'ALAC';
-                        const needsFFmpeg = settings.applyMetadata || needsRencode;
+                        // Apple Music: metadata already applied by gamdl sidecar, only need FFmpeg for reencode
+                        const needsFFmpeg = needsRencode;
                         
                         setStatusBar((prev) => ({
                             ...prev,
@@ -78,7 +79,9 @@ export const createDownloadJob = async (
 
                         if (needsFFmpeg) {
                             setStatusBar((prev) => ({ ...prev, description: 'Processing...', progress: 100 }));
-                            outputFile = await applyMetadata(response.data, result as QobuzTrack, ffmpegState, settings, setStatusBar, undefined, undefined, 'm4a');
+                            // Apple Music: metadata already applied by gamdl, only reencode
+                            const appleSettings = { ...settings, applyMetadata: false };
+                            outputFile = await applyMetadata(response.data, result as QobuzTrack, ffmpegState, appleSettings, setStatusBar, false, undefined, 'm4a');
                         }
 
                         const extension = needsRencode ? codecMap[settings.outputCodec].extension : 'm4a';
