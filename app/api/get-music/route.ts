@@ -18,29 +18,51 @@ export async function GET(request: NextRequest) {
     const start = Date.now();
     try {
         const { q, offset } = searchParamsSchema.parse(params);
-        const result = await runWithTokenContext(() => search(q, 10, offset, country ? { country } : {}));
-        const { _tokenSuffix, _tokenCountry, ...searchResults } = result;
 
-        // Apple Music fallback: if Qobuz returned no tracks, try Apple Music
-        const qobuzTrackCount = searchResults?.tracks?.items?.length || 0;
-        if (qobuzTrackCount === 0) {
+        // Search Qobuz and Apple Music in parallel
+        const [qobuzResult, appleResult] = await Promise.all([
+            runWithTokenContext(() => search(q, 10, offset, country ? { country } : {})),
+            offset === 0
+                ? searchAppleMusic(q, 10).catch((err) => { console.error('[get-music] Apple Music search failed:', err); return null; })
+                : Promise.resolve(null), // Only search Apple Music on first page
+        ]);
+
+        const { _tokenSuffix, _tokenCountry, ...searchResults } = qobuzResult;
+
+        // Merge Apple Music results after Qobuz results
+        let mergedResults = searchResults;
+        if (appleResult) {
             try {
-                const appleResponse = await searchAppleMusic(q, 10);
-                const appleSongs = extractSongsFromAppleResponse(appleResponse);
+                const appleSongs = extractSongsFromAppleResponse(appleResult);
                 if (appleSongs.length > 0) {
-                    const appleResults = convertAppleMusicToQobuzFormat(appleSongs);
-                    const merged = { ...searchResults, tracks: appleResults.tracks };
-                    const res = new NextResponse(JSON.stringify({ success: true, data: merged }), { status: 200 });
-                    logRequest(request, 200, Date.now() - start, _tokenSuffix, _tokenCountry);
-                    return res;
+                    // Deduplicate by ISRC: remove Apple tracks that already exist in Qobuz results
+                    const qobuzIsrcs = new Set(
+                        (searchResults?.tracks?.items || [])
+                            .map((t: any) => t.isrc?.toUpperCase())
+                            .filter(Boolean)
+                    );
+                    const uniqueAppleSongs = appleSongs.filter(
+                        (s) => !qobuzIsrcs.has(s.attributes.isrc?.toUpperCase())
+                    );
+                    if (uniqueAppleSongs.length > 0) {
+                        const appleFormatted = convertAppleMusicToQobuzFormat(uniqueAppleSongs);
+                        const qobuzItems = searchResults?.tracks?.items || [];
+                        mergedResults = {
+                            ...searchResults,
+                            tracks: {
+                                ...searchResults?.tracks,
+                                items: [...qobuzItems, ...appleFormatted.tracks.items],
+                                total: (searchResults?.tracks?.total || 0) + uniqueAppleSongs.length,
+                            },
+                        };
+                    }
                 }
             } catch (appleErr) {
-                console.error('[get-music] Apple Music fallback failed:', appleErr);
-                // Continue with empty Qobuz results
+                console.error('[get-music] Apple Music merge failed:', appleErr);
             }
         }
 
-        const res = new NextResponse(JSON.stringify({ success: true, data: searchResults }), { status: 200 });
+        const res = new NextResponse(JSON.stringify({ success: true, data: mergedResults }), { status: 200 });
         logRequest(request, 200, Date.now() - start, _tokenSuffix, _tokenCountry);
         return res;
     } catch (error: any) {
