@@ -7,7 +7,7 @@ import z from 'zod';
 
 const searchParamsSchema = z.object({
     q: z.string().min(1, 'Query is required'),
-    offset: z.preprocess((a) => parseInt(a as string), z.number().max(1000, 'Offset must be less than 1000').min(0, 'Offset must be 0 or greater').default(0))
+    offset: z.preprocess((a) => (a != null && a !== '') ? parseInt(a as string) : undefined, z.number().max(1000, 'Offset must be less than 1000').min(0, 'Offset must be 0 or greater').default(0))
 });
 
 export async function GET(request: NextRequest) {

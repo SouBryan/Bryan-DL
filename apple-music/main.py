@@ -218,9 +218,10 @@ async def download_track(song_id: str):
             overwrite=True,
         )
 
-        # Build Apple Music URL from song_id
-        # gamdl needs a full URL to resolve the track
-        song_url = f"https://music.apple.com/song/{song_id}"
+        # Get the real Apple Music URL from catalog data
+        catalog_data = await apple_music_api.get_song(song_id)
+        song_url = catalog_data["data"][0]["attributes"]["url"]
+        logger.info(f"Resolved song URL: {song_url}")
 
         downloaded_path = None
         async for download_item in downloader.get_download_item_from_url(song_url):
