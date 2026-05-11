@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Slider } from './slider';
 
 const losslessCodecs = ['FLAC', 'ALAC', 'WAV'];
+const noAlbumArtCodecs = ['OPUS', 'WAV'];
 
 const qualityMap = {
     '27': [24, 192],
@@ -33,20 +34,22 @@ const SettingsForm = () => {
 
     // When switching to Apple Music only without lossless, force codec to lossy
     useEffect(() => {
-        if (blockLossless && losslessCodecs.includes(settings.outputCodec)) {
+        if (blockLossless && (losslessCodecs.includes(settings.outputCodec) || settings.outputCodec === 'AAC_ORIGINAL')) {
             setSettings((prev) => ({ ...prev, outputCodec: 'AAC', bitrate: undefined }));
         }
     }, [blockLossless]);
 
     const bitrateInput = useRef<HTMLInputElement | null>(null);
 
+    const maxBitrate = settings.outputCodec === 'OPUS' ? 510 : 320;
+
     useEffect(() => {
         if (!open && bitrateInput.current) {
             let numberInput = parseInt(bitrateInput.current.value);
-            if (isNaN(numberInput)) numberInput = 320;
-            if (numberInput > 320) numberInput = 320;
-            if (numberInput < 24) numberInput = 320;
-            setSettings((prev) => ({ ...prev, bitrate: numberInput || 320 }));
+            if (isNaN(numberInput)) numberInput = maxBitrate;
+            if (numberInput > maxBitrate) numberInput = maxBitrate;
+            if (numberInput < 24) numberInput = maxBitrate;
+            setSettings((prev) => ({ ...prev, bitrate: numberInput || maxBitrate }));
         }
     }, [open]);
 
@@ -187,7 +190,13 @@ const SettingsForm = () => {
                                                 ...settings,
                                                 outputCodec: codec as SettingsProps['outputCodec']
                                             }));
-                                            if (!losslessCodecs.includes(codec)) {
+                                            if (codec === 'AAC_ORIGINAL') {
+                                                setSettings((settings) => ({
+                                                    ...settings,
+                                                    outputQuality: '6' as const,
+                                                    bitrate: undefined
+                                                }));
+                                            } else if (!losslessCodecs.includes(codec)) {
                                                 setSettings((settings) => ({
                                                     ...settings,
                                                     outputQuality: settings.outputCodec === 'OPUS' ? ('6' as const) : ('5' as const),
@@ -210,7 +219,14 @@ const SettingsForm = () => {
                                         {!blockLossless && <DropdownMenuRadioItem value='WAV'>WAV</DropdownMenuRadioItem>}
                                         {!blockLossless && <DropdownMenuRadioItem value='ALAC'>ALAC{isAppleOnly && appleLossless ? ' (original, lossless)' : ''}</DropdownMenuRadioItem>}
                                         <DropdownMenuRadioItem value='MP3'>MP3</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value='AAC'>AAC{blockLossless ? ' (original, 256kbps)' : ''}</DropdownMenuRadioItem>
+                                        {isAppleOnly && appleLossless ? (
+                                            <>
+                                                <DropdownMenuRadioItem value='AAC_ORIGINAL'>AAC (original, 256kbps)</DropdownMenuRadioItem>
+                                                <DropdownMenuRadioItem value='AAC'>AAC (from ALAC, custom bitrate)</DropdownMenuRadioItem>
+                                            </>
+                                        ) : (
+                                            <DropdownMenuRadioItem value='AAC'>AAC{blockLossless ? ' (original, 256kbps)' : ''}</DropdownMenuRadioItem>
+                                        )}
                                         <DropdownMenuRadioItem value='OPUS'>OPUS</DropdownMenuRadioItem>
                                     </DropdownMenuRadioGroup>
                                 </DropdownMenuContent>
@@ -255,13 +271,17 @@ const SettingsForm = () => {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
+                        ) : settings.outputCodec === 'AAC_ORIGINAL' ? (
+                            <p className='text-xs text-muted-foreground text-center'>
+                                Apple Music original AAC at 256kbps. No conversion applied.
+                            </p>
                         ) : (
                             <>
                                 <p className='text-xs text-muted-foreground text-center'>
-                                    Lossy codec selected. All music will be downloaded at 320kbps. You can specify a bitrate to rencode to below.
+                                    Lossy codec selected. All music will be downloaded at {maxBitrate}kbps. You can specify a bitrate to rencode to below.
                                 </p>
                                 <div className='flex items-center gap-2 w-full justify-center'>
-                                    <Input ref={bitrateInput} max={320} min={24} className='w-fit' type='number' defaultValue={settings.bitrate} />
+                                    <Input ref={bitrateInput} max={maxBitrate} min={24} className='w-fit' type='number' defaultValue={settings.bitrate} />
                                     <p>kbps</p>
                                 </div>
                             </>
@@ -319,6 +339,8 @@ const SettingsForm = () => {
                             />
                         </div>
                     </SheetHeader>
+                    {!['OPUS', 'WAV'].includes(settings.outputCodec) && (
+                    <>
                     <Separator />
                     <SheetHeader>
                         <div className='flex flex-col items-center gap-2'>
@@ -357,6 +379,8 @@ const SettingsForm = () => {
                             <p>{Math.round(settings.albumArtQuality * 100)}%</p>
                         </div>
                     </SheetHeader>
+                    </>
+                    )}
                     <Button variant='destructive' onClick={resetSettings}>
                         Reset Settings
                     </Button>

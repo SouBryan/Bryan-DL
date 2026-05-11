@@ -35,8 +35,8 @@ export const createDownloadJob = async (
                         const signal = controller.signal;
                         let cancelled = false;
                         // Input from sidecar is .m4a (ALAC or AAC depending on wrapper)
-                        // If output codec matches container (AAC→AAC or ALAC→ALAC), no reencode needed
-                        const needsRencode = settings.outputCodec !== 'AAC' && settings.outputCodec !== 'ALAC';
+                        // If output codec matches container (AAC→AAC, AAC_ORIGINAL→m4a, or ALAC→ALAC), no reencode needed
+                        const needsRencode = settings.outputCodec !== 'AAC' && settings.outputCodec !== 'AAC_ORIGINAL' && settings.outputCodec !== 'ALAC';
                         // Apple Music: metadata already applied by gamdl sidecar, only need FFmpeg for reencode
                         const needsFFmpeg = needsRencode;
                         

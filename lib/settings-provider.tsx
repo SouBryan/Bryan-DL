@@ -4,7 +4,7 @@ import React, { createContext, ReactNode, useContext, useEffect, useState } from
 export type SettingsProps = {
     particles: boolean;
     outputQuality: '27' | '7' | '6' | '5';
-    outputCodec: 'FLAC' | 'WAV' | 'ALAC' | 'MP3' | 'AAC' | 'OPUS';
+    outputCodec: 'FLAC' | 'WAV' | 'ALAC' | 'MP3' | 'AAC' | 'AAC_ORIGINAL' | 'OPUS';
     bitrate: number | undefined;
     applyMetadata: boolean;
     fixMD5: boolean;
@@ -21,8 +21,8 @@ const isValidSettings = (obj: any): obj is SettingsProps => {
     return (
         typeof obj.particles === 'boolean' &&
             ['27', '7', '6', '5'].includes(obj.outputQuality) &&
-            ['FLAC', 'WAV', 'ALAC', 'MP3', 'AAC', 'OPUS'].includes(obj.outputCodec) &&
-            ((typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 320) || obj.bitrate === undefined) &&
+            ['FLAC', 'WAV', 'ALAC', 'MP3', 'AAC', 'AAC_ORIGINAL', 'OPUS'].includes(obj.outputCodec) &&
+            ((typeof obj.bitrate === 'number' && obj.bitrate >= 24 && obj.bitrate <= 510) || obj.bitrate === undefined) &&
             typeof obj.applyMetadata === 'boolean' &&
             typeof obj.explicitContent === 'boolean' &&
             typeof obj.fixMD5 === 'boolean' &&

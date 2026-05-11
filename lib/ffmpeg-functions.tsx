@@ -34,6 +34,10 @@ export const codecMap = {
         extension: 'm4a',
         codec: 'aac'
     },
+    AAC_ORIGINAL: {
+        extension: 'm4a',
+        codec: 'aac'
+    },
     OPUS: {
         extension: 'opus',
         codec: 'libopus'
@@ -55,8 +59,8 @@ export async function applyMetadata(
         (settings.outputQuality != '5' && settings.outputCodec === 'FLAC') ||
         (settings.outputQuality === '5' && settings.outputCodec === 'MP3' && settings.bitrate === 320)
     );
-    // For Apple Music (m4a input): skip rencode if output stays in m4a container (AAC or ALAC)
-    const skipAppleRencode = inputFormat === 'm4a' && (settings.outputCodec === 'AAC' || settings.outputCodec === 'ALAC');
+    // For Apple Music (m4a input): skip rencode if output stays in m4a container (AAC, AAC_ORIGINAL, or ALAC)
+    const skipAppleRencode = inputFormat === 'm4a' && (settings.outputCodec === 'AAC' || settings.outputCodec === 'AAC_ORIGINAL' || settings.outputCodec === 'ALAC');
     const shouldSkipRencode = skipRencode || skipAppleRencode;
     if (shouldSkipRencode && !settings.applyMetadata) return trackBuffer;
     const extension = codecMap[settings.outputCodec].extension;
