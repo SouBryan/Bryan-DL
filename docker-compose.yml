@@ -84,10 +84,8 @@ services:
     # Apple Music Wrapper — decrypts ALAC/lossless via Apple's native libraries
     apple-music-wrapper:
         build:
-            context: https://github.com/WorldObservationLog/wrapper.git#wrapper.arm64.latest
-            args:
-                BUILD_PLATFORM: linux/arm64
-                RUNTIME_PLATFORM: linux/arm64
+            context: ./docker/apple-music-wrapper
+            dockerfile: Dockerfile
         container_name: apple-music-wrapper
         privileged: true
         entrypoint: ./wrapper
