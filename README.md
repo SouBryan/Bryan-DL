@@ -1,13 +1,13 @@
-# Qobuz-DL
+# Bryan-DL
 
-![Qobuz-DL](https://github.com/user-attachments/assets/45896382-1764-4339-824a-b31f32991480)
+![Bryan-DL](https://github.com/user-attachments/assets/45896382-1764-4339-824a-b31f32991480)
 
 ---
 
 > [!IMPORTANT]
-> This repository does not contain any copyrighted material, or code to illegaly download music. Downloads are provided by the Qobuz API and should only be initiated by the API token owner. The author is **not responsible for the usage of this repository nor endorses it**, nor is the author responsible for any copies, forks, re-uploads made by other users, or anything else related to Qobuz-DL. Any live demo found online of this project is not associated with the authors of this repo. This is the author's only account and repository.
+> This repository does not contain any copyrighted material, or code to illegaly download music. Downloads are provided by the Qobuz and Apple Music APIs and should only be initiated by the API token/subscription owner. The author is **not responsible for the usage of this repository nor endorses it**, nor is the author responsible for any copies, forks, re-uploads made by other users, or anything else related to Bryan-DL. Any live demo found online of this project is not associated with the authors of this repo. This is the author's only account and repository.
 
-Qobuz-DL provides a fast and easy way to download music from **Qobuz** and **Apple Music** in a variety of codecs and formats entirely from the browser. This fork adds Apple Music lossless (ALAC up to 24-bit/192kHz), WARP proxy for IP privacy, and security hardening.
+Bryan-DL provides a fast and easy way to download music from **Qobuz** and **Apple Music** in a variety of codecs and formats entirely from the browser. Built on top of [QobuzDL/Qobuz-DL](https://github.com/QobuzDL/Qobuz-DL), this fork adds Apple Music lossless (ALAC up to 24-bit/192kHz), WARP proxy for IP privacy, and security hardening.
 
 ## Features
 
@@ -77,13 +77,13 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/SouBryan/Qobuz-DL.git
+git clone https://github.com/SouBryan/Bryan-DL.git
 ```
 
 ### 2. Install Dependencies
 
 ```bash
-cd Qobuz-DL && npm i
+cd Bryan-DL && npm i
 ```
 
 ### 3. Configure .env
@@ -101,8 +101,8 @@ npm run dev
 ## Docker Installation
 
 ```bash
-git clone https://github.com/SouBryan/Qobuz-DL.git
-cd Qobuz-DL
+git clone https://github.com/SouBryan/Bryan-DL.git
+cd Bryan-DL
 cp .env.example .env   # edit with your tokens
 docker compose up -d
 ```
@@ -179,7 +179,7 @@ This project uses the following third-party tools for Apple Music functionality:
 | [gamdl](https://github.com/glomatico/gamdl) | [@glomatico](https://github.com/glomatico) | Apple Music download, decryption, and metadata tagging (AAC 256kbps + ALAC lossless) | [MIT](https://github.com/glomatico/gamdl/blob/main/LICENSE) |
 | [wrapper](https://github.com/WorldObservationLog/wrapper) | [@WorldObservationLog](https://github.com/WorldObservationLog) | FairPlay decryption server enabling ALAC lossless downloads (up to 24-bit/192kHz) | No license specified |
 
-Additionally, this project is a fork of [QobuzDL/Qobuz-DL](https://github.com/QobuzDL/Qobuz-DL) (MIT License).
+The Qobuz download functionality is based on [QobuzDL/Qobuz-DL](https://github.com/QobuzDL/Qobuz-DL) (MIT License).
 
 ## Disclaimer
 
