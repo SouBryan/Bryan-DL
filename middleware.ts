@@ -61,10 +61,11 @@ const BLOCKED_UA_PATTERNS = [
 // Hardcoded blocked IPs (known attackers)
 const BLOCKED_IPS = new Set([
     '2600:387:15:3613::1', // Residential proxy bot - returnNaN/let attacks
-    '2601:281:c800:1ab0:cca1:36cc:4524:60e7', // Mass album downloader bot (Opera)
     '45.94.31.32', // WordPress scanner bot - 1337 Services GmbH NL (AbuseIPDB flagged)
     '45.205.1.43', // SSR injection bot - POST / with returnNaN payload, rotating UAs
     '212.113.98.30', // Cryptominer dropper - POST / with base64 bash payload downloading from 78.153.140.16
+    '34.246.163.208', // WordPress scanner bot - Tentou por muito tempo varios endpoints, como .env e outros
+    '35.240.247.11', // WordPress scanner bot - (AbuseIPDB flagged)
 ]);
 
 function getClientIp(request: NextRequest): string {

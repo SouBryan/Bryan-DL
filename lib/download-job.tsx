@@ -25,29 +25,32 @@ export const createDownloadJob = async (
         const formattedTitle = formatCustomTitle(settings.trackName, result as QobuzTrack);
         const isAppleMusic = String((result as QobuzTrack).id).startsWith('apple:');
 
-        // Apple Music tracks: download M4A from API proxy, then apply FFmpeg pipeline
-        // (same as Qobuz but input is M4A/AAC instead of FLAC)
+        // Apple Music tracks: download M4A (AAC 256kbps) from API proxy
+        // Only allows lossy codec conversions (MP3, OPUS, AAC) — lossless would be fake upscaling
         if (isAppleMusic) {
+            // Force lossy codec — prevent fake lossless from AAC source
+            const effectiveCodec = ['FLAC', 'WAV', 'ALAC'].includes(settings.outputCodec) ? 'AAC' : settings.outputCodec;
+            
             await createJob(setStatusBar, formattedTitle, Disc3Icon, async () => {
                 return new Promise(async (resolve) => {
                     try {
                         const controller = new AbortController();
                         const signal = controller.signal;
                         let cancelled = false;
+                        const needsRencode = effectiveCodec !== 'AAC';
+                        const needsFFmpeg = settings.applyMetadata || needsRencode;
+                        
                         setStatusBar((prev) => ({
                             ...prev,
                             progress: 0,
                             title: `Downloading ${formatTitle(result)}`,
-                            description: `Loading FFmpeg`,
+                            description: needsFFmpeg ? `Loading FFmpeg` : 'Fetching Apple Music track...',
                             onCancel: () => {
                                 cancelled = true;
                                 controller.abort();
                             }
                         }));
 
-                        // Determine if we need FFmpeg at all
-                        const needsRencode = settings.outputCodec !== 'AAC';
-                        const needsFFmpeg = settings.applyMetadata || needsRencode;
                         if (needsFFmpeg) await loadFFmpeg(ffmpegState, signal);
 
                         setStatusBar((prev) => ({ ...prev, description: 'Fetching Apple Music track...' }));
@@ -76,10 +79,12 @@ export const createDownloadJob = async (
 
                         if (needsFFmpeg) {
                             setStatusBar((prev) => ({ ...prev, description: 'Processing...', progress: 100 }));
-                            outputFile = await applyMetadata(response.data, result as QobuzTrack, ffmpegState, settings, setStatusBar, undefined, undefined, 'm4a');
+                            // Pass effective codec settings to avoid lossless upscaling
+                            const appleSettings = { ...settings, outputCodec: effectiveCodec as SettingsProps['outputCodec'] };
+                            outputFile = await applyMetadata(response.data, result as QobuzTrack, ffmpegState, appleSettings, setStatusBar, undefined, undefined, 'm4a');
                         }
 
-                        const extension = needsRencode ? codecMap[settings.outputCodec].extension : 'm4a';
+                        const extension = needsRencode ? codecMap[effectiveCodec as keyof typeof codecMap].extension : 'm4a';
                         const objectURL = URL.createObjectURL(new Blob([outputFile]));
                         const title = formattedTitle + '.' + extension;
                         proceedDownload(objectURL, title);

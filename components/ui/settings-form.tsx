@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from './input';
 import { ModeToggle } from '../mode-toggle';
+import { useMusicSource } from '@/lib/music-source-provider';
 import { nameVariables, SettingsProps, useSettings } from '@/lib/settings-provider';
 import { Separator } from './separator';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -21,10 +22,21 @@ const qualityMap = {
     '6': [16, 44.1]
 };
 
+const appleOnlyCodecs = ['AAC', 'MP3', 'OPUS'] as const;
+
 const SettingsForm = () => {
     const { settings, setSettings, resetSettings } = useSettings();
+    const { musicSource } = useMusicSource();
+    const isAppleOnly = musicSource === 'apple-music';
 
     const [open, setOpen] = useState(false);
+
+    // When switching to Apple Music only, force codec to lossy if currently lossless
+    useEffect(() => {
+        if (isAppleOnly && losslessCodecs.includes(settings.outputCodec)) {
+            setSettings((prev) => ({ ...prev, outputCodec: 'AAC', bitrate: undefined }));
+        }
+    }, [isAppleOnly]);
 
     const bitrateInput = useRef<HTMLInputElement | null>(null);
 
@@ -154,6 +166,9 @@ const SettingsForm = () => {
                                 </div>
                             </div>
                             <p className='font-medium text-sm'>Output Codec</p>
+                            {isAppleOnly && (
+                                <p className='text-xs text-muted-foreground'>Apple Music delivers AAC 256kbps. Lossless codecs are unavailable.</p>
+                            )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant='outline' className='flex gap-2 items-center'>
@@ -188,17 +203,17 @@ const SettingsForm = () => {
                                             }
                                         }}
                                     >
-                                        <DropdownMenuRadioItem value='FLAC'>FLAC (recommended)</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value='WAV'>WAV</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value='ALAC'>ALAC</DropdownMenuRadioItem>
+                                        {!isAppleOnly && <DropdownMenuRadioItem value='FLAC'>FLAC (recommended)</DropdownMenuRadioItem>}
+                                        {!isAppleOnly && <DropdownMenuRadioItem value='WAV'>WAV</DropdownMenuRadioItem>}
+                                        {!isAppleOnly && <DropdownMenuRadioItem value='ALAC'>ALAC</DropdownMenuRadioItem>}
                                         <DropdownMenuRadioItem value='MP3'>MP3</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value='AAC'>AAC</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value='AAC'>AAC{isAppleOnly ? ' (original, 256kbps)' : ''}</DropdownMenuRadioItem>
                                         <DropdownMenuRadioItem value='OPUS'>OPUS</DropdownMenuRadioItem>
                                     </DropdownMenuRadioGroup>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
-                        {losslessCodecs.includes(settings.outputCodec) ? (
+                        {losslessCodecs.includes(settings.outputCodec) && !isAppleOnly ? (
                             <div className='space-y-2'>
                                 <p className='font-medium text-sm'>Max Download Quality</p>
                                 <DropdownMenu>
@@ -268,6 +283,8 @@ const SettingsForm = () => {
                             <p className='text-xs text-destructive font-semibold text-center'>WAV files do not support metadata / tags.</p>
                         )}
                     </SheetHeader>
+                    {!isAppleOnly && (
+                    <>
                     <Separator />
                     <SheetHeader>
                         <div className='flex items-center gap-2'>
@@ -284,6 +301,8 @@ const SettingsForm = () => {
                             />
                         </div>
                     </SheetHeader>
+                    </>
+                    )}
                     <Separator />
                     <SheetHeader>
                         <div className='flex items-center gap-2'>
