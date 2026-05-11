@@ -170,6 +170,21 @@ All endpoints return JSON and accept a `Token-Country` header for multi-region t
 4. Push your branch: `git push origin feature-name`.
 5. Create a pull request.
 
+## Acknowledgements
+
+This project uses the following third-party tools for Apple Music functionality:
+
+| Project | Author | Usage | License |
+|---|---|---|---|
+| [gamdl](https://github.com/glomatico/gamdl) | [@glomatico](https://github.com/glomatico) | Apple Music download, decryption, and metadata tagging (AAC 256kbps + ALAC lossless) | [MIT](https://github.com/glomatico/gamdl/blob/main/LICENSE) |
+| [wrapper](https://github.com/WorldObservationLog/wrapper) | [@WorldObservationLog](https://github.com/WorldObservationLog) | FairPlay decryption server enabling ALAC lossless downloads (up to 24-bit/192kHz) | No license specified |
+
+Additionally, this project is a fork of [Monochrome-DL/qobuz-dl](https://github.com/kiraleos/qobuz-dl) (MIT License).
+
+## Disclaimer
+
+This project does not contain any copyrighted material. Apple Music downloads require an **active Apple Music subscription**. Qobuz downloads require a **valid Qobuz API token** from a paying account. The authors are not responsible for misuse.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
