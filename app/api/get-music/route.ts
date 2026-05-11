@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { search, runWithTokenContext } from '@/lib/qobuz-dl-server';
-import { searchAppleMusic, extractSongsFromAppleResponse, convertAppleMusicToQobuzFormat } from '@/lib/apple-music-server';
+import { searchAppleMusic, lookupAppleMusicByIsrc, extractSongsFromAppleResponse, convertAppleMusicToQobuzFormat } from '@/lib/apple-music-server';
 import { logRequest } from '@/lib/api-logger';
 import { checkIpGate } from '@/lib/ipgate';
 import z from 'zod';
@@ -19,11 +19,14 @@ export async function GET(request: NextRequest) {
     try {
         const { q, offset } = searchParamsSchema.parse(params);
 
+        // Detect ISRC pattern (2 letter country + 3 alphanum registrant + 2 digit year + 5 digit designation)
+        const isIsrc = /^[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}$/i.test(q);
+
         // Search Qobuz and Apple Music in parallel
         const [qobuzResult, appleResult] = await Promise.all([
             runWithTokenContext(() => search(q, 10, offset, country ? { country } : {})),
             offset === 0
-                ? searchAppleMusic(q, 10).catch((err) => { console.error('[get-music] Apple Music search failed:', err); return null; })
+                ? (isIsrc ? lookupAppleMusicByIsrc(q) : searchAppleMusic(q, 10)).catch((err) => { console.error('[get-music] Apple Music search failed:', err); return null; })
                 : Promise.resolve(null), // Only search Apple Music on first page
         ]);
 

@@ -19,6 +19,16 @@ export async function searchAppleMusic(term: string, limit: number = 10) {
     return res.json();
 }
 
+export async function lookupAppleMusicByIsrc(isrc: string) {
+    const url = `${APPLE_MUSIC_API_URL}/lookup-isrc?isrc=${encodeURIComponent(isrc)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) {
+        console.error(`[apple-music] ISRC lookup failed: ${res.status}`);
+        return null;
+    }
+    return res.json();
+}
+
 export async function downloadAppleMusicTrack(songId: string): Promise<string | null> {
     // Check R2 cache first (fast HEAD via public URL)
     const r2Url = `${R2_PUBLIC_URL}/apple/${songId}.m4a`;

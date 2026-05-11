@@ -172,6 +172,30 @@ async def search(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/lookup-isrc")
+async def lookup_isrc(
+    isrc: str = Query(..., min_length=5),
+):
+    """Look up a song by ISRC code via Apple Music catalog filter."""
+    if apple_music_api is None:
+        raise HTTPException(status_code=503, detail="Not initialized")
+
+    try:
+        storefront = apple_music_api.storefront
+        url = f"https://amp-api.music.apple.com/v1/catalog/{storefront}/songs"
+        params = {"filter[isrc]": isrc}
+        response = await apple_music_api.client.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        # Wrap in search-like format for consistency
+        songs = data.get("data", [])
+        logger.info(f"ISRC lookup '{isrc}': {len(songs)} results")
+        return {"results": {"songs": {"data": songs}}} if songs else {"results": {}}
+    except Exception as e:
+        logger.error(f"ISRC lookup failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/download/{song_id}")
 async def download_track(song_id: str):
     """
