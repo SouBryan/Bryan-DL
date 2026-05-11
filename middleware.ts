@@ -11,11 +11,6 @@ function corsResponse(body: string | null, status: number, extra?: Record<string
     return new NextResponse(body, { status, headers: { ...CORS_HEADERS, ...extra } });
 }
 
-// --- Rate Limiting (in-memory, per IP) ---
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 60; // 60 requests per minute per IP
-
 // --- WHITELIST: only these paths are valid app routes ---
 // Everything else gets 404 immediately (no SSR rendering = no returnNaN/let exploits)
 const VALID_PATHS = [
@@ -81,17 +76,6 @@ function getClientIp(request: NextRequest): string {
     );
 }
 
-function isRateLimited(ip: string): boolean {
-    const now = Date.now();
-    const entry = rateLimitMap.get(ip);
-    if (!entry || now > entry.resetAt) {
-        rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-        return false;
-    }
-    entry.count++;
-    return entry.count > RATE_LIMIT_MAX_REQUESTS;
-}
-
 function containsMaliciousPayload(url: string, params: URLSearchParams): boolean {
     const fullString = url + ' ' + Array.from(params.values()).join(' ');
     return MALICIOUS_PATTERNS.some((pattern) => pattern.test(fullString));
@@ -144,22 +128,13 @@ export function middleware(request: NextRequest) {
         return corsResponse('Forbidden', 403);
     }
 
-    // 4. Rate limiting
-    if (isRateLimited(ip)) {
-        return corsResponse(JSON.stringify({ error: 'Too many requests' }), 429, {
-            'Content-Type': 'application/json',
-            'Retry-After': '60',
-        });
-    }
-
-    // 5. Malicious payload detection (URL + query params)
+    // 4. Malicious payload detection (URL + query params)
     const params = request.nextUrl.searchParams;
     if (containsMaliciousPayload(request.url, params)) {
-        console.warn(`[security] Blocked malicious payload from ${ip}: ${request.url.slice(0, 200)}`);
         return corsResponse('Bad Request', 400);
     }
 
-    // 6. Validate query params for search endpoints
+    // 5. Validate query params for search endpoints
     if (pathname === '/api/get-music') {
         const q = params.get('q');
         if (q && q.length > 500) {
@@ -170,10 +145,6 @@ export function middleware(request: NextRequest) {
     }
 
     // Pass through — add CORS headers to the response
-    // Log non-API pass-throughs to find attack vector
-    if (!pathname.startsWith('/api/')) {
-        console.log(`[middleware] Pass: ${ip} → ${request.method} ${pathname}${request.nextUrl.search || ''} | ${(ua || 'no-ua').slice(0, 80)}`);
-    }
     const response = NextResponse.next();
     for (const [key, value] of Object.entries(CORS_HEADERS)) {
         response.headers.set(key, value);
