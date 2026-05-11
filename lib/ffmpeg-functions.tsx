@@ -47,15 +47,21 @@ export async function applyMetadata(
     settings: SettingsProps,
     setStatusBar?: React.Dispatch<React.SetStateAction<StatusBarProps>>,
     albumArt?: ArrayBuffer | false,
-    upc?: string
+    upc?: string,
+    inputFormat?: 'm4a' | 'flac' | 'mp3'
 ) {
-    const skipRencode =
+    const inferredInput = inputFormat || (settings.outputQuality === '5' ? 'mp3' : 'flac');
+    const skipRencode = !inputFormat && (
         (settings.outputQuality != '5' && settings.outputCodec === 'FLAC') ||
-        (settings.outputQuality === '5' && settings.outputCodec === 'MP3' && settings.bitrate === 320);
-    if (skipRencode && !settings.applyMetadata) return trackBuffer;
+        (settings.outputQuality === '5' && settings.outputCodec === 'MP3' && settings.bitrate === 320)
+    );
+    // For Apple Music (m4a input): skip rencode only if output is AAC
+    const skipAppleRencode = inputFormat === 'm4a' && settings.outputCodec === 'AAC';
+    const shouldSkipRencode = skipRencode || skipAppleRencode;
+    if (shouldSkipRencode && !settings.applyMetadata) return trackBuffer;
     const extension = codecMap[settings.outputCodec].extension;
-    if (!skipRencode) {
-        const inputExtension = settings.outputQuality === '5' ? 'mp3' : 'flac';
+    if (!shouldSkipRencode) {
+        const inputExtension = inferredInput;
         if (setStatusBar)
             setStatusBar((prev) => {
                 if (prev.processing) {

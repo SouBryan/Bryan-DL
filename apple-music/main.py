@@ -51,6 +51,35 @@ R2_PUBLIC_URL = os.environ.get("R2_PUBLIC_URL", "")
 
 SOCKS5_PROXY = os.environ.get("SOCKS5_PROXY", "")
 
+# ── Monkey-patch httpx to inject SOCKS5 proxy into all gamdl requests ──
+if SOCKS5_PROXY:
+    import httpx
+    _proxy_url = SOCKS5_PROXY if "://" in SOCKS5_PROXY else f"socks5://{SOCKS5_PROXY}"
+
+    # Patch AsyncHTTPTransport to inject proxy (covers RetryTransport's internal transport)
+    _original_transport_init = httpx.AsyncHTTPTransport.__init__
+
+    def _patched_transport_init(self, *args, **kwargs):
+        if "proxy" not in kwargs:
+            kwargs["proxy"] = _proxy_url
+        _original_transport_init(self, *args, **kwargs)
+
+    httpx.AsyncHTTPTransport.__init__ = _patched_transport_init
+
+    # Patch AsyncClient for cases where no custom transport is used (static methods)
+    _original_client_init = httpx.AsyncClient.__init__
+
+    def _patched_client_init(self, *args, **kwargs):
+        if "proxy" not in kwargs and "transport" not in kwargs:
+            kwargs["proxy"] = _proxy_url
+        _original_client_init(self, *args, **kwargs)
+
+    httpx.AsyncClient.__init__ = _patched_client_init
+
+    logger.info(f"httpx monkey-patched with proxy: {_proxy_url}")
+else:
+    logger.warning("No SOCKS5_PROXY configured — Apple Music requests will use direct connection")
+
 # ── Global state ──
 
 apple_music_api: AppleMusicApi | None = None
@@ -167,6 +196,25 @@ async def health():
         "subscription": apple_music_api.active_subscription,
         "storefront": apple_music_api.storefront,
     }
+
+
+@app.get("/check-ip")
+async def check_ip():
+    """Check what IP is being used for outbound requests (verifies WARP proxy)."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get("https://cloudflare.com/cdn-cgi/trace")
+            lines = resp.text.strip().split("\n")
+            info = {k: v for k, v in (line.split("=", 1) for line in lines if "=" in line)}
+            return {
+                "ip": info.get("ip", "unknown"),
+                "warp": info.get("warp", "unknown"),
+                "proxy_configured": bool(SOCKS5_PROXY),
+                "proxy_url": _proxy_url if SOCKS5_PROXY else None,
+            }
+    except Exception as e:
+        return {"error": str(e), "proxy_configured": bool(SOCKS5_PROXY)}
 
 
 @app.get("/search")

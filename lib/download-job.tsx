@@ -25,8 +25,8 @@ export const createDownloadJob = async (
         const formattedTitle = formatCustomTitle(settings.trackName, result as QobuzTrack);
         const isAppleMusic = String((result as QobuzTrack).id).startsWith('apple:');
 
-        // Apple Music tracks: skip FFmpeg, download M4A directly (already has metadata from gamdl)
-        // The API proxies the file from R2, so we get binary directly (no CORS issues)
+        // Apple Music tracks: download M4A from API proxy, then apply FFmpeg pipeline
+        // (same as Qobuz but input is M4A/AAC instead of FLAC)
         if (isAppleMusic) {
             await createJob(setStatusBar, formattedTitle, Disc3Icon, async () => {
                 return new Promise(async (resolve) => {
@@ -38,12 +38,19 @@ export const createDownloadJob = async (
                             ...prev,
                             progress: 0,
                             title: `Downloading ${formatTitle(result)}`,
-                            description: `Fetching Apple Music track...`,
+                            description: `Loading FFmpeg`,
                             onCancel: () => {
                                 cancelled = true;
                                 controller.abort();
                             }
                         }));
+
+                        // Determine if we need FFmpeg at all
+                        const needsRencode = settings.outputCodec !== 'AAC';
+                        const needsFFmpeg = settings.applyMetadata || needsRencode;
+                        if (needsFFmpeg) await loadFFmpeg(ffmpegState, signal);
+
+                        setStatusBar((prev) => ({ ...prev, description: 'Fetching Apple Music track...' }));
                         const response = await axios.get('/api/download-music', {
                             params: { track_id: (result as QobuzTrack).id },
                             responseType: 'arraybuffer',
@@ -64,8 +71,17 @@ export const createDownloadJob = async (
                             },
                             signal
                         });
-                        const objectURL = URL.createObjectURL(new Blob([response.data]));
-                        const title = formattedTitle + '.m4a';
+
+                        let outputFile: ArrayBuffer | Blob = response.data;
+
+                        if (needsFFmpeg) {
+                            setStatusBar((prev) => ({ ...prev, description: 'Processing...', progress: 100 }));
+                            outputFile = await applyMetadata(response.data, result as QobuzTrack, ffmpegState, settings, setStatusBar, undefined, undefined, 'm4a');
+                        }
+
+                        const extension = needsRencode ? codecMap[settings.outputCodec].extension : 'm4a';
+                        const objectURL = URL.createObjectURL(new Blob([outputFile]));
+                        const title = formattedTitle + '.' + extension;
                         proceedDownload(objectURL, title);
                         resolve();
                     } catch (e) {

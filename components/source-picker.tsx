@@ -5,10 +5,10 @@ import { ChevronDownIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMusicSource, MusicSource } from '@/lib/music-source-provider';
 
-const sourceOptions: { value: MusicSource; label: string; icon: string }[] = [
-    { value: 'both', label: 'Both', icon: '🎵' },
-    { value: 'qobuz', label: 'Qobuz', icon: '🇶' },
-    { value: 'apple-music', label: 'Apple Music', icon: '🍎' },
+const sourceOptions: { value: MusicSource; label: string }[] = [
+    { value: 'both', label: 'Both' },
+    { value: 'qobuz', label: 'Qobuz' },
+    { value: 'apple-music', label: 'Apple Music' },
 ];
 
 const SourcePicker = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
@@ -22,7 +22,6 @@ const SourcePicker = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
                 <SelectTrigger className='select-none outline-none'>
                     <div className='bg-background rounded-full'>
                         <div className='bg-primary/10 flex gap-2 px-3 py-1 rounded-full outline-primary/40 outline-[0.5px] outline items-center justify-center text-nowrap'>
-                            {current.icon}
                             <span className='text-sm'>{current.label}</span>
                             <ChevronDownIcon className='w-4 h-4' />
                         </div>
@@ -32,7 +31,6 @@ const SourcePicker = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
                     {sourceOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                             <div className='flex gap-2 items-center'>
-                                {option.icon}
                                 {option.label}
                             </div>
                         </SelectItem>
