@@ -9,8 +9,9 @@ const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || 'https://cdn.bryanhifi.dpdns.
 
 // ── Sidecar HTTP calls ──
 
-export async function searchAppleMusic(term: string, limit: number = 10) {
-    const url = `${APPLE_MUSIC_API_URL}/search?term=${encodeURIComponent(term)}&limit=${limit}&types=songs`;
+export async function searchAppleMusic(term: string, limit: number = 10, storefront?: string) {
+    let url = `${APPLE_MUSIC_API_URL}/search?term=${encodeURIComponent(term)}&limit=${limit}&types=songs`;
+    if (storefront) url += `&storefront=${encodeURIComponent(storefront)}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) {
         console.error(`[apple-music] Search failed: ${res.status}`);
@@ -19,8 +20,9 @@ export async function searchAppleMusic(term: string, limit: number = 10) {
     return res.json();
 }
 
-export async function lookupAppleMusicByIsrc(isrc: string) {
-    const url = `${APPLE_MUSIC_API_URL}/lookup-isrc?isrc=${encodeURIComponent(isrc)}`;
+export async function lookupAppleMusicByIsrc(isrc: string, storefront?: string) {
+    let url = `${APPLE_MUSIC_API_URL}/lookup-isrc?isrc=${encodeURIComponent(isrc)}`;
+    if (storefront) url += `&storefront=${encodeURIComponent(storefront)}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) {
         console.error(`[apple-music] ISRC lookup failed: ${res.status}`);
@@ -29,7 +31,7 @@ export async function lookupAppleMusicByIsrc(isrc: string) {
     return res.json();
 }
 
-export async function downloadAppleMusicTrack(songId: string): Promise<string | null> {
+export async function downloadAppleMusicTrack(songId: string, storefront?: string): Promise<string | null> {
     // Check R2 cache first (fast HEAD via public URL)
     const r2Url = `${R2_PUBLIC_URL}/apple/${songId}.m4a`;
     try {
@@ -43,8 +45,9 @@ export async function downloadAppleMusicTrack(songId: string): Promise<string | 
     }
 
     // Call sidecar to download + decrypt + upload to R2
-    const url = `${APPLE_MUSIC_API_URL}/download/${songId}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(60000) }); // 60s timeout for download+decrypt
+    let downloadUrl = `${APPLE_MUSIC_API_URL}/download/${songId}`;
+    if (storefront) downloadUrl += `?storefront=${encodeURIComponent(storefront)}`;
+    const res = await fetch(downloadUrl, { signal: AbortSignal.timeout(60000) }); // 60s timeout for download+decrypt
     if (!res.ok) {
         console.error(`[apple-music] Download failed: ${res.status}`);
         return null;
@@ -67,6 +70,7 @@ export async function getAppleMusicHealth() {
 
 interface AppleMusicSong {
     id: string;
+    _storefront?: string;
     attributes: {
         name: string;
         artistName: string;
@@ -156,6 +160,7 @@ export function convertAppleMusicToQobuzFormat(songs: AppleMusicSong[]) {
             },
             // Flag to identify Apple Music tracks
             _source: 'apple-music',
+            _storefront: song._storefront || undefined,
         };
     });
 

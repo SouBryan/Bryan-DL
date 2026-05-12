@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
         // Apple Music track (prefixed with "apple:")
         if (track_id.startsWith('apple:')) {
             const appleId = track_id.replace('apple:', '');
-            const url = await downloadAppleMusicTrack(appleId);
+            const storefront = params.storefront || undefined;
+            const url = await downloadAppleMusicTrack(appleId, storefront);
             if (!url) {
                 logRequest(request, 404, Date.now() - start);
                 return new NextResponse(

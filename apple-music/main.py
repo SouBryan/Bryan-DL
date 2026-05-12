@@ -2,6 +2,7 @@
 Apple Music Sidecar — FastAPI service
 Internal service called by the Next.js app. Not exposed publicly.
 Provides: search, download+decrypt+upload to R2, health check.
+Supports multiple accounts/storefronts for multi-country coverage.
 """
 
 import asyncio
@@ -12,8 +13,10 @@ import shutil
 import logging
 import functools
 from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 import boto3
 from botocore.exceptions import ClientError
@@ -44,7 +47,8 @@ logger = logging.getLogger("apple-music-api")
 
 # ── Config ──
 
-COOKIES_PATH = os.environ.get("APPLE_MUSIC_COOKIES_PATH", "/app/cookies/cookies.txt")
+COOKIES_DIR = os.environ.get("APPLE_MUSIC_COOKIES_DIR", "/app/cookies")
+COOKIES_PATH = os.environ.get("APPLE_MUSIC_COOKIES_PATH", os.path.join(COOKIES_DIR, "cookies.txt"))
 TEMP_DIR = os.environ.get("APPLE_MUSIC_TEMP_DIR", "/tmp/apple-music-processing")
 
 R2_ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL", "")
@@ -62,16 +66,44 @@ USE_WRAPPER = bool(WRAPPER_HOST)
 
 SOCKS5_PROXY = os.environ.get("SOCKS5_PROXY", "")
 
-# Cookie auto-refresh config
+# Cookie auto-refresh config (single account — backward compat)
 APPLE_MUSIC_EMAIL = os.environ.get("APPLE_MUSIC_EMAIL", "")
 APPLE_MUSIC_PASSWORD = os.environ.get("APPLE_MUSIC_PASSWORD", "")
 COOKIE_REFRESH_INTERVAL_H = int(os.environ.get("APPLE_MUSIC_COOKIE_REFRESH_HOURS", "12"))
-COOKIE_REFRESH_ENABLED = bool(APPLE_MUSIC_EMAIL and APPLE_MUSIC_PASSWORD)
+
+# Multi-account config: JSON array of {email, password, storefront}
+# Example: [{"email":"a@b.com","password":"x","storefront":"us"},{"email":"c@d.com","password":"y","storefront":"jp"}]
+# Falls back to single APPLE_MUSIC_EMAIL/PASSWORD if not set
+APPLE_MUSIC_ACCOUNTS_RAW = os.environ.get("APPLE_MUSIC_ACCOUNTS", "")
 
 # Rate limiting config
 REQUEST_DELAY_MS = int(os.environ.get("APPLE_MUSIC_REQUEST_DELAY_MS", "500"))
 MAX_RETRIES_429 = int(os.environ.get("APPLE_MUSIC_MAX_RETRIES_429", "5"))
 MAX_CONCURRENT_DOWNLOADS = int(os.environ.get("APPLE_MUSIC_MAX_CONCURRENT_DOWNLOADS", "2"))
+
+
+def _parse_accounts_config() -> list[dict]:
+    """Parse multi-account config. Returns list of {email, password, storefront}."""
+    if APPLE_MUSIC_ACCOUNTS_RAW:
+        try:
+            accounts = json.loads(APPLE_MUSIC_ACCOUNTS_RAW)
+            if isinstance(accounts, list) and len(accounts) > 0:
+                for acc in accounts:
+                    if not acc.get("email") or not acc.get("password") or not acc.get("storefront"):
+                        raise ValueError(f"Each account must have email, password, storefront. Got: {acc}")
+                logger.info(f"Parsed {len(accounts)} accounts from APPLE_MUSIC_ACCOUNTS")
+                return accounts
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid APPLE_MUSIC_ACCOUNTS JSON: {e}")
+    # Fallback: single account from legacy env vars
+    if APPLE_MUSIC_EMAIL and APPLE_MUSIC_PASSWORD:
+        logger.info("Using single account from APPLE_MUSIC_EMAIL/PASSWORD (storefront auto-detected)")
+        return [{"email": APPLE_MUSIC_EMAIL, "password": APPLE_MUSIC_PASSWORD, "storefront": "auto"}]
+    return []
+
+
+ACCOUNT_CONFIGS = _parse_accounts_config()
+COOKIE_REFRESH_ENABLED = len(ACCOUNT_CONFIGS) > 0
 
 # ── Monkey-patch httpx to inject SOCKS5 proxy into all gamdl requests ──
 if SOCKS5_PROXY:
@@ -134,17 +166,31 @@ if SOCKS5_PROXY:
 else:
     logger.warning("No SOCKS5_PROXY configured — Apple Music requests will use direct connection")
 
+# ── Account instance (per-storefront) ──
+
+@dataclass
+class AccountInstance:
+    """Holds all state for a single Apple Music account/storefront."""
+    storefront: str
+    email: str
+    password: str
+    cookies_path: str
+    api: Optional[AppleMusicApi] = None
+    interface: Optional[AppleMusicInterface] = None
+    uses_wrapper: bool = False
+    codec: str = "aac-legacy"
+    last_cookie_refresh: str = "never"
+    refresh_task: Optional[asyncio.Task] = field(default=None, repr=False)
+
+
 # ── Global state ──
 
-apple_music_api: AppleMusicApi | None = None
-apple_music_interface: AppleMusicInterface | None = None
+_accounts: dict[str, AccountInstance] = {}  # keyed by storefront code
+_wrapper_storefront: str | None = None  # storefront that uses the wrapper (ALAC)
 s3_client = None
 _init_lock = asyncio.Lock()
-_wrapper_connected = False  # True only if wrapper was actually used (not cookie fallback)
 _last_request_time: float = 0.0  # monotonic timestamp of last API request
 _download_semaphore: asyncio.Semaphore | None = None  # limits concurrent downloads
-_cookie_refresh_task: asyncio.Task | None = None
-_last_cookie_refresh: str = "never"  # ISO timestamp of last successful refresh
 
 
 async def _throttle():
@@ -161,7 +207,7 @@ async def _throttle():
     _last_request_time = asyncio.get_event_loop().time()
 
 
-async def _request_with_backoff(coro_factory, description: str = "request"):
+async def _request_with_backoff(coro_factory, description: str = "request", account: AccountInstance | None = None):
     """
     Execute an async request with exponential backoff on 429/rate limit errors.
     Also triggers cookie refresh on 401 (expired auth).
@@ -176,12 +222,12 @@ async def _request_with_backoff(coro_factory, description: str = "request"):
             is_rate_limit = "429" in error_str or "rate limit" in error_str or "too many" in error_str
             is_auth_error = "401" in error_str or "unauthorized" in error_str
 
-            if is_auth_error and attempt == 1 and COOKIE_REFRESH_ENABLED and not _wrapper_connected:
-                logger.warning(f"Auth error on {description}, triggering cookie refresh...")
-                refreshed = await _do_cookie_refresh()
+            if is_auth_error and attempt == 1 and account and not account.uses_wrapper:
+                logger.warning(f"Auth error on {description} (storefront={account.storefront}), triggering cookie refresh...")
+                refreshed = await _do_cookie_refresh(account)
                 if refreshed:
-                    logger.info("Cookies refreshed after 401, reinitializing gamdl...")
-                    await _reinit_gamdl_cookies()
+                    logger.info(f"Cookies refreshed for {account.storefront}, reinitializing gamdl...")
+                    await _reinit_gamdl_cookies(account)
                     continue
                 else:
                     raise
@@ -192,7 +238,6 @@ async def _request_with_backoff(coro_factory, description: str = "request"):
                 await asyncio.sleep(backoff)
             else:
                 raise
-    # Should not reach here, but just in case
     raise RuntimeError(f"Exhausted {MAX_RETRIES_429} retries for {description}")
 
 
@@ -206,57 +251,62 @@ def get_s3_client():
     )
 
 
-async def _do_cookie_refresh() -> bool:
-    """Run cookie refresh in thread pool. Returns True on success."""
-    global _last_cookie_refresh
-    if not COOKIE_REFRESH_ENABLED:
+async def _do_cookie_refresh(account: AccountInstance) -> bool:
+    """Run cookie refresh for a specific account. Returns True on success."""
+    if not account.email or not account.password:
         return False
     try:
         proxy_url = f"socks5://{SOCKS5_PROXY}" if SOCKS5_PROXY and "://" not in SOCKS5_PROXY else SOCKS5_PROXY or None
-        logger.info(f"Starting cookie refresh for {APPLE_MUSIC_EMAIL}...")
+        logger.info(f"Starting cookie refresh for {account.email} (storefront={account.storefront})...")
         loop = asyncio.get_event_loop()
         cookies = await loop.run_in_executor(
             None,
-            functools.partial(refresh_cookies_sync, APPLE_MUSIC_EMAIL, APPLE_MUSIC_PASSWORD, proxy_url),
+            functools.partial(refresh_cookies_sync, account.email, account.password, proxy_url),
         )
-        cookies_json_to_netscape(cookies, COOKIES_PATH)
-        _last_cookie_refresh = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        logger.info(f"Cookie refresh succeeded — {len(cookies)} cookies written to {COOKIES_PATH}")
+        cookies_json_to_netscape(cookies, account.cookies_path)
+        account.last_cookie_refresh = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        logger.info(f"Cookie refresh succeeded for {account.storefront} — {len(cookies)} cookies written to {account.cookies_path}")
         return True
     except Exception as e:
-        logger.error(f"Cookie refresh failed: {e}", exc_info=True)
+        logger.error(f"Cookie refresh failed for {account.storefront}: {e}", exc_info=True)
         return False
 
 
-async def _reinit_gamdl_cookies():
-    """Reinitialize gamdl API from refreshed cookies (cookies-only path)."""
-    global apple_music_api, apple_music_interface
+async def _reinit_gamdl_cookies(account: AccountInstance):
+    """Reinitialize gamdl API from refreshed cookies for a specific account."""
     try:
-        apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
-        logger.info(f"gamdl reinitialized from cookies — Subscription: {apple_music_api.active_subscription}")
+        account.api = await AppleMusicApi.create_from_netscape_cookies(account.cookies_path)
+        logger.info(f"gamdl reinitialized for {account.storefront} — Subscription: {account.api.active_subscription}")
 
-        base_interface = await AppleMusicBaseInterface.create(apple_music_api=apple_music_api)
+        # Update storefront if it was auto-detected
+        if account.storefront == "auto":
+            account.storefront = account.api.storefront
+            # Re-register under correct key
+            _accounts[account.api.storefront] = account
+            logger.info(f"Auto-detected storefront: {account.api.storefront}")
+
+        base_interface = await AppleMusicBaseInterface.create(apple_music_api=account.api)
         song_interface = AppleMusicSongInterface(
             base=base_interface,
             codec_priority=[SongCodec.AAC_LEGACY],
         )
-        apple_music_interface = AppleMusicInterface(
+        account.interface = AppleMusicInterface(
             song=song_interface,
             music_video=AppleMusicMusicVideoInterface(base=base_interface),
             uploaded_video=AppleMusicUploadedVideoInterface(base=base_interface),
         )
     except Exception as e:
-        logger.error(f"gamdl reinit from cookies failed: {e}", exc_info=True)
+        logger.error(f"gamdl reinit failed for {account.storefront}: {e}", exc_info=True)
 
 
-async def _cookie_refresh_loop():
-    """Background task: refresh cookies periodically."""
+async def _cookie_refresh_loop(account: AccountInstance):
+    """Background task: refresh cookies periodically for a specific account."""
     interval_s = COOKIE_REFRESH_INTERVAL_H * 3600
-    logger.info(f"Cookie refresh background task started (every {COOKIE_REFRESH_INTERVAL_H}h)")
+    logger.info(f"Cookie refresh loop started for {account.storefront} (every {COOKIE_REFRESH_INTERVAL_H}h)")
     while True:
         await asyncio.sleep(interval_s)
-        logger.info("Scheduled cookie refresh triggered")
-        await _do_cookie_refresh()
+        logger.info(f"Scheduled cookie refresh for {account.storefront}")
+        await _do_cookie_refresh(account)
 
 
 def r2_object_exists(key: str) -> bool:
@@ -279,118 +329,211 @@ def r2_upload_file(local_path: str, key: str) -> str:
     return f"{R2_PUBLIC_URL}/{key}"
 
 
+def _get_account(storefront: str | None = None) -> AccountInstance:
+    """Get an account instance by storefront, or the first available one."""
+    if not _accounts:
+        raise HTTPException(status_code=503, detail="No accounts initialized")
+    if storefront and storefront in _accounts:
+        return _accounts[storefront]
+    if storefront:
+        raise HTTPException(status_code=404, detail=f"Storefront '{storefront}' not configured. Available: {list(_accounts.keys())}")
+    # Return first account (wrapper account preferred if available)
+    if _wrapper_storefront and _wrapper_storefront in _accounts:
+        return _accounts[_wrapper_storefront]
+    return next(iter(_accounts.values()))
+
+
+async def _init_account_from_cookies(acc_config: dict) -> AccountInstance:
+    """Initialize a single account from cookies."""
+    storefront = acc_config["storefront"]
+    cookies_path = os.path.join(COOKIES_DIR, f"cookies_{storefront}.txt") if storefront != "auto" else COOKIES_PATH
+
+    account = AccountInstance(
+        storefront=storefront,
+        email=acc_config["email"],
+        password=acc_config["password"],
+        cookies_path=cookies_path,
+    )
+
+    # If cookies file doesn't exist yet, do initial refresh
+    if not os.path.exists(cookies_path):
+        logger.info(f"No cookies file for {storefront}, performing initial cookie refresh...")
+        success = await _do_cookie_refresh(account)
+        if not success:
+            logger.error(f"Initial cookie refresh failed for {storefront} — skipping this account")
+            return account
+
+    try:
+        account.api = await AppleMusicApi.create_from_netscape_cookies(cookies_path)
+        actual_storefront = account.api.storefront
+        logger.info(f"Account initialized: {acc_config['email']} → storefront={actual_storefront}, "
+                     f"subscription={account.api.active_subscription}")
+
+        # Update storefront if auto-detected
+        if storefront == "auto":
+            account.storefront = actual_storefront
+
+        base_interface = await AppleMusicBaseInterface.create(apple_music_api=account.api)
+        song_interface = AppleMusicSongInterface(
+            base=base_interface,
+            codec_priority=[SongCodec.AAC_LEGACY],
+        )
+        account.interface = AppleMusicInterface(
+            song=song_interface,
+            music_video=AppleMusicMusicVideoInterface(base=base_interface),
+            uploaded_video=AppleMusicUploadedVideoInterface(base=base_interface),
+        )
+        account.codec = "aac-legacy"
+    except Exception as e:
+        logger.error(f"Failed to init account {acc_config['email']}: {e}", exc_info=True)
+
+    return account
+
+
 async def init_gamdl():
-    """Initialize gamdl API and interfaces."""
-    global apple_music_api, apple_music_interface, s3_client
+    """Initialize gamdl API instances (wrapper + cookie accounts)."""
+    global s3_client, _wrapper_storefront
 
     async with _init_lock:
-        if apple_music_api is not None:
+        if _accounts:
             return
 
-        # Initialize gamdl — try wrapper first (ALAC/lossless), fall back to cookies (AAC only)
-        global _wrapper_connected
+        # 1. Try wrapper first (single ALAC account)
         if USE_WRAPPER:
             wrapper_account_url = f"http://{WRAPPER_HOST}:{WRAPPER_ACCOUNT_PORT}/"
-            logger.info(f"Initializing gamdl with WRAPPER at {wrapper_account_url}")
+            logger.info(f"Initializing wrapper account at {wrapper_account_url}")
 
-            # Retry wrapper connection (Docker healthcheck ensures port is listening,
-            # but the API may need a moment after port opens)
             max_retries = 5
             for attempt in range(1, max_retries + 1):
                 try:
-                    apple_music_api = await AppleMusicApi.create_from_wrapper(
-                        wrapper_account_url=wrapper_account_url,
+                    api = await AppleMusicApi.create_from_wrapper(wrapper_account_url=wrapper_account_url)
+                    storefront = api.storefront
+                    logger.info(f"Wrapper connected! storefront={storefront}, subscription={api.active_subscription}")
+
+                    base_interface = await AppleMusicBaseInterface.create(
+                        apple_music_api=api,
+                        use_wrapper=True,
+                        wrapper_m3u8_ip=f"{WRAPPER_HOST}:{WRAPPER_M3U8_PORT}",
                     )
-                    _wrapper_connected = True
-                    logger.info(f"Wrapper connected on attempt {attempt}! Subscription: {apple_music_api.active_subscription}")
-                    logger.info(f"Storefront: {apple_music_api.storefront}")
-                    logger.info("ALAC/lossless codec available via wrapper")
+                    song_interface = AppleMusicSongInterface(
+                        base=base_interface,
+                        codec_priority=[SongCodec.ALAC, SongCodec.AAC_LEGACY],
+                    )
+                    interface = AppleMusicInterface(
+                        song=song_interface,
+                        music_video=AppleMusicMusicVideoInterface(base=base_interface),
+                        uploaded_video=AppleMusicUploadedVideoInterface(base=base_interface),
+                    )
+
+                    wrapper_account = AccountInstance(
+                        storefront=storefront,
+                        email="(wrapper)",
+                        password="",
+                        cookies_path="",
+                        api=api,
+                        interface=interface,
+                        uses_wrapper=True,
+                        codec="alac",
+                    )
+                    _accounts[storefront] = wrapper_account
+                    _wrapper_storefront = storefront
+                    logger.info(f"Wrapper account registered as storefront={storefront} (ALAC)")
                     break
                 except Exception as e:
                     if attempt < max_retries:
-                        wait = 5
-                        logger.warning(f"Wrapper attempt {attempt}/{max_retries} failed ({e}), retrying in {wait}s...")
-                        await asyncio.sleep(wait)
+                        logger.warning(f"Wrapper attempt {attempt}/{max_retries} failed ({e}), retrying in 5s...")
+                        await asyncio.sleep(5)
                     else:
-                        logger.error(f"Wrapper failed after {max_retries} attempts ({e}), falling back to cookies...")
-                        apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
-                        logger.info(f"Cookies fallback — Subscription: {apple_music_api.active_subscription}")
-        else:
-            logger.info(f"Initializing gamdl with cookies from {COOKIES_PATH}")
-            apple_music_api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
-            logger.info(f"Subscription active: {apple_music_api.active_subscription}")
-            logger.info(f"Storefront: {apple_music_api.storefront}")
+                        logger.error(f"Wrapper failed after {max_retries} attempts: {e}")
 
-        base_interface = await AppleMusicBaseInterface.create(
-            apple_music_api=apple_music_api,
-            **({"use_wrapper": True, "wrapper_m3u8_ip": f"{WRAPPER_HOST}:{WRAPPER_M3U8_PORT}"} if _wrapper_connected else {}),
-        )
+        # 2. Initialize cookie-based accounts (AAC)
+        if ACCOUNT_CONFIGS:
+            os.makedirs(COOKIES_DIR, exist_ok=True)
+            for acc_config in ACCOUNT_CONFIGS:
+                sf = acc_config["storefront"]
+                # Skip if wrapper already covers this storefront
+                if sf in _accounts and sf != "auto":
+                    logger.info(f"Storefront {sf} already covered by wrapper, skipping cookie account")
+                    continue
 
-        # With wrapper: ALAC first (lossless), fallback to AAC. Without: AAC only.
-        if _wrapper_connected:
-            codec_priority = [SongCodec.ALAC, SongCodec.AAC_LEGACY]
-        else:
-            codec_priority = [SongCodec.AAC_LEGACY]
-        logger.info(f"Codec priority: {[c.value for c in codec_priority]}")
+                account = await _init_account_from_cookies(acc_config)
+                if account.api is not None:
+                    actual_sf = account.storefront
+                    # Don't overwrite wrapper account
+                    if actual_sf in _accounts and _accounts[actual_sf].uses_wrapper:
+                        logger.info(f"Storefront {actual_sf} covered by wrapper, cookie account available as fallback")
+                        _accounts[f"{actual_sf}-cookies"] = account
+                    else:
+                        _accounts[actual_sf] = account
+        elif not _accounts:
+            # No accounts configured and no wrapper — try legacy single cookies file
+            if os.path.exists(COOKIES_PATH):
+                logger.info(f"No accounts configured, trying legacy cookies from {COOKIES_PATH}")
+                api = await AppleMusicApi.create_from_netscape_cookies(COOKIES_PATH)
+                sf = api.storefront
+                base_interface = await AppleMusicBaseInterface.create(apple_music_api=api)
+                song_interface = AppleMusicSongInterface(
+                    base=base_interface,
+                    codec_priority=[SongCodec.AAC_LEGACY],
+                )
+                interface = AppleMusicInterface(
+                    song=song_interface,
+                    music_video=AppleMusicMusicVideoInterface(base=base_interface),
+                    uploaded_video=AppleMusicUploadedVideoInterface(base=base_interface),
+                )
+                _accounts[sf] = AccountInstance(
+                    storefront=sf, email="", password="",
+                    cookies_path=COOKIES_PATH, api=api, interface=interface,
+                )
 
-        song_interface = AppleMusicSongInterface(
-            base=base_interface,
-            codec_priority=codec_priority,
-        )
-        mv_interface = AppleMusicMusicVideoInterface(base=base_interface)
-        uv_interface = AppleMusicUploadedVideoInterface(base=base_interface)
+        if not _accounts:
+            logger.error("No Apple Music accounts initialized!")
+            raise RuntimeError("No Apple Music accounts available")
 
-        apple_music_interface = AppleMusicInterface(
-            song=song_interface,
-            music_video=mv_interface,
-            uploaded_video=uv_interface,
-        )
+        logger.info(f"Initialized {len(_accounts)} account(s): {list(_accounts.keys())}")
 
+        # R2 client
         s3_client = get_s3_client()
         logger.info("R2 client initialized")
 
-        # Configure CORS on R2 bucket to allow frontend downloads
         try:
             s3_client.put_bucket_cors(
                 Bucket=R2_BUCKET_NAME,
                 CORSConfiguration={
-                    "CORSRules": [
-                        {
-                            "AllowedOrigins": ["*"],
-                            "AllowedMethods": ["GET", "HEAD"],
-                            "AllowedHeaders": ["*"],
-                            "MaxAgeSeconds": 86400,
-                        }
-                    ]
+                    "CORSRules": [{
+                        "AllowedOrigins": ["*"],
+                        "AllowedMethods": ["GET", "HEAD"],
+                        "AllowedHeaders": ["*"],
+                        "MaxAgeSeconds": 86400,
+                    }]
                 },
             )
-            logger.info("R2 CORS configured successfully")
         except Exception as e:
-            logger.warning(f"Failed to configure R2 CORS (may need manual config): {e}")
+            logger.warning(f"R2 CORS config failed: {e}")
 
         os.makedirs(TEMP_DIR, exist_ok=True)
 
         global _download_semaphore
         _download_semaphore = asyncio.Semaphore(MAX_CONCURRENT_DOWNLOADS)
-        logger.info(f"Rate limiting: {REQUEST_DELAY_MS}ms delay, {MAX_RETRIES_429} retries on 429, "
+        logger.info(f"Rate limiting: {REQUEST_DELAY_MS}ms delay, {MAX_RETRIES_429} retries, "
                     f"{MAX_CONCURRENT_DOWNLOADS} max concurrent downloads")
-        logger.info("Apple Music API ready")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_gamdl()
-    # Start background cookie refresh if credentials are configured
-    global _cookie_refresh_task
-    if COOKIE_REFRESH_ENABLED:
-        _cookie_refresh_task = asyncio.create_task(_cookie_refresh_loop())
-        logger.info(f"Cookie auto-refresh enabled (every {COOKIE_REFRESH_INTERVAL_H}h)")
-    else:
-        logger.info("Cookie auto-refresh disabled (no APPLE_MUSIC_EMAIL/PASSWORD configured)")
+    # Start background cookie refresh for each cookie-based account
+    for account in _accounts.values():
+        if account.email and account.password and not account.uses_wrapper:
+            account.refresh_task = asyncio.create_task(_cookie_refresh_loop(account))
+            logger.info(f"Cookie auto-refresh started for {account.storefront}")
+    if not any(a.email and a.password for a in _accounts.values()):
+        logger.info("Cookie auto-refresh disabled (no credentials configured)")
     yield
     # Cleanup
-    if _cookie_refresh_task:
-        _cookie_refresh_task.cancel()
+    for account in _accounts.values():
+        if account.refresh_task:
+            account.refresh_task.cancel()
     if os.path.exists(TEMP_DIR):
         shutil.rmtree(TEMP_DIR, ignore_errors=True)
 
@@ -403,35 +546,75 @@ app = FastAPI(title="Apple Music Sidecar", lifespan=lifespan)
 
 @app.get("/health")
 async def health():
-    if apple_music_api is None:
+    if not _accounts:
         raise HTTPException(status_code=503, detail="Not initialized")
+    accounts_info = []
+    for sf, acc in _accounts.items():
+        accounts_info.append({
+            "storefront": acc.storefront,
+            "key": sf,
+            "subscription": acc.api.active_subscription if acc.api else False,
+            "uses_wrapper": acc.uses_wrapper,
+            "codec": acc.codec,
+            "last_cookie_refresh": acc.last_cookie_refresh,
+            "has_credentials": bool(acc.email and acc.password),
+        })
+    primary = _get_account()
     return {
         "status": "ok",
-        "subscription": apple_music_api.active_subscription,
-        "storefront": apple_music_api.storefront,
-        "wrapper_active": _wrapper_connected,
-        "lossless_available": _wrapper_connected,
-        "codec": "alac" if _wrapper_connected else "aac-legacy",
-        "cookie_refresh": {
-            "enabled": COOKIE_REFRESH_ENABLED,
-            "interval_hours": COOKIE_REFRESH_INTERVAL_H,
-            "last_refresh": _last_cookie_refresh,
-        },
+        "accounts": accounts_info,
+        "storefronts": [a["storefront"] for a in accounts_info],
+        "primary_storefront": primary.storefront,
+        "wrapper_storefront": _wrapper_storefront,
+        "cookie_refresh_interval_hours": COOKIE_REFRESH_INTERVAL_H,
+    }
+
+
+@app.get("/storefronts")
+async def list_storefronts():
+    """List all available storefronts."""
+    if not _accounts:
+        raise HTTPException(status_code=503, detail="Not initialized")
+    return {
+        "storefronts": [
+            {
+                "code": acc.storefront,
+                "codec": acc.codec,
+                "uses_wrapper": acc.uses_wrapper,
+            }
+            for acc in _accounts.values()
+        ]
     }
 
 
 @app.post("/refresh-cookies")
-async def refresh_cookies_endpoint():
-    """Manually trigger a cookie refresh. Only works if credentials are configured."""
-    if not COOKIE_REFRESH_ENABLED:
-        raise HTTPException(status_code=400, detail="Cookie refresh not configured (missing APPLE_MUSIC_EMAIL/PASSWORD)")
-    success = await _do_cookie_refresh()
-    if not success:
-        raise HTTPException(status_code=500, detail="Cookie refresh failed — check logs")
-    # Reinit gamdl if not using wrapper
-    if not _wrapper_connected:
-        await _reinit_gamdl_cookies()
-    return {"status": "ok", "last_refresh": _last_cookie_refresh}
+async def refresh_cookies_endpoint(
+    storefront: str | None = Query(None, description="Specific storefront to refresh, or all if omitted"),
+):
+    """Manually trigger a cookie refresh for one or all accounts."""
+    targets = []
+    if storefront:
+        acc = _accounts.get(storefront)
+        if not acc:
+            raise HTTPException(status_code=404, detail=f"Storefront '{storefront}' not found")
+        targets = [acc]
+    else:
+        targets = [a for a in _accounts.values() if a.email and a.password and not a.uses_wrapper]
+
+    if not targets:
+        raise HTTPException(status_code=400, detail="No cookie-based accounts with credentials found")
+
+    results = {}
+    for acc in targets:
+        success = await _do_cookie_refresh(acc)
+        if success and not acc.uses_wrapper:
+            await _reinit_gamdl_cookies(acc)
+        results[acc.storefront] = {"success": success, "last_refresh": acc.last_cookie_refresh}
+
+    all_ok = all(r["success"] for r in results.values())
+    if not all_ok:
+        return JSONResponse(status_code=207, content={"results": results})
+    return {"status": "ok", "results": results}
 
 
 @app.get("/check-ip")
@@ -458,17 +641,57 @@ async def search(
     term: str = Query(..., min_length=1),
     limit: int = Query(10, ge=1, le=50),
     types: str = Query("songs"),
+    storefront: str | None = Query(None, description="Search specific storefront, or all if omitted"),
 ):
-    """Search Apple Music. Returns raw Apple Music API results."""
-    if apple_music_api is None:
+    """Search Apple Music. Can search a specific storefront or all configured ones."""
+    if not _accounts:
         raise HTTPException(status_code=503, detail="Not initialized")
 
     try:
-        results = await _request_with_backoff(
-            lambda: apple_music_api.get_search_results(term=term, types=types, limit=limit),
-            description=f"search '{term}'",
-        )
-        return results
+        if storefront:
+            # Search specific storefront
+            account = _get_account(storefront)
+            results = await _request_with_backoff(
+                lambda: account.api.get_search_results(term=term, types=types, limit=limit),
+                description=f"search '{term}' on {storefront}",
+                account=account,
+            )
+            # Tag results with storefront
+            _tag_results_with_storefront(results, account.storefront)
+            return results
+        else:
+            # Search all storefronts, merge results
+            all_songs = []
+            seen_isrcs = set()
+            for sf, account in _accounts.items():
+                if account.api is None:
+                    continue
+                try:
+                    results = await _request_with_backoff(
+                        lambda a=account: a.api.get_search_results(term=term, types=types, limit=limit),
+                        description=f"search '{term}' on {sf}",
+                        account=account,
+                    )
+                    songs = results.get("results", {}).get("songs", {}).get("data", [])
+                    for song in songs:
+                        isrc = song.get("attributes", {}).get("isrc", "")
+                        song["_storefront"] = account.storefront
+                        if isrc and isrc in seen_isrcs:
+                            continue  # deduplicate by ISRC across storefronts
+                        if isrc:
+                            seen_isrcs.add(isrc)
+                        all_songs.append(song)
+                except Exception as e:
+                    logger.warning(f"Search on {sf} failed: {e}")
+
+            # Return merged results in standard format
+            return {
+                "results": {
+                    "songs": {
+                        "data": all_songs[:limit],
+                    }
+                }
+            }
     except HTTPException:
         raise
     except Exception as e:
@@ -476,47 +699,84 @@ async def search(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _tag_results_with_storefront(results: dict, storefront: str):
+    """Add _storefront field to each song in results."""
+    songs = results.get("results", {}).get("songs", {}).get("data", [])
+    for song in songs:
+        song["_storefront"] = storefront
+
+
 @app.get("/lookup-isrc")
 async def lookup_isrc(
     isrc: str = Query(..., min_length=5),
+    storefront: str | None = Query(None),
 ):
-    """Look up a song by ISRC code via Apple Music catalog filter."""
-    if apple_music_api is None:
+    """Look up a song by ISRC code. Searches specific storefront or all."""
+    if not _accounts:
         raise HTTPException(status_code=503, detail="Not initialized")
 
-    try:
-        storefront = apple_music_api.storefront
-        url = f"https://amp-api.music.apple.com/v1/catalog/{storefront}/songs"
+    async def _do_isrc_lookup(account: AccountInstance):
+        sf = account.api.storefront
+        url = f"https://amp-api.music.apple.com/v1/catalog/{sf}/songs"
         params = {"filter[isrc]": isrc}
+        resp = await account.api.client.get(url, params=params)
+        resp.raise_for_status()
+        return resp.json()
 
-        async def _do_isrc_lookup():
-            resp = await apple_music_api.client.get(url, params=params)
-            resp.raise_for_status()
-            return resp.json()
-
-        data = await _request_with_backoff(_do_isrc_lookup, description=f"ISRC lookup '{isrc}'")
-        # Wrap in search-like format for consistency
-        songs = data.get("data", [])
-        logger.info(f"ISRC lookup '{isrc}': {len(songs)} results")
-        return {"results": {"songs": {"data": songs}}} if songs else {"results": {}}
+    try:
+        if storefront:
+            account = _get_account(storefront)
+            data = await _request_with_backoff(
+                lambda: _do_isrc_lookup(account),
+                description=f"ISRC lookup '{isrc}' on {storefront}",
+                account=account,
+            )
+            songs = data.get("data", [])
+            for s in songs:
+                s["_storefront"] = account.storefront
+            return {"results": {"songs": {"data": songs}}} if songs else {"results": {}}
+        else:
+            # Try all storefronts until we find a match
+            for sf, account in _accounts.items():
+                if account.api is None:
+                    continue
+                try:
+                    data = await _request_with_backoff(
+                        lambda a=account: _do_isrc_lookup(a),
+                        description=f"ISRC lookup '{isrc}' on {sf}",
+                        account=account,
+                    )
+                    songs = data.get("data", [])
+                    if songs:
+                        for s in songs:
+                            s["_storefront"] = account.storefront
+                        logger.info(f"ISRC lookup '{isrc}': found in {sf}")
+                        return {"results": {"songs": {"data": songs}}}
+                except Exception as e:
+                    logger.warning(f"ISRC lookup on {sf} failed: {e}")
+            return {"results": {}}
     except Exception as e:
         logger.error(f"ISRC lookup failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/download/{song_id}")
-async def download_track(song_id: str):
+async def download_track(
+    song_id: str,
+    storefront: str | None = Query(None, description="Which storefront account to use for download"),
+):
     """
     Download, decrypt, and upload a track to R2.
     Returns the public R2 URL.
 
     Flow:
     1. Check R2 cache — if exists, return URL immediately
-    2. Download HLS + decrypt via gamdl
-    3. Upload to R2
-    4. Return public URL
+    2. Select account (by storefront param, or try all)
+    3. Download HLS + decrypt via gamdl
+    4. Upload to R2
+    5. Return public URL
     """
-    if apple_music_api is None or apple_music_interface is None:
+    if not _accounts:
         raise HTTPException(status_code=503, detail="Not initialized")
 
     r2_key = f"apple/{song_id}.m4a"
@@ -527,8 +787,11 @@ async def download_track(song_id: str):
         logger.info(f"R2 cache hit: {song_id}")
         return {"url": url, "cached": True}
 
-    # 2. Download + decrypt (with concurrency limiter)
-    logger.info(f"R2 cache miss, downloading: {song_id}")
+    # 2. Select account
+    account = _get_account(storefront)
+
+    # 3. Download + decrypt (with concurrency limiter)
+    logger.info(f"R2 cache miss, downloading: {song_id} via {account.storefront}")
     if _download_semaphore is None:
         raise HTTPException(status_code=503, detail="Not initialized")
 
@@ -539,10 +802,10 @@ async def download_track(song_id: str):
         try:
             # Create downloader targeting work_dir
             base_dl = AppleMusicBaseDownloader(
-                interface=apple_music_interface,
+                interface=account.interface,
                 output_path=work_dir,
                 temp_path=work_dir,
-                **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if _wrapper_connected else {}),
+                **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if account.uses_wrapper else {}),
             )
             song_dl = AppleMusicSongDownloader(base=base_dl)
             mv_dl = AppleMusicMusicVideoDownloader(base=base_dl)
@@ -558,8 +821,9 @@ async def download_track(song_id: str):
 
             # Get the real Apple Music URL from catalog data
             catalog_data = await _request_with_backoff(
-                lambda: apple_music_api.get_song(song_id),
+                lambda: account.api.get_song(song_id),
                 description=f"get_song {song_id}",
+                account=account,
             )
             song_url = catalog_data["data"][0]["attributes"]["url"]
             logger.info(f"Resolved song URL: {song_url}")
@@ -616,15 +880,21 @@ async def download_track(song_id: str):
 
 
 @app.get("/track-info/{song_id}")
-async def track_info(song_id: str):
+async def track_info(
+    song_id: str,
+    storefront: str | None = Query(None),
+):
     """Get track metadata from Apple Music catalog."""
-    if apple_music_api is None:
+    if not _accounts:
         raise HTTPException(status_code=503, detail="Not initialized")
+
+    account = _get_account(storefront)
 
     try:
         catalog_data = await _request_with_backoff(
-            lambda: apple_music_api.get_song(song_id),
+            lambda: account.api.get_song(song_id),
             description=f"track-info {song_id}",
+            account=account,
         )
         if not catalog_data:
             raise HTTPException(status_code=404, detail=f"Track {song_id} not found")

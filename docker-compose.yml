@@ -76,6 +76,7 @@ services:
             - APPLE_MUSIC_EMAIL=${APPLE_MUSIC_EMAIL:-}
             - APPLE_MUSIC_PASSWORD=${APPLE_MUSIC_PASSWORD:-}
             - APPLE_MUSIC_COOKIE_REFRESH_HOURS=${APPLE_MUSIC_COOKIE_REFRESH_HOURS:-12}
+            - APPLE_MUSIC_ACCOUNTS=${APPLE_MUSIC_ACCOUNTS:-}
         volumes:
             - ./apple-music/cookies:/app/cookies
         depends_on:
