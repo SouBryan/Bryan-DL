@@ -17,6 +17,7 @@ Bryan-DL provides a fast and easy way to download music from **Qobuz** and **App
 - Re-encode to FLAC, WAV, ALAC, AAC, MP3, or OPUS using FFmpeg.wasm in the browser.
 - Apply metadata and album art to downloaded songs.
 - Cloudflare WARP SOCKS5 proxy with automatic IP rotation every 30 minutes.
+- Multi-account Apple Music — multiple storefronts/countries with automatic cookie refresh.
 - Cloudflare R2 cache for Apple Music tracks (5-day auto-delete).
 - Security middleware: route whitelist, bot detection, IPGate (~612M blocked IPs).
 - Cross-origin API with CORS headers — works as a backend for external clients.
@@ -107,6 +108,20 @@ cp .env.example .env   # edit with your tokens
 docker compose up -d
 ```
 
+### Rebuilding after changes
+
+```bash
+cd ~/home-server/qobuz-dl   # or wherever your repo is
+git pull
+docker compose up -d --build
+```
+
+To rebuild only a specific service (e.g., the Apple Music sidecar):
+
+```bash
+docker compose up -d --build apple-music-api
+```
+
 This starts 5 services:
 
 | Service | Description |
@@ -114,7 +129,7 @@ This starts 5 services:
 | **qobuz-dl** | Next.js app on port 3000 |
 | **warp-socks** | Cloudflare WARP SOCKS5 proxy for IP privacy |
 | **warp-rotator** | Automatic IP rotation every 30 minutes |
-| **apple-music-api** | FastAPI sidecar — downloads/decrypts/caches Apple Music via gamdl |
+| **apple-music-api** | FastAPI sidecar — downloads/decrypts/caches Apple Music via gamdl. Multi-account/storefront support with auto cookie refresh. |
 | **apple-music-wrapper** | FairPlay wrapper for ALAC decryption (ARM64) |
 
 ## API Endpoints
@@ -140,9 +155,11 @@ All endpoints return JSON and accept a `Token-Country` header for multi-region t
 │   ├── not-found.tsx       # 404 page (minimal, no SSR risk)
 │   └── layout.tsx          # Root layout
 ├── apple-music/            # FastAPI sidecar for Apple Music
-│   ├── main.py             # Download/decrypt/upload pipeline (gamdl 3.5.1)
+│   ├── main.py             # Multi-account download/decrypt/upload pipeline (gamdl 3.5.1)
+│   ├── auth.py             # Cookie refresh via SRP web login (per-account)
+│   ├── cookies/            # Per-storefront cookies (auto-generated)
 │   ├── Dockerfile          # Python image
-│   └── requirements.txt    # gamdl, httpx[socks], boto3
+│   └── requirements.txt    # gamdl, httpx[socks], boto3, requests[socks], beautifulsoup4
 ├── middleware.ts           # Security middleware (whitelist, CORS, etc.)
 ├── lib/
 │   ├── apple-music-server.ts  # Apple Music sidecar client

@@ -1,5 +1,21 @@
 [
     {
+        "title": "Multi-Storefront Apple Music + Auto Cookie Refresh",
+        "date": "05-11-2026",
+        "changes": [
+            "Multi-account Apple Music support — configure multiple accounts for different countries/storefronts",
+            "Search across all storefronts in parallel with automatic ISRC deduplication",
+            "Downloads routed to the correct account per storefront",
+            "Config via APPLE_MUSIC_ACCOUNTS JSON array (backward-compatible with single account)",
+            "Automatic cookie refresh via SRP web login — runs every 12h per account (configurable)",
+            "On-demand cookie refresh when 401 auth errors are detected",
+            "Manual refresh endpoint: POST /refresh-cookies (per-storefront or all at once)",
+            "New endpoint: GET /storefronts — list all available accounts and their codecs",
+            "Rate limiting: 500ms delay between requests, exponential backoff on 429, max 2 concurrent downloads",
+            "Per-account cookies files (cookies/cookies_{storefront}.txt) with independent refresh loops"
+        ]
+    },
+    {
         "title": "Apple Music Lossless (ALAC) + Output Codec Overhaul",
         "date": "05-11-2026",
         "changes": [
