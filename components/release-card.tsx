@@ -84,7 +84,7 @@ const ReleaseCard = ({
                         <div className='space-y-0.5 p-4 flex justify-between relative overflow-x-hidden'>
                             <div className='w-full pr-9'>
                                 <p className='text-sm truncate capitalize font-bold'>
-                                    {!(getType(result) === 'artists') ? album.genre.name : (result as QobuzArtist).albums_count + ' Releases'}
+                                    {!(getType(result) === 'artists') ? album.genre.name : ((result as QobuzArtist).albums_count ? (result as QobuzArtist).albums_count + ' Releases' : 'Artist')}
                                 </p>
                                 {!(getType(result) === 'artists') && (
                                     <p className='text-xs truncate capitalize font-medium'>{new Date(album.released_at * 1000).getFullYear()}</p>

@@ -958,9 +958,10 @@ async def download_track(
 
             downloaded_path = None
             item_count = 0
+            last_error = None
 
             async def _do_download():
-                nonlocal downloaded_path, item_count
+                nonlocal downloaded_path, item_count, last_error
                 async for download_item in downloader.get_download_item_from_url(song_url):
                     item_count += 1
                     has_error = download_item.media.error if hasattr(download_item.media, 'error') else None
@@ -979,6 +980,7 @@ async def download_track(
 
                     # Item with error — log and skip (loop will end naturally if no more items)
                     if has_error:
+                        last_error = has_error
                         logger.error(
                             f"Item #{item_count} has error: {type(has_error).__name__}: {has_error}",
                             exc_info=has_error,
@@ -1010,6 +1012,16 @@ async def download_track(
             if not downloaded_path or not os.path.exists(downloaded_path):
                 all_files = list(Path(work_dir).rglob("*"))
                 logger.error(f"No .m4a found after {item_count} items. All files in work_dir: {all_files}")
+                # Return specific error messages based on the last error
+                if last_error:
+                    err_name = type(last_error).__name__
+                    err_str = str(last_error)
+                    if "DecryptionNotAvailable" in err_name:
+                        raise HTTPException(status_code=403, detail=f"Decryption not available for track {song_id}. The Apple Music account may not have an active subscription.")
+                    elif "explicit" in err_str.lower() or "m-allowed" in err_str.lower():
+                        raise HTTPException(status_code=403, detail=f"Track {song_id} is blocked by explicit content restrictions on the Apple Music account.")
+                    else:
+                        raise HTTPException(status_code=500, detail=f"Download failed for track {song_id}: {err_name}: {err_str}")
                 raise HTTPException(status_code=404, detail=f"Track {song_id} not downloaded. Items yielded: {item_count}")
 
             # 3. Upload to R2

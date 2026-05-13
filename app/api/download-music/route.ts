@@ -24,7 +24,18 @@ export async function GET(request: NextRequest) {
         if (track_id.startsWith('apple:')) {
             const appleId = track_id.replace('apple:', '');
             const storefront = params.storefront || undefined;
-            const url = await downloadAppleMusicTrack(appleId, storefront, codec);
+            let url: string | null;
+            try {
+                url = await downloadAppleMusicTrack(appleId, storefront, codec);
+            } catch (e: unknown) {
+                const message = e instanceof Error ? e.message : 'Download failed';
+                const status = message.includes('Decryption not available') || message.includes('explicit content') ? 403 : 500;
+                logRequest(request, status, Date.now() - start);
+                return new NextResponse(
+                    JSON.stringify({ success: false, error: message }),
+                    { status }
+                );
+            }
             if (!url) {
                 logRequest(request, 404, Date.now() - start);
                 return new NextResponse(

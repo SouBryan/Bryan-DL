@@ -92,9 +92,10 @@ export const createDownloadJob = async (
                     } catch (e) {
                         if (e instanceof AxiosError && e.code === 'ERR_CANCELED') resolve();
                         else {
+                            const errMsg = (e instanceof AxiosError && e.response?.data?.error) || (e instanceof Error ? e.message : 'An unknown error occurred');
                             toast({
                                 title: 'Error',
-                                description: e instanceof Error ? e.message : 'An unknown error occurred',
+                                description: errMsg,
                                 action: (
                                     <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>
                                         Copy Stack
@@ -193,9 +194,10 @@ export const createDownloadJob = async (
                 } catch (e) {
                     if (e instanceof AxiosError && e.code === 'ERR_CANCELED') resolve();
                     else {
+                        const errMsg = (e instanceof AxiosError && e.response?.data?.error) || (e instanceof Error ? e.message : 'An unknown error occurred');
                         toast({
                             title: 'Error',
-                            description: e instanceof Error ? e.message : 'An unknown error occurred',
+                            description: errMsg,
                             action: (
                                 <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>
                                     Copy Stack
@@ -342,9 +344,10 @@ export const createDownloadJob = async (
                 } catch (e) {
                     if (e instanceof AxiosError && e.code === 'ERR_CANCELED') resolve();
                     else {
+                        const errMsg = (e instanceof AxiosError && e.response?.data?.error) || (e instanceof Error ? e.message : 'An unknown error occurred');
                         toast({
                             title: 'Error',
-                            description: e instanceof Error ? e.message : 'An unknown error occurred',
+                            description: errMsg,
                             action: (
                                 <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>
                                     Copy Stack

@@ -107,16 +107,16 @@ const ArtistDialog = ({ open, setOpen, artist }: { open: boolean; setOpen: (open
             <DialogContent className='w-[1000px] max-w-[90%] md:max-w-[80%] overflow-hidden'>
                 <div className='flex gap-3 overflow-hidden'>
                     <div className='relative shrink-0 aspect-square min-w-[100px] min-h-[100px] rounded-sm overflow-hidden'>
-                        {(artist.image?.small || artistResults?.artist.images.portrait) && <Skeleton className='absolute aspect-square w-full h-full' />}
-                        {artist.image?.small || artistResults?.artist.images.portrait ? (
+                        {(artist.image?.small || artistResults?.artist.images?.portrait) && <Skeleton className='absolute aspect-square w-full h-full' />}
+                        {artist.image?.small || artistResults?.artist.images?.portrait ? (
                             <Image
                                 fill
                                 src={
                                     artist.image?.small ||
                                     'https://static.qobuz.com/images/artists/covers/medium/' +
-                                        artistResults?.artist.images.portrait.hash +
+                                        artistResults?.artist.images?.portrait?.hash +
                                         '.' +
-                                        artistResults?.artist.images.portrait.format
+                                        artistResults?.artist.images?.portrait?.format
                                 }
                                 alt={artist.name}
                                 className='text-[0px] absolute aspect-square w-full h-full object-cover'
@@ -133,14 +133,14 @@ const ArtistDialog = ({ open, setOpen, artist }: { open: boolean; setOpen: (open
                             <DialogTitle title={artist.name} className='truncate overflow-visible py-0.5 pr-2'>
                                 {artist.name}
                             </DialogTitle>
-                            {artist.albums_count && (
+                            {(artistResults?.artist.albums_count || artist.albums_count) ? (
                                 <DialogDescription
-                                    title={artist.albums_count + ' ' + (artist.albums_count !== 1 ? 'releases' : 'release')}
+                                    title={(artistResults?.artist.albums_count || artist.albums_count) + ' ' + ((artistResults?.artist.albums_count || artist.albums_count) !== 1 ? 'releases' : 'release')}
                                     className='truncate overflow-visible '
                                 >
-                                    {artist.albums_count} {artist.albums_count > 1 ? 'releases' : 'release'}
+                                    {artistResults?.artist.albums_count || artist.albums_count} {(artistResults?.artist.albums_count || artist.albums_count) > 1 ? 'releases' : 'release'}
                                 </DialogDescription>
-                            )}
+                            ) : null}
                         </div>
                         <div className='flex items-center w-full justify-between gap-2'>
                             {artistResults && (

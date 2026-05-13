@@ -1,39 +1,24 @@
-ubuntu@oracle-vps-definitive:~/home-server/qobuz-dl$ docker logs -f qobuz-dl
-   ▲ Next.js 15.5.4
-   - Local:        http://localhost:3000
-   - Network:      http://0.0.0.0:3000
-
- ✓ Starting...
- ✓ Ready in 135ms
-194.36.25.39 | 13/05 01:38:09 | GET /api/get-music?q=+Weft+%E2%80%93+The+Splintered+Oar&offset=0 https → 200 (742ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:09 | GET /api/get-music?q=Weft+%E2%80%93+The+Splintered+Oar&offset=0 https → 200 (568ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:10 | GET /api/get-music?q=Weft+%E2%80%93+The+Splintered+Oar&offset=0 https → 200 (339ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:14 | GET /api/get-album?album_id=e4z3x1c69dm8i https → 200 (299ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:14 | GET /api/download-music?track_id=371377275&quality=27 https → 200 (247ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:15 | GET /api/download-music?track_id=371377276&quality=27 https → 200 (266ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:16 | GET /api/download-music?track_id=371377277&quality=27 https → 200 (264ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:16 | GET /api/download-music?track_id=371377278&quality=27 https → 200 (262ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:17 | GET /api/download-music?track_id=371377279&quality=27 https → 200 (248ms) | Chrome/148 Win | ...cErP8Q BR
-131.100.63.63 | 13/05 01:38:30 | GET /api/get-music?q=kennyoung&offset=0 https → 200 (427ms) | Chrome/142 Win | ------ ??
-194.36.25.39 | 13/05 01:38:52 | GET /api/get-music?q=Weft+%E2%80%93+The+Splintered+Oar&offset=0 https → 200 (513ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:52 | GET /api/get-music?q=Redivider+%E2%80%93+Sounds+of+Malice&offset=0 https → 200 (574ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:53 | GET /api/get-music?q=Redivider+%E2%80%93+Sounds+of+Malice&offset=0 https → 200 (740ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:57 | GET /api/get-album?album_id=nbqmkco2ekt3b https → 200 (352ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:57 | GET /api/download-music?track_id=357275609&quality=27 https → 200 (272ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:58 | GET /api/download-music?track_id=357275610&quality=27 https → 200 (310ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:38:59 | GET /api/download-music?track_id=357275611&quality=27 https → 200 (322ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:00 | GET /api/download-music?track_id=357275612&quality=27 https → 200 (596ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:01 | GET /api/download-music?track_id=357275613&quality=27 https → 200 (255ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:01 | GET /api/download-music?track_id=357275614&quality=27 https → 200 (249ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:02 | GET /api/download-music?track_id=357275615&quality=27 https → 200 (345ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:22 | GET /api/get-music?q=Redivider+%E2%80%93+Sounds+of+Malice&offset=0 https → 200 (404ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:23 | GET /api/get-music?q=Dawn+of+a+Dark+Age+%E2%80%93+Ver+Sacrum&offset=0 https → 200 (672ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:23 | GET /api/get-music?q=Dawn+of+a+Dark+Age+%E2%80%93+Ver+Sacrum&offset=0 https → 200 (650ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:31 | GET /api/get-album?album_id=ajsoapdsby3ya https → 200 (331ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:32 | GET /api/download-music?track_id=362715147&quality=27 https → 200 (268ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:32 | GET /api/download-music?track_id=362715148&quality=27 https → 200 (315ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:33 | GET /api/download-music?track_id=362715149&quality=27 https → 200 (257ms) | Chrome/148 Win | ...cErP8Q BR
-194.36.25.39 | 13/05 01:39:34 | GET /api/download-music?track_id=362715150&quality=27 https → 200 (271ms) | Chrome/148 Win | ...cErP8Q BR
-131.100.63.63 | 13/05 01:39:43 | GET /api/get-artist?artist_id=apple%3A1463002072 https → 400 (240ms) | Chrome/142 Win | ------ ??
-131.100.63.63 | 13/05 01:39:53 | GET /api/get-artist?artist_id=apple%3A1463002072 https → 400 (266ms) | Chrome/142 Win | ------ ??
-131.100.63.63 | 13/05 01:41:26 | GET /api/get-album?album_id=apple%3A1585581455 https → 400 (375ms) | Chrome/142 Win | ------ ??
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:33 | GET /api/get-music?q=ma&offset=0 https → 200 (1072ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:33 | GET /api/get-music?q=mar&offset=0 https → 200 (1013ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:34 | GET /api/get-music?q=markosa+&offset=0 https → 200 (655ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:35 | GET /api/get-music?q=markosa+jo&offset=0 https → 200 (835ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:35 | GET /api/get-music?q=markosa+joseph&offset=0 https → 200 (676ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:35 | GET /api/get-music?q=markosa+josep&offset=0 https → 200 (1021ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:36 | GET /api/get-music?q=markosa+josephi&offset=0 https → 200 (752ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:36 | GET /api/get-music?q=markosa+j&offset=0 https → 200 (2425ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:36 | GET /api/get-music?q=markosa+josephine+2020&offset=0 https → 200 (536ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:38 | GET /api/get-music?q=markosa+josephine+2020&offset=0 https → 200 (344ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:46 | GET /api/get-album?album_id=ctdto2hojwi1a https → 200 (304ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:47 | GET /api/download-music?track_id=92953693&quality=5 https → 200 (259ms) | Chrome/148 Win | ...cErP8Q BR
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:55 | GET /api/get-album?album_id=apple%3A1703161156 https → 200 (275ms) | Chrome/148 Win | ------ ??
+[apple-music] Download failed: 404
+2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:57 | GET /api/download-music?track_id=apple%3A1703161157&codec=MP3 https → 404 (2132ms) | Chrome/148 Win | ------ ??
+109.185.90.143 | 13/05 03:22:50 | GET /api/get-music?q=QZWFK2358265&offset=0 https → 200 (559ms) | Safari/26 iOS | ...XlVO6w FR
+[apple-music] Download failed: 404
+109.185.90.143 | 13/05 03:22:52 | GET /api/download-music?track_id=apple%3A1726080200&quality=6 https → 404 (1399ms) | Safari/26 iOS | ------ ??
+131.100.63.63 | 13/05 03:23:22 | GET /api/get-artist?artist_id=apple%3A1463002072 https → 200 (281ms) | Chrome/142 Win | ------ ??
+131.100.63.63 | 13/05 03:23:53 | GET /api/get-album?album_id=apple%3A1657572430 https → 200 (249ms) | Chrome/142 Win | ------ ??
+[apple-music] Download failed: 404
+131.100.63.63 | 13/05 03:23:54 | GET /api/download-music?track_id=apple%3A1657572431&quality=27 https → 404 (1071ms) | Chrome/142 Win | ------ ??
+[apple-music] Download failed: 404
+131.100.63.63 | 13/05 03:24:05 | GET /api/download-music?track_id=apple%3A1657572431&quality=27 https → 404 (1108ms) | Chrome/142 Win | ------ ??

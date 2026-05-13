@@ -57,8 +57,11 @@ export async function downloadAppleMusicTrack(songId: string, storefront?: strin
     const downloadUrl = `${APPLE_MUSIC_API_URL}/download/${songId}?${params.toString()}`;
     const res = await fetch(downloadUrl, { signal: AbortSignal.timeout(60000) }); // 60s timeout for download+decrypt
     if (!res.ok) {
-        console.error(`[apple-music] Download failed: ${res.status}`);
-        return null;
+        const body = await res.text().catch(() => '');
+        let detail = '';
+        try { detail = JSON.parse(body).detail || body; } catch { detail = body; }
+        console.error(`[apple-music] Download failed: ${res.status} — ${detail}`);
+        throw new Error(detail || `Download failed with status ${res.status}`);
     }
     const data = await res.json();
     return data.url || null;
@@ -241,7 +244,7 @@ export function convertAppleMusicArtistDetailToQobuzFormat(artistData: any) {
     return {
         artist: {
             id: `apple:${artist.id}`,
-            name: attr.name,
+            name: { display: attr.name },
             image: artworkUrl ? {
                 small: artworkUrl.replace('600x600', '150x150'),
                 medium: artworkUrl.replace('600x600', '300x300'),
@@ -252,6 +255,7 @@ export function convertAppleMusicArtistDetailToQobuzFormat(artistData: any) {
             albums_count: totalAlbums,
             biography: { content: attr.editorialNotes?.standard || attr.editorialNotes?.short || '' },
             releases,
+            _source: 'apple-music',
         },
     };
 }
