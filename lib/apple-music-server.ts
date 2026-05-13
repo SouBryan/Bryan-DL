@@ -32,9 +32,11 @@ export async function lookupAppleMusicByIsrc(isrc: string, storefront?: string) 
 }
 
 export async function downloadAppleMusicTrack(songId: string, storefront?: string, outputCodec?: string): Promise<string | null> {
-    // Map frontend codec to sidecar codec: lossless outputs request ALAC, lossy outputs request AAC
-    const losslessCodecs = ['FLAC', 'WAV', 'ALAC'];
-    const sidecarCodec = losslessCodecs.includes(outputCodec || '') ? 'alac' : 'aac';
+    // Map frontend codec to sidecar codec:
+    // - AAC_ORIGINAL → request AAC (native 256kbps from Apple Music, needs cookie auth)
+    // - Everything else (FLAC, WAV, ALAC, OPUS, MP3, AAC-from-ALAC) → request ALAC
+    //   The frontend converts ALAC to the final format client-side via ffmpeg.wasm
+    const sidecarCodec = outputCodec === 'AAC_ORIGINAL' ? 'aac' : 'alac';
 
     // R2 key depends on codec (ALAC keeps legacy key; AAC gets _aac suffix)
     const r2Suffix = sidecarCodec === 'alac' ? '' : '_aac';

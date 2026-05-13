@@ -1068,6 +1068,17 @@ async def download_track(
             logger.info(f"R2 cache hit (AAC fallback): {song_id}")
             return {"url": url, "cached": True}
 
+    # Fall back to ALAC if AAC requested but account only has wrapper (wrapper can't do AAC)
+    if codec == "aac" and account.uses_wrapper:
+        logger.warning(f"AAC requested but account '{account.storefront}' uses wrapper — falling back to ALAC")
+        codec = "alac"
+        r2_key = f"apple/{song_id}.m4a"
+        # Re-check cache for ALAC key
+        if r2_object_exists(r2_key):
+            url = f"{R2_PUBLIC_URL}/{r2_key}"
+            logger.info(f"R2 cache hit (ALAC fallback): {song_id}")
+            return {"url": url, "cached": True}
+
     # 3. Download + decrypt (with concurrency limiter)
     logger.info(f"R2 cache miss, downloading: {song_id} via {account.storefront} (codec={codec})")
     if _download_semaphore is None:
