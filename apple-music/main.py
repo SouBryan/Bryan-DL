@@ -830,25 +830,47 @@ async def download_track(
 
             downloaded_path = None
             item_count = 0
-            async for download_item in downloader.get_download_item_from_url(song_url):
-                item_count += 1
-                has_error = download_item.media.error if hasattr(download_item.media, 'error') else None
-                is_partial = download_item.media.partial if hasattr(download_item.media, 'partial') else None
-                logger.info(f"Download item #{item_count}: partial={is_partial}, error={has_error}, "
-                            f"final_path={download_item.final_path}, staged_path={download_item.staged_path}")
 
-                if has_error:
-                    logger.error(f"Media error: {has_error}")
-                    continue
+            async def _do_download():
+                nonlocal downloaded_path, item_count
+                async for download_item in downloader.get_download_item_from_url(song_url):
+                    item_count += 1
+                    has_error = download_item.media.error if hasattr(download_item.media, 'error') else None
+                    is_partial = download_item.media.partial if hasattr(download_item.media, 'partial') else None
+                    logger.info(
+                        f"Download item #{item_count}: partial={is_partial}, "
+                        f"error={type(has_error).__name__ + ': ' + str(has_error) if has_error else None}, "
+                        f"final_path={download_item.final_path}"
+                    )
 
-                if is_partial:
-                    logger.warning(f"Media is partial (stream info incomplete pre-download), attempting download anyway...")
+                    # Item #1: partial=True — gamdl yields this immediately with catalog metadata only.
+                    # Stream info (M3U8, fairplay key) is NOT ready yet. Skip and wait for item #2.
+                    if is_partial:
+                        logger.info(f"Item #{item_count} is partial (pre-stream-info), waiting for next item...")
+                        continue
 
-                await downloader.download(download_item)
-                if download_item.final_path and os.path.exists(download_item.final_path):
-                    downloaded_path = str(download_item.final_path)
-                    logger.info(f"Downloaded to final_path: {downloaded_path}")
-                break
+                    # Item with error — log and skip (loop will end naturally if no more items)
+                    if has_error:
+                        logger.error(
+                            f"Item #{item_count} has error: {type(has_error).__name__}: {has_error}",
+                            exc_info=has_error,
+                        )
+                        continue
+
+                    # Item #2: partial=False, no error — this has full stream info; do the actual download
+                    await downloader.download(download_item)
+                    if download_item.final_path and os.path.exists(download_item.final_path):
+                        downloaded_path = str(download_item.final_path)
+                        logger.info(f"Downloaded to final_path: {downloaded_path}")
+                    else:
+                        logger.warning(f"download() returned but final_path missing: {download_item.final_path}")
+                    break
+
+            try:
+                await asyncio.wait_for(_do_download(), timeout=120)
+            except asyncio.TimeoutError:
+                logger.error(f"Download timed out after 120s for {song_id} (wrapper M3U8/decrypt may be hanging)")
+                raise HTTPException(status_code=504, detail=f"Download timed out for track {song_id}")
 
             if not downloaded_path:
                 logger.info(f"Items yielded: {item_count}. Searching work_dir recursively for .m4a...")
