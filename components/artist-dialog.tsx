@@ -133,12 +133,12 @@ const ArtistDialog = ({ open, setOpen, artist }: { open: boolean; setOpen: (open
                             <DialogTitle title={artist.name} className='truncate overflow-visible py-0.5 pr-2'>
                                 {artist.name}
                             </DialogTitle>
-                            {(artistResults?.artist.albums_count || artist.albums_count) ? (
+                            {((artistResults?.artist as any)?.albums_count || artist.albums_count) ? (
                                 <DialogDescription
-                                    title={(artistResults?.artist.albums_count || artist.albums_count) + ' ' + ((artistResults?.artist.albums_count || artist.albums_count) !== 1 ? 'releases' : 'release')}
+                                    title={((artistResults?.artist as any)?.albums_count || artist.albums_count) + ' ' + (((artistResults?.artist as any)?.albums_count || artist.albums_count) !== 1 ? 'releases' : 'release')}
                                     className='truncate overflow-visible '
                                 >
-                                    {artistResults?.artist.albums_count || artist.albums_count} {(artistResults?.artist.albums_count || artist.albums_count) > 1 ? 'releases' : 'release'}
+                                    {(artistResults?.artist as any)?.albums_count || artist.albums_count} {((artistResults?.artist as any)?.albums_count || artist.albums_count) > 1 ? 'releases' : 'release'}
                                 </DialogDescription>
                             ) : null}
                         </div>
