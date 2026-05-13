@@ -31,13 +31,20 @@ export async function lookupAppleMusicByIsrc(isrc: string, storefront?: string) 
     return res.json();
 }
 
-export async function downloadAppleMusicTrack(songId: string, storefront?: string): Promise<string | null> {
+export async function downloadAppleMusicTrack(songId: string, storefront?: string, outputCodec?: string): Promise<string | null> {
+    // Map frontend codec to sidecar codec: lossless outputs request ALAC, lossy outputs request AAC
+    const losslessCodecs = ['FLAC', 'WAV', 'ALAC'];
+    const sidecarCodec = losslessCodecs.includes(outputCodec || '') ? 'alac' : 'aac';
+
+    // R2 key depends on codec (ALAC keeps legacy key; AAC gets _aac suffix)
+    const r2Suffix = sidecarCodec === 'alac' ? '' : '_aac';
+    const r2Url = `${R2_PUBLIC_URL}/apple/${songId}${r2Suffix}.m4a`;
+
     // Check R2 cache first (fast HEAD via public URL)
-    const r2Url = `${R2_PUBLIC_URL}/apple/${songId}.m4a`;
     try {
         const head = await fetch(r2Url, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
         if (head.ok) {
-            console.log(`[apple-music] R2 cache hit: ${songId}`);
+            console.log(`[apple-music] R2 cache hit: ${songId} (${sidecarCodec})`);
             return r2Url;
         }
     } catch {
@@ -45,8 +52,9 @@ export async function downloadAppleMusicTrack(songId: string, storefront?: strin
     }
 
     // Call sidecar to download + decrypt + upload to R2
-    let downloadUrl = `${APPLE_MUSIC_API_URL}/download/${songId}`;
-    if (storefront) downloadUrl += `?storefront=${encodeURIComponent(storefront)}`;
+    const params = new URLSearchParams({ codec: sidecarCodec });
+    if (storefront) params.set('storefront', storefront);
+    const downloadUrl = `${APPLE_MUSIC_API_URL}/download/${songId}?${params.toString()}`;
     const res = await fetch(downloadUrl, { signal: AbortSignal.timeout(60000) }); // 60s timeout for download+decrypt
     if (!res.ok) {
         console.error(`[apple-music] Download failed: ${res.status}`);

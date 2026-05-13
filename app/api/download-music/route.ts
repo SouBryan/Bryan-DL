@@ -7,7 +7,8 @@ import z from 'zod';
 
 const downloadParamsSchema = z.object({
     track_id: z.string().min(1, 'Track ID is required'),
-    quality: z.enum(['27', '7', '6', '5']).default('27')
+    quality: z.enum(['27', '7', '6', '5']).default('27'),
+    codec: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -17,13 +18,13 @@ export async function GET(request: NextRequest) {
     const params = Object.fromEntries(new URL(request.url).searchParams.entries());
     const start = Date.now();
     try {
-        const { track_id, quality } = downloadParamsSchema.parse(params);
+        const { track_id, quality, codec } = downloadParamsSchema.parse(params);
 
         // Apple Music track (prefixed with "apple:")
         if (track_id.startsWith('apple:')) {
             const appleId = track_id.replace('apple:', '');
             const storefront = params.storefront || undefined;
-            const url = await downloadAppleMusicTrack(appleId, storefront);
+            const url = await downloadAppleMusicTrack(appleId, storefront, codec);
             if (!url) {
                 logRequest(request, 404, Date.now() - start);
                 return new NextResponse(

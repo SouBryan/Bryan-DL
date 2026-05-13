@@ -67,6 +67,7 @@ const BLOCKED_IPS = new Set([
     '34.246.163.208', // WordPress scanner bot - Tentou por muito tempo varios endpoints, como .env e outros
     '35.240.247.11', // WordPress scanner bot - (AbuseIPDB flagged)
     '164.92.178.95', // .env & docker scanner bot - DigitalOcean droplet
+    '193.32.162.28', // Tentou acessar uma vez /api/route - provavelmente um scanner de vulnerabilidades (AbuseIPDB flagged)
 ]);
 
 function getClientIp(request: NextRequest): string {

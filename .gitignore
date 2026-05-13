@@ -51,9 +51,15 @@ CONTEXT.md
 Qobuz-AppID-Secret-Tool
 
 # apple music
-apple_cookies_netscape.txt
-APPLE_MUSIC_PLAN.md
-applemusic_auth_cookies.json
+apple-music/apple_cookies_netscape.txt
+apple-music/APPLE_MUSIC_PLAN.md
+apple-music/applemusic_auth_cookies.json
 apple-music/cookies/
 apple-music/wrapper-data/
-main.py
+apple-music/main-discord.py
+
+# soundcloud
+soundcloud/cache/
+SOUNDCLOUD_PLAN.md
+soundcloud_test/
+*.wvd

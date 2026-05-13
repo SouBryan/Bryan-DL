@@ -1,0 +1,21 @@
+ubuntu@oracle-vps-definitive:~/home-server/qobuz-dl$ docker logs -f qobuz-dl
+   ▲ Next.js 15.5.4
+   - Local:        http://localhost:3000
+   - Network:      http://0.0.0.0:3000
+
+ ✓ Starting...
+ ✓ Ready in 121ms
+131.100.63.63 | 13/05 00:49:54 | GET /api/get-music?q=kessoku+band&offset=0 https → 200 (939ms) | Chrome/142 Win | ...cErP8Q BR
+131.100.63.63 | 13/05 00:49:55 | GET /api/get-music?q=kessoku+band&offset=0 https → 200 (359ms) | Chrome/142 Win | ...cErP8Q BR
+131.100.63.63 | 13/05 00:49:56 | GET /api/get-music?q=kessoku+band&offset=0 https → 200 (457ms) | Chrome/142 Win | ------ ??
+131.100.63.63 | 13/05 00:50:22 | GET /api/download-music?track_id=apple%3A1657318551 https → 200 (24728ms) | Chrome/142 Win | ------ ??
+131.100.63.63 | 13/05 00:50:47 | GET /api/get-music?q=kessoku+band&offset=0 https → 200 (370ms) | Chrome/142 Win | ...cErP8Q BR
+131.100.63.63 | 13/05 00:50:48 | GET /api/get-music?q=kessoku+band&offset=0 https → 200 (451ms) | Chrome/142 Win | ------ ??
+[apple-music] R2 cache hit: 1657318551
+131.100.63.63 | 13/05 00:50:49 | GET /api/download-music?track_id=apple%3A1657318551 https → 200 (389ms) | Chrome/142 Win | ------ ??
+131.100.63.63 | 13/05 00:51:16 | GET /api/get-music?q=kessoku+band&offset=0 https → 200 (416ms) | Chrome/142 Win | ...cErP8Q BR
+131.100.63.63 | 13/05 00:51:18 | GET /api/get-music?q=%3D&offset=0 https → 200 (1064ms) | Chrome/142 Win | ...cErP8Q BR
+131.100.63.63 | 13/05 00:51:46 | GET /api/get-music?q=kessoku+band&offset=0 https → 200 (360ms) | Chrome/142 Win | ...cErP8Q BR
+131.100.63.63 | 13/05 00:51:46 | GET /api/get-music?q=kessoku+band&offset=10 https → 200 (267ms) | Chrome/142 Win | ...cErP8Q BR
+131.100.63.63 | 13/05 00:51:47 | GET /api/get-music?q=kessoku+band&offset=20 https → 200 (292ms) | Chrome/142 Win | ...cErP8Q BR
+131.100.63.63 | 13/05 00:51:53 | GET /api/get-music?q=kessoku+band&offset=0 https → 200 (354ms) | Chrome/142 Win | ------ ??

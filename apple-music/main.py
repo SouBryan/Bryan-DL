@@ -764,6 +764,7 @@ async def lookup_isrc(
 async def download_track(
     song_id: str,
     storefront: str | None = Query(None, description="Which storefront account to use for download"),
+    codec: str = Query("alac", description="Requested codec: 'alac' for lossless, 'aac' for 256kbps AAC"),
 ):
     """
     Download, decrypt, and upload a track to R2.
@@ -779,19 +780,37 @@ async def download_track(
     if not _accounts:
         raise HTTPException(status_code=503, detail="Not initialized")
 
-    r2_key = f"apple/{song_id}.m4a"
+    # Normalize codec value
+    codec = codec.lower()
+    if codec not in ("alac", "aac"):
+        codec = "alac"
+
+    # R2 key: ALAC uses legacy key for backward compat; AAC gets its own key
+    r2_suffix = "" if codec == "alac" else "_aac"
+    r2_key = f"apple/{song_id}{r2_suffix}.m4a"
 
     # 1. Check R2 cache
     if r2_object_exists(r2_key):
         url = f"{R2_PUBLIC_URL}/{r2_key}"
-        logger.info(f"R2 cache hit: {song_id}")
+        logger.info(f"R2 cache hit: {song_id} ({codec})")
         return {"url": url, "cached": True}
 
     # 2. Select account
     account = _get_account(storefront)
 
+    # Fall back to AAC if ALAC requested but account has no wrapper
+    if codec == "alac" and not account.uses_wrapper:
+        logger.warning(f"ALAC requested but account '{account.storefront}' has no wrapper — falling back to AAC")
+        codec = "aac"
+        r2_key = f"apple/{song_id}_aac.m4a"
+        # Re-check cache for AAC key
+        if r2_object_exists(r2_key):
+            url = f"{R2_PUBLIC_URL}/{r2_key}"
+            logger.info(f"R2 cache hit (AAC fallback): {song_id}")
+            return {"url": url, "cached": True}
+
     # 3. Download + decrypt (with concurrency limiter)
-    logger.info(f"R2 cache miss, downloading: {song_id} via {account.storefront}")
+    logger.info(f"R2 cache miss, downloading: {song_id} via {account.storefront} (codec={codec})")
     if _download_semaphore is None:
         raise HTTPException(status_code=503, detail="Not initialized")
 
@@ -800,9 +819,21 @@ async def download_track(
         os.makedirs(work_dir, exist_ok=True)
 
         try:
+            # Build per-request interface with the requested codec_priority
+            codec_priority = [SongCodec.ALAC] if codec == "alac" else [SongCodec.AAC_LEGACY]
+            song_interface = AppleMusicSongInterface(
+                base=account.interface.song.base,
+                codec_priority=codec_priority,
+            )
+            request_interface = AppleMusicInterface(
+                song=song_interface,
+                music_video=account.interface.music_video,
+                uploaded_video=account.interface.uploaded_video,
+            )
+
             # Create downloader targeting work_dir
             base_dl = AppleMusicBaseDownloader(
-                interface=account.interface,
+                interface=request_interface,
                 output_path=work_dir,
                 temp_path=work_dir,
                 **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if account.uses_wrapper else {}),

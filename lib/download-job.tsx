@@ -55,7 +55,7 @@ export const createDownloadJob = async (
 
                         setStatusBar((prev) => ({ ...prev, description: 'Fetching Apple Music track...' }));
                         const response = await axios.get('/api/download-music', {
-                            params: { track_id: (result as QobuzTrack).id },
+                            params: { track_id: (result as QobuzTrack).id, codec: settings.outputCodec },
                             responseType: 'arraybuffer',
                             onDownloadProgress: (progressEvent) => {
                                 setStatusBar((statusbar) => {
