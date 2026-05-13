@@ -79,6 +79,7 @@ services:
             - APPLE_MUSIC_ACCOUNTS=${APPLE_MUSIC_ACCOUNTS:-}
         volumes:
             - ./apple-music/cookies:/app/cookies
+            - ./apple-music/wrapper-data:/app/wrapper-data
         depends_on:
             warp-socks:
                 condition: service_healthy
@@ -89,14 +90,17 @@ services:
             - qobuz-network
 
     # Apple Music Wrapper — decrypts ALAC/lossless via Apple's native libraries
+    # Uses entrypoint.sh from the release: auto-logs in with USERNAME/PASSWORD
+    # when the account database doesn't exist yet, otherwise reuses saved session.
     apple-music-wrapper:
         build:
             context: ./docker/apple-music-wrapper
             dockerfile: Dockerfile
         container_name: apple-music-wrapper
         privileged: true
-        entrypoint: ./wrapper
-        command: ["-H", "0.0.0.0"]
+        environment:
+            - USERNAME=${APPLE_MUSIC_EMAIL:-}
+            - PASSWORD=${APPLE_MUSIC_PASSWORD:-}
         volumes:
             - ./apple-music/wrapper-data:/app/rootfs/data
         healthcheck:

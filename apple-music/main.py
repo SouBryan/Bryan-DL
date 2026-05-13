@@ -77,6 +77,16 @@ WRAPPER_M3U8_PORT = int(os.environ.get("WRAPPER_M3U8_PORT", "20020"))
 WRAPPER_ACCOUNT_PORT = int(os.environ.get("WRAPPER_ACCOUNT_PORT", "30020"))
 USE_WRAPPER = bool(WRAPPER_HOST)
 
+# Wrapper re-auth config
+# Path to the wrapper's token database inside the shared volume.
+# When this file is deleted, the wrapper will crash; Docker restarts it
+# and entrypoint.sh re-logs in with USERNAME/PASSWORD automatically.
+WRAPPER_TOKEN_DB_PATH = os.environ.get(
+    "WRAPPER_TOKEN_DB_PATH",
+    "/app/wrapper-data/data/com.apple.android.music/files/mpl_db/kvs.sqlitedb",
+)
+WRAPPER_REAUTH_COOLDOWN_S = int(os.environ.get("WRAPPER_REAUTH_COOLDOWN_S", "300"))  # 5 min
+
 SOCKS5_PROXY = os.environ.get("SOCKS5_PROXY", "")
 
 # Cookie auto-refresh config (single account — backward compat)
@@ -204,6 +214,14 @@ s3_client = None
 _init_lock = asyncio.Lock()
 _last_request_time: float = 0.0  # monotonic timestamp of last API request
 _download_semaphore: asyncio.Semaphore | None = None  # limits concurrent downloads
+_wrapper_reauth_lock = asyncio.Lock()
+_last_wrapper_reauth: float = 0.0  # monotonic time of last wrapper reauth
+
+
+class _WrapperReauthRetrySignal(Exception):
+    """Internal signal: wrapper was re-authenticated, retry the download."""
+    def __init__(self, song_id: str):
+        self.song_id = song_id
 
 
 async def _throttle():
@@ -252,6 +270,135 @@ async def _request_with_backoff(coro_factory, description: str = "request", acco
             else:
                 raise
     raise RuntimeError(f"Exhausted {MAX_RETRIES_429} retries for {description}")
+
+
+async def _reauth_wrapper() -> bool:
+    """
+    Force wrapper re-authentication by deleting its token DB.
+    Docker's restart policy will restart the wrapper container,
+    and entrypoint.sh will re-login with USERNAME/PASSWORD automatically.
+    Returns True if the wrapper came back online successfully.
+    """
+    global _last_wrapper_reauth
+
+    async with _wrapper_reauth_lock:
+        now = asyncio.get_event_loop().time()
+        if now - _last_wrapper_reauth < WRAPPER_REAUTH_COOLDOWN_S:
+            elapsed = int(now - _last_wrapper_reauth)
+            logger.info(f"Wrapper reauth skipped (cooldown: {elapsed}s / {WRAPPER_REAUTH_COOLDOWN_S}s)")
+            return False
+
+        logger.warning("Wrapper decryption failed — triggering re-authentication...")
+
+        # 1. Delete the token DB to force re-login on restart
+        db_deleted = False
+        if os.path.exists(WRAPPER_TOKEN_DB_PATH):
+            try:
+                os.remove(WRAPPER_TOKEN_DB_PATH)
+                db_deleted = True
+                logger.info(f"Deleted wrapper token DB: {WRAPPER_TOKEN_DB_PATH}")
+            except OSError as e:
+                logger.error(f"Failed to delete wrapper token DB: {e}")
+        else:
+            logger.warning(f"Wrapper token DB not found at {WRAPPER_TOKEN_DB_PATH} — wrapper may restart with stale creds")
+
+        # Also remove the accounts DB to ensure a clean re-login
+        accounts_db = os.path.join(os.path.dirname(WRAPPER_TOKEN_DB_PATH), "..", "accounts.sqlitedb")
+        accounts_db = os.path.normpath(accounts_db)
+        if os.path.exists(accounts_db):
+            try:
+                os.remove(accounts_db)
+                logger.info(f"Deleted wrapper accounts DB: {accounts_db}")
+            except OSError:
+                pass
+
+        if not db_deleted:
+            # If we couldn't delete the DB, try a more aggressive approach:
+            # delete the entire files directory
+            files_dir = os.path.join(os.path.dirname(WRAPPER_TOKEN_DB_PATH), "..")
+            files_dir = os.path.normpath(files_dir)
+            if os.path.isdir(files_dir):
+                try:
+                    shutil.rmtree(files_dir)
+                    logger.info(f"Deleted wrapper files directory: {files_dir}")
+                except OSError as e:
+                    logger.error(f"Failed to delete wrapper files dir: {e}")
+                    return False
+
+        # 2. Wait for the wrapper to come back up (Docker restarts it)
+        import httpx
+        wrapper_url = f"http://{WRAPPER_HOST}:{WRAPPER_ACCOUNT_PORT}/"
+        logger.info(f"Waiting for wrapper to restart and re-login... (checking {wrapper_url})")
+        for attempt in range(1, 73):  # wait up to 6 minutes (73 * 5s)
+            await asyncio.sleep(5)
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    resp = await client.get(wrapper_url)
+                    if resp.status_code == 200:
+                        logger.info(f"Wrapper back online after reauth ({attempt * 5}s)")
+                        _last_wrapper_reauth = asyncio.get_event_loop().time()
+                        # 3. Reinitialize the gamdl wrapper connection
+                        await _reinit_wrapper()
+                        return True
+            except Exception:
+                pass
+            if attempt % 12 == 0:
+                logger.info(f"Still waiting for wrapper to restart... ({attempt * 5}s)")
+
+        logger.error("Wrapper failed to come back after reauth (timeout 6min)")
+        _last_wrapper_reauth = asyncio.get_event_loop().time()
+        return False
+
+
+async def _reinit_wrapper():
+    """Reinitialize the gamdl wrapper connection after wrapper restart."""
+    global _wrapper_storefront
+    if not USE_WRAPPER or not _wrapper_storefront:
+        return
+
+    old_storefront = _wrapper_storefront
+    wrapper_account_url = f"http://{WRAPPER_HOST}:{WRAPPER_ACCOUNT_PORT}/"
+
+    try:
+        api = await AppleMusicApi.create_from_wrapper(wrapper_account_url=wrapper_account_url)
+        storefront = api.storefront
+        logger.info(f"Wrapper reinit: storefront={storefront}, subscription={api.active_subscription}")
+
+        base_interface = await AppleMusicBaseInterface.create(
+            apple_music_api=api,
+            use_wrapper=True,
+            wrapper_m3u8_ip=f"{WRAPPER_HOST}:{WRAPPER_M3U8_PORT}",
+        )
+        song_interface = AppleMusicSongInterface(
+            base=base_interface,
+            codec_priority=[SongCodec.ALAC, SongCodec.AAC_LEGACY],
+        )
+        interface = AppleMusicInterface(
+            song=song_interface,
+            music_video=AppleMusicMusicVideoInterface(base=base_interface),
+            uploaded_video=AppleMusicUploadedVideoInterface(base=base_interface),
+        )
+
+        wrapper_account = AccountInstance(
+            storefront=storefront,
+            email="(wrapper)",
+            password="",
+            cookies_path="",
+            api=api,
+            interface=interface,
+            uses_wrapper=True,
+            codec="alac",
+        )
+
+        # Remove old storefront entry if different
+        if old_storefront != storefront and old_storefront in _accounts:
+            del _accounts[old_storefront]
+
+        _accounts[storefront] = wrapper_account
+        _wrapper_storefront = storefront
+        logger.info(f"Wrapper re-registered as storefront={storefront}")
+    except Exception as e:
+        logger.error(f"Wrapper reinit failed: {e}", exc_info=True)
 
 
 def get_s3_client():
@@ -594,6 +741,21 @@ async def health():
     }
 
 
+@app.post("/reauth-wrapper")
+async def reauth_wrapper_endpoint():
+    """Manually trigger wrapper re-authentication.
+    Deletes the wrapper token DB, causing Docker to restart it with fresh login."""
+    if not USE_WRAPPER:
+        raise HTTPException(status_code=400, detail="Wrapper not configured")
+    if not _wrapper_storefront:
+        raise HTTPException(status_code=400, detail="Wrapper not initialized")
+
+    success = await _reauth_wrapper()
+    if success:
+        return {"status": "ok", "message": "Wrapper re-authenticated successfully"}
+    raise HTTPException(status_code=500, detail="Wrapper re-authentication failed. Check logs.")
+
+
 @app.get("/storefronts")
 async def list_storefronts():
     """List all available storefronts."""
@@ -912,132 +1074,157 @@ async def download_track(
         raise HTTPException(status_code=503, detail="Not initialized")
 
     async with _download_semaphore:
-        work_dir = os.path.join(TEMP_DIR, song_id)
-        os.makedirs(work_dir, exist_ok=True)
+        for _download_attempt in range(1, 3):  # max 2 attempts (1 original + 1 after reauth)
+            try:
+                result = await _do_download_and_upload(song_id, song_url=None, account=account, codec=codec, r2_key=r2_key, storefront=storefront)
+                return result
+            except _WrapperReauthRetrySignal:
+                logger.info(f"Retrying download for {song_id} after wrapper reauth (attempt {_download_attempt + 1})...")
+                account = _get_account(storefront)
+                continue
+
+    # Should never reach here, but just in case
+    raise HTTPException(status_code=500, detail=f"Download failed for track {song_id} after retries")
+
+
+async def _do_download_and_upload(
+    song_id: str,
+    song_url: str | None,
+    account: AccountInstance,
+    codec: str,
+    r2_key: str,
+    storefront: str | None,
+) -> dict:
+    """Core download+decrypt+upload logic. Raises _WrapperReauthRetrySignal on wrapper auth failure."""
+    work_dir = os.path.join(TEMP_DIR, song_id)
+    os.makedirs(work_dir, exist_ok=True)
+
+    try:
+        # Build per-request interface with the requested codec_priority
+        codec_priority = [SongCodec.ALAC] if codec == "alac" else [SongCodec.AAC_LEGACY]
+        song_interface = AppleMusicSongInterface(
+            base=account.interface.song.base,
+            codec_priority=codec_priority,
+        )
+        request_interface = AppleMusicInterface(
+            song=song_interface,
+            music_video=account.interface.music_video,
+            uploaded_video=account.interface.uploaded_video,
+        )
+
+        # Create downloader targeting work_dir
+        base_dl = AppleMusicBaseDownloader(
+            interface=request_interface,
+            output_path=work_dir,
+            temp_path=work_dir,
+            **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if account.uses_wrapper else {}),
+        )
+        song_dl = AppleMusicSongDownloader(base=base_dl)
+        mv_dl = AppleMusicMusicVideoDownloader(base=base_dl)
+        uv_dl = AppleMusicUploadedVideoDownloader(base=base_dl)
+
+        downloader = AppleMusicDownloader(
+            song=song_dl,
+            music_video=mv_dl,
+            uploaded_video=uv_dl,
+            overwrite=True,
+            skip_cleanup=True,
+        )
+
+        # Get the real Apple Music URL from catalog data
+        catalog_data = await _request_with_backoff(
+            lambda: account.api.get_song(song_id),
+            description=f"get_song {song_id}",
+            account=account,
+        )
+        resolved_url = catalog_data["data"][0]["attributes"]["url"]
+        logger.info(f"Resolved song URL: {resolved_url}")
+
+        downloaded_path = None
+        item_count = 0
+        last_error = None
+
+        async def _do_download():
+            nonlocal downloaded_path, item_count, last_error
+            async for download_item in downloader.get_download_item_from_url(resolved_url):
+                item_count += 1
+                has_error = download_item.media.error if hasattr(download_item.media, 'error') else None
+                is_partial = download_item.media.partial if hasattr(download_item.media, 'partial') else None
+                logger.info(
+                    f"Download item #{item_count}: partial={is_partial}, "
+                    f"error={type(has_error).__name__ + ': ' + str(has_error) if has_error else None}, "
+                    f"final_path={download_item.final_path}"
+                )
+
+                if is_partial:
+                    logger.info(f"Item #{item_count} is partial (pre-stream-info), waiting for next item...")
+                    continue
+
+                if has_error:
+                    last_error = has_error
+                    logger.error(
+                        f"Item #{item_count} has error: {type(has_error).__name__}: {has_error}",
+                        exc_info=has_error,
+                    )
+                    continue
+
+                await downloader.download(download_item)
+                if download_item.final_path and os.path.exists(download_item.final_path):
+                    downloaded_path = str(download_item.final_path)
+                    logger.info(f"Downloaded to final_path: {downloaded_path}")
+                else:
+                    logger.warning(f"download() returned but final_path missing: {download_item.final_path}")
+                break
 
         try:
-            # Build per-request interface with the requested codec_priority
-            codec_priority = [SongCodec.ALAC] if codec == "alac" else [SongCodec.AAC_LEGACY]
-            song_interface = AppleMusicSongInterface(
-                base=account.interface.song.base,
-                codec_priority=codec_priority,
-            )
-            request_interface = AppleMusicInterface(
-                song=song_interface,
-                music_video=account.interface.music_video,
-                uploaded_video=account.interface.uploaded_video,
-            )
+            await asyncio.wait_for(_do_download(), timeout=120)
+        except asyncio.TimeoutError:
+            logger.error(f"Download timed out after 120s for {song_id} (wrapper M3U8/decrypt may be hanging)")
+            raise HTTPException(status_code=504, detail=f"Download timed out for track {song_id}")
 
-            # Create downloader targeting work_dir
-            base_dl = AppleMusicBaseDownloader(
-                interface=request_interface,
-                output_path=work_dir,
-                temp_path=work_dir,
-                **({"wrapper_decrypt_ip": f"{WRAPPER_HOST}:{WRAPPER_DECRYPT_PORT}"} if account.uses_wrapper else {}),
-            )
-            song_dl = AppleMusicSongDownloader(base=base_dl)
-            mv_dl = AppleMusicMusicVideoDownloader(base=base_dl)
-            uv_dl = AppleMusicUploadedVideoDownloader(base=base_dl)
+        if not downloaded_path:
+            logger.info(f"Items yielded: {item_count}. Searching work_dir recursively for .m4a...")
+            for f in Path(work_dir).rglob("*.m4a"):
+                downloaded_path = str(f)
+                logger.info(f"Found .m4a: {downloaded_path}")
+                break
 
-            downloader = AppleMusicDownloader(
-                song=song_dl,
-                music_video=mv_dl,
-                uploaded_video=uv_dl,
-                overwrite=True,
-                skip_cleanup=True,
-            )
-
-            # Get the real Apple Music URL from catalog data
-            catalog_data = await _request_with_backoff(
-                lambda: account.api.get_song(song_id),
-                description=f"get_song {song_id}",
-                account=account,
-            )
-            song_url = catalog_data["data"][0]["attributes"]["url"]
-            logger.info(f"Resolved song URL: {song_url}")
-
-            downloaded_path = None
-            item_count = 0
-            last_error = None
-
-            async def _do_download():
-                nonlocal downloaded_path, item_count, last_error
-                async for download_item in downloader.get_download_item_from_url(song_url):
-                    item_count += 1
-                    has_error = download_item.media.error if hasattr(download_item.media, 'error') else None
-                    is_partial = download_item.media.partial if hasattr(download_item.media, 'partial') else None
-                    logger.info(
-                        f"Download item #{item_count}: partial={is_partial}, "
-                        f"error={type(has_error).__name__ + ': ' + str(has_error) if has_error else None}, "
-                        f"final_path={download_item.final_path}"
+        if not downloaded_path or not os.path.exists(downloaded_path):
+            all_files = list(Path(work_dir).rglob("*"))
+            logger.error(f"No .m4a found after {item_count} items. All files in work_dir: {all_files}")
+            if last_error:
+                err_name = type(last_error).__name__
+                err_str = str(last_error)
+                if "DecryptionNotAvailable" in err_name and account.uses_wrapper:
+                    logger.warning(f"DecryptionNotAvailable on wrapper for track {song_id}, attempting reauth...")
+                    reauthed = await _reauth_wrapper()
+                    if reauthed:
+                        raise _WrapperReauthRetrySignal(song_id)
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"Decryption not available for track {song_id}. "
+                               f"Wrapper re-authentication failed. Check wrapper logs and Apple Music credentials.",
                     )
+                elif "DecryptionNotAvailable" in err_name:
+                    raise HTTPException(status_code=403, detail=f"Decryption not available for track {song_id}. The Apple Music account may not have an active subscription.")
+                elif "explicit" in err_str.lower() or "m-allowed" in err_str.lower():
+                    raise HTTPException(status_code=403, detail=f"Track {song_id} is blocked by explicit content restrictions on the Apple Music account.")
+                else:
+                    raise HTTPException(status_code=500, detail=f"Download failed for track {song_id}: {err_name}: {err_str}")
+            raise HTTPException(status_code=404, detail=f"Track {song_id} not downloaded. Items yielded: {item_count}")
 
-                    # Item #1: partial=True — gamdl yields this immediately with catalog metadata only.
-                    # Stream info (M3U8, fairplay key) is NOT ready yet. Skip and wait for item #2.
-                    if is_partial:
-                        logger.info(f"Item #{item_count} is partial (pre-stream-info), waiting for next item...")
-                        continue
+        # Upload to R2
+        url = r2_upload_file(downloaded_path, r2_key)
+        logger.info(f"Uploaded to R2: {r2_key} ({os.path.getsize(downloaded_path)} bytes)")
+        return {"url": url, "cached": False}
 
-                    # Item with error — log and skip (loop will end naturally if no more items)
-                    if has_error:
-                        last_error = has_error
-                        logger.error(
-                            f"Item #{item_count} has error: {type(has_error).__name__}: {has_error}",
-                            exc_info=has_error,
-                        )
-                        continue
-
-                    # Item #2: partial=False, no error — this has full stream info; do the actual download
-                    await downloader.download(download_item)
-                    if download_item.final_path and os.path.exists(download_item.final_path):
-                        downloaded_path = str(download_item.final_path)
-                        logger.info(f"Downloaded to final_path: {downloaded_path}")
-                    else:
-                        logger.warning(f"download() returned but final_path missing: {download_item.final_path}")
-                    break
-
-            try:
-                await asyncio.wait_for(_do_download(), timeout=120)
-            except asyncio.TimeoutError:
-                logger.error(f"Download timed out after 120s for {song_id} (wrapper M3U8/decrypt may be hanging)")
-                raise HTTPException(status_code=504, detail=f"Download timed out for track {song_id}")
-
-            if not downloaded_path:
-                logger.info(f"Items yielded: {item_count}. Searching work_dir recursively for .m4a...")
-                for f in Path(work_dir).rglob("*.m4a"):
-                    downloaded_path = str(f)
-                    logger.info(f"Found .m4a: {downloaded_path}")
-                    break
-
-            if not downloaded_path or not os.path.exists(downloaded_path):
-                all_files = list(Path(work_dir).rglob("*"))
-                logger.error(f"No .m4a found after {item_count} items. All files in work_dir: {all_files}")
-                # Return specific error messages based on the last error
-                if last_error:
-                    err_name = type(last_error).__name__
-                    err_str = str(last_error)
-                    if "DecryptionNotAvailable" in err_name:
-                        raise HTTPException(status_code=403, detail=f"Decryption not available for track {song_id}. The Apple Music account may not have an active subscription.")
-                    elif "explicit" in err_str.lower() or "m-allowed" in err_str.lower():
-                        raise HTTPException(status_code=403, detail=f"Track {song_id} is blocked by explicit content restrictions on the Apple Music account.")
-                    else:
-                        raise HTTPException(status_code=500, detail=f"Download failed for track {song_id}: {err_name}: {err_str}")
-                raise HTTPException(status_code=404, detail=f"Track {song_id} not downloaded. Items yielded: {item_count}")
-
-            # 3. Upload to R2
-            url = r2_upload_file(downloaded_path, r2_key)
-            logger.info(f"Uploaded to R2: {r2_key} ({os.path.getsize(downloaded_path)} bytes)")
-
-            return {"url": url, "cached": False}
-
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Download failed for {song_id}: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=str(e))
-        finally:
-            # Cleanup work_dir
-            shutil.rmtree(work_dir, ignore_errors=True)
+    except (HTTPException, _WrapperReauthRetrySignal):
+        raise
+    except Exception as e:
+        logger.error(f"Download failed for {song_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)
 
 
 @app.get("/track-info/{song_id}")
