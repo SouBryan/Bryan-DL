@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
                 port: '',
                 pathname: '**',
                 search: ''
+            },
+            {
+                protocol: 'https',
+                hostname: '*.mzstatic.com',
+                port: '',
+                pathname: '**',
+                search: ''
             }
         ]
     },
