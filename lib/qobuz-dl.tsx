@@ -224,6 +224,7 @@ export function getType(input: QobuzAlbum | QobuzTrack | QobuzArtist): QobuzSear
 }
 
 export function parseArtistAlbumData(album: QobuzAlbum) {
+    if ((album as any)._source === 'apple-music') return album;
     album.maximum_sampling_rate = (album as any).audio_info.maximum_sampling_rate;
     album.maximum_bit_depth = (album as any).audio_info.maximum_bit_depth;
     album.streamable = (album as any).rights.streamable;

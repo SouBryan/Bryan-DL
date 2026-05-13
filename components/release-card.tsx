@@ -102,10 +102,10 @@ const ReleaseCard = ({
                                             <p>
                                                 {(result as QobuzAlbum).tracks_count} {(result as QobuzAlbum).tracks_count > 1 ? 'tracks' : 'track'}
                                             </p>
-                                            <DotIcon size={16} />
+                                            {!!(result as QobuzAlbum | QobuzTrack).duration && <DotIcon size={16} />}
                                         </>
                                     ) : null}
-                                    {!(getType(result) === 'artists') && <p>{formatDuration((result as QobuzAlbum | QobuzTrack).duration)}</p>}
+                                    {!(getType(result) === 'artists') && !!(result as QobuzAlbum | QobuzTrack).duration && <p>{formatDuration((result as QobuzAlbum | QobuzTrack).duration)}</p>}
                                 </div>
                             </div>
                             {getType(result) !== 'artists' && showArtistDialog && (

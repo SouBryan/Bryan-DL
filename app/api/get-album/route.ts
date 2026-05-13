@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAlbumInfo, runWithTokenContext } from '@/lib/qobuz-dl-server';
+import { getAppleMusicAlbum, convertAppleMusicAlbumDetailToQobuzFormat } from '@/lib/apple-music-server';
 import { logRequest } from '@/lib/api-logger';
 import { checkIpGate } from '@/lib/ipgate';
 import z from 'zod';
@@ -16,6 +17,25 @@ export async function GET(request: NextRequest) {
     const start = Date.now();
     try {
         const { album_id } = albumInfoParamsSchema.parse(params);
+
+        // Handle Apple Music album IDs (prefixed with "apple:")
+        if (album_id.startsWith('apple:')) {
+            const appleId = album_id.replace('apple:', '');
+            const raw = await getAppleMusicAlbum(appleId);
+            if (!raw) {
+                logRequest(request, 404, Date.now() - start);
+                return new NextResponse(JSON.stringify({ success: false, error: 'Apple Music album not found' }), { status: 404 });
+            }
+            const data = convertAppleMusicAlbumDetailToQobuzFormat(raw);
+            if (!data) {
+                logRequest(request, 404, Date.now() - start);
+                return new NextResponse(JSON.stringify({ success: false, error: 'Failed to parse Apple Music album' }), { status: 404 });
+            }
+            const res = new NextResponse(JSON.stringify({ success: true, data }), { status: 200 });
+            logRequest(request, 200, Date.now() - start);
+            return res;
+        }
+
         const result = await runWithTokenContext(async () => {
             const data = await getAlbumInfo(album_id, country ? { country } : {});
             return { data };

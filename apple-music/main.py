@@ -51,6 +51,13 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("gamdl").setLevel(logging.WARNING)
 logging.getLogger("uvicorn.access").setLevel(logging.CRITICAL)  # replaced by middleware below
 
+# Suppress structlog debug output from gamdl internals
+try:
+    import structlog
+    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
+except Exception:
+    pass
+
 # ── Config ──
 
 COOKIES_DIR = os.environ.get("APPLE_MUSIC_COOKIES_DIR", "/app/cookies")
@@ -651,6 +658,57 @@ async def check_ip():
             }
     except Exception as e:
         return {"error": str(e), "proxy_configured": bool(SOCKS5_PROXY)}
+
+
+@app.get("/album/{album_id}")
+async def get_album(
+    album_id: str,
+    storefront: str | None = Query(None),
+):
+    """Get album details with tracks from Apple Music catalog."""
+    if not _accounts:
+        raise HTTPException(status_code=503, detail="Not initialized")
+    try:
+        account = _get_account(storefront)
+        result = await _request_with_backoff(
+            lambda: account.api.get_album(album_id),
+            description=f"get_album '{album_id}'",
+            account=account,
+        )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_album failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/artist/{artist_id}")
+async def get_artist(
+    artist_id: str,
+    storefront: str | None = Query(None),
+):
+    """Get artist details with albums from Apple Music catalog."""
+    if not _accounts:
+        raise HTTPException(status_code=503, detail="Not initialized")
+    try:
+        account = _get_account(storefront)
+        result = await _request_with_backoff(
+            lambda: account.api.get_artist(
+                artist_id,
+                include="albums",
+                views="full-albums,singles",
+                limit=100,
+            ),
+            description=f"get_artist '{artist_id}'",
+            account=account,
+        )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_artist failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/search")
