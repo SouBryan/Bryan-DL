@@ -842,8 +842,7 @@ async def download_track(
                     continue
 
                 if is_partial:
-                    logger.warning(f"Media is partial (incomplete stream info), skipping")
-                    continue
+                    logger.warning(f"Media is partial (stream info incomplete pre-download), attempting download anyway...")
 
                 await downloader.download(download_item)
                 if download_item.final_path and os.path.exists(download_item.final_path):
