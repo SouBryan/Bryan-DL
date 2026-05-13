@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py .
+COPY main.py auth.py ./
 
 # Create directories
 RUN mkdir -p /app/cookies /tmp/apple-music-processing
