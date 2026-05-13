@@ -90,20 +90,34 @@ export const createDownloadJob = async (
                         proceedDownload(objectURL, title);
                         resolve();
                     } catch (e) {
-                        if (e instanceof AxiosError && e.code === 'ERR_CANCELED') resolve();
-                        else {
-                            const errMsg = (e instanceof AxiosError && e.response?.data?.error) || (e instanceof Error ? e.message : 'An unknown error occurred');
+                        if (e instanceof AxiosError && e.code === 'ERR_CANCELED') { resolve(); return; }
+                        let errMsg = 'An unknown error occurred';
+                        if (e instanceof AxiosError && e.response?.data) {
+                            try {
+                                const text = new TextDecoder().decode(e.response.data as ArrayBuffer);
+                                const json = JSON.parse(text);
+                                errMsg = json.error || e.message || errMsg;
+                            } catch {
+                                errMsg = e.message || errMsg;
+                            }
+                        } else if (e instanceof Error) {
+                            errMsg = e.message;
+                        }
+                        console.error('[Bryan-DL] Apple Music download error:', errMsg);
+                        try {
                             toast({
                                 title: 'Error',
                                 description: errMsg,
                                 action: (
-                                    <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText((e as Error).stack!)}>
+                                    <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText(e instanceof Error ? (e.stack || errMsg) : errMsg)}>
                                         Copy Stack
                                     </ToastAction>
                                 )
                             });
-                            resolve();
+                        } catch (toastErr) {
+                            console.error('[Bryan-DL] Toast failed:', toastErr);
                         }
+                        resolve();
                     }
                 });
             });
