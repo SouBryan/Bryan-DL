@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { search, runWithTokenContext } from '@/lib/qobuz-dl-server';
-import { searchAppleMusic, lookupAppleMusicByIsrc, extractSongsFromAppleResponse, convertAppleMusicToQobuzFormat } from '@/lib/apple-music-server';
+import { searchAppleMusic, lookupAppleMusicByIsrc, extractSongsFromAppleResponse, extractAlbumsFromAppleResponse, extractArtistsFromAppleResponse, convertAppleMusicToQobuzFormat, convertAppleMusicAlbumsToQobuzFormat, convertAppleMusicArtistsToQobuzFormat } from '@/lib/apple-music-server';
 import { logRequest } from '@/lib/api-logger';
 import { checkIpGate } from '@/lib/ipgate';
 import z from 'zod';
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
                 ? runWithTokenContext(() => search(q, 10, offset, country ? { country } : {}))
                 : Promise.resolve({ _tokenSuffix: '', _tokenCountry: '', tracks: { items: [] as any[], total: 0, offset: 0, limit: 10 }, albums: { items: [] as any[], total: 0, offset: 0, limit: 10 }, artists: { items: [] as any[], total: 0, offset: 0, limit: 10 }, query: q, switchTo: null } as any),
             searchApple && offset === 0
-                ? (isIsrc ? lookupAppleMusicByIsrc(q) : searchAppleMusic(q, 10)).catch((err) => { console.error('[get-music] Apple Music search failed:', err); return null; })
+                ? (isIsrc ? lookupAppleMusicByIsrc(q) : searchAppleMusic(q, 10, undefined, 'songs,albums,artists')).catch((err) => { console.error('[get-music] Apple Music search failed:', err); return null; })
                 : Promise.resolve(null),
         ]);
 
@@ -62,29 +62,45 @@ export async function GET(request: NextRequest) {
         let mergedResults = searchResults;
         if (appleResult) {
             try {
+                // Merge songs
                 const appleSongs = extractSongsFromAppleResponse(appleResult);
-                if (appleSongs.length > 0) {
-                    // Deduplicate by ISRC: remove Apple tracks that already exist in Qobuz results
-                    const qobuzIsrcs = new Set(
-                        (searchResults?.tracks?.items || [])
-                            .map((t: any) => t.isrc?.toUpperCase())
-                            .filter(Boolean)
-                    );
-                    const uniqueAppleSongs = appleSongs.filter(
-                        (s) => !qobuzIsrcs.has(s.attributes.isrc?.toUpperCase())
-                    );
-                    if (uniqueAppleSongs.length > 0) {
-                        const appleFormatted = convertAppleMusicToQobuzFormat(uniqueAppleSongs);
-                        const qobuzItems = searchResults?.tracks?.items || [];
-                        mergedResults = {
-                            ...searchResults,
-                            tracks: {
-                                ...searchResults?.tracks,
-                                items: [...qobuzItems, ...appleFormatted.tracks.items] as any[],
-                                total: (searchResults?.tracks?.total || 0) + uniqueAppleSongs.length,
-                            },
-                        };
-                    }
+                const qobuzIsrcs = new Set(
+                    (searchResults?.tracks?.items || [])
+                        .map((t: any) => t.isrc?.toUpperCase())
+                        .filter(Boolean)
+                );
+                const uniqueAppleSongs = appleSongs.filter(
+                    (s) => !qobuzIsrcs.has(s.attributes.isrc?.toUpperCase())
+                );
+                const appleTracksFormatted = uniqueAppleSongs.length > 0 ? convertAppleMusicToQobuzFormat(uniqueAppleSongs) : null;
+
+                // Merge albums
+                const appleAlbums = extractAlbumsFromAppleResponse(appleResult);
+                const appleAlbumsFormatted = appleAlbums.length > 0 ? convertAppleMusicAlbumsToQobuzFormat(appleAlbums) : null;
+
+                // Merge artists
+                const appleArtists = extractArtistsFromAppleResponse(appleResult);
+                const appleArtistsFormatted = appleArtists.length > 0 ? convertAppleMusicArtistsToQobuzFormat(appleArtists) : null;
+
+                if (appleTracksFormatted || appleAlbumsFormatted || appleArtistsFormatted) {
+                    mergedResults = {
+                        ...searchResults,
+                        tracks: appleTracksFormatted ? {
+                            ...searchResults?.tracks,
+                            items: [...(searchResults?.tracks?.items || []), ...appleTracksFormatted.tracks.items] as any[],
+                            total: (searchResults?.tracks?.total || 0) + uniqueAppleSongs.length,
+                        } : searchResults?.tracks,
+                        albums: appleAlbumsFormatted ? {
+                            ...searchResults?.albums,
+                            items: [...(searchResults?.albums?.items || []), ...appleAlbumsFormatted.albums.items] as any[],
+                            total: (searchResults?.albums?.total || 0) + appleAlbums.length,
+                        } : searchResults?.albums,
+                        artists: appleArtistsFormatted ? {
+                            ...searchResults?.artists,
+                            items: [...(searchResults?.artists?.items || []), ...appleArtistsFormatted.artists.items] as any[],
+                            total: (searchResults?.artists?.total || 0) + appleArtists.length,
+                        } : searchResults?.artists,
+                    };
                 }
             } catch (appleErr) {
                 console.error('[get-music] Apple Music merge failed:', appleErr);

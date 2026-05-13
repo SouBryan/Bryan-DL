@@ -9,8 +9,8 @@ const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || 'https://cdn.bryanhifi.dpdns.
 
 // ── Sidecar HTTP calls ──
 
-export async function searchAppleMusic(term: string, limit: number = 10, storefront?: string) {
-    let url = `${APPLE_MUSIC_API_URL}/search?term=${encodeURIComponent(term)}&limit=${limit}&types=songs`;
+export async function searchAppleMusic(term: string, limit: number = 10, storefront?: string, types: string = 'songs') {
+    let url = `${APPLE_MUSIC_API_URL}/search?term=${encodeURIComponent(term)}&limit=${limit}&types=${encodeURIComponent(types)}`;
     if (storefront) url += `&storefront=${encodeURIComponent(storefront)}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) {
@@ -116,7 +116,7 @@ export function convertAppleMusicToQobuzFormat(songs: AppleMusicSong[]) {
             media_number: song.attributes.discNumber,
             isrc: song.attributes.isrc,
             copyright: '',
-            released_at: new Date(song.attributes.releaseDate).getTime() / 1000,
+            released_at: song.attributes.releaseDate ? new Date(song.attributes.releaseDate).getTime() / 1000 : 0,
             version: null,
             parental_warning: false,
             maximum_bit_depth: 16,
@@ -149,7 +149,8 @@ export function convertAppleMusicToQobuzFormat(songs: AppleMusicSong[]) {
                     id: 0,
                     name: song.attributes.artistName,
                 },
-                release_date_original: song.attributes.releaseDate,
+                released_at: song.attributes.releaseDate ? new Date(song.attributes.releaseDate).getTime() / 1000 : 0,
+                release_date_original: song.attributes.releaseDate || '',
                 genre: {
                     id: 0,
                     name: song.attributes.genreNames?.[0] || 'Unknown',
@@ -197,3 +198,90 @@ export function extractSongsFromAppleResponse(response: any): AppleMusicSong[] {
 
     return songs;
 }
+
+export function extractAlbumsFromAppleResponse(response: any): any[] {
+    if (!response) return [];
+    return response?.results?.albums?.data || [];
+}
+
+export function extractArtistsFromAppleResponse(response: any): any[] {
+    if (!response) return [];
+    return response?.results?.artists?.data || [];
+}
+
+export function convertAppleMusicAlbumsToQobuzFormat(albums: any[]) {
+    const items = albums.map((album) => {
+        const artworkUrl = album.attributes.artwork?.url
+            ?.replace('{w}', '600')
+            ?.replace('{h}', '600') || '';
+        const releasedAt = album.attributes.releaseDate ? new Date(album.attributes.releaseDate).getTime() / 1000 : 0;
+        return {
+            id: `apple:${album.id}`,
+            title: album.attributes.name,
+            artist: { id: 0, name: album.attributes.artistName },
+            artists: [],
+            released_at: releasedAt,
+            release_date_original: album.attributes.releaseDate || '',
+            image: {
+                small: artworkUrl.replace('600x600', '150x150'),
+                thumbnail: artworkUrl.replace('600x600', '300x300'),
+                large: artworkUrl,
+                back: null,
+            },
+            tracks_count: album.attributes.trackCount || 0,
+            duration: Math.round((album.attributes.durationInMillis || 0) / 1000),
+            genre: { id: 0, name: album.attributes.genreNames?.[0] || 'Unknown', path: [], color: '' },
+            label: { id: 0, name: '', albums_count: 0 },
+            maximum_bit_depth: 16,
+            maximum_sampling_rate: 44.1,
+            hires: false,
+            hires_streamable: false,
+            streamable: true,
+            displayable: true,
+            parental_warning: false,
+            version: null,
+            qobuz_id: 0,
+            upc: '',
+            _source: 'apple-music',
+            _storefront: album._storefront,
+        };
+    });
+    return {
+        albums: {
+            items,
+            total: items.length,
+            offset: 0,
+            limit: items.length,
+        },
+    };
+}
+
+export function convertAppleMusicArtistsToQobuzFormat(artists: any[]) {
+    const items = artists.map((artist) => {
+        const artworkUrl = artist.attributes.artwork?.url
+            ?.replace('{w}', '600')
+            ?.replace('{h}', '600') || null;
+        return {
+            id: `apple:${artist.id}`,
+            name: artist.attributes.name,
+            image: artworkUrl ? {
+                small: artworkUrl.replace('600x600', '150x150'),
+                medium: artworkUrl.replace('600x600', '300x300'),
+                large: artworkUrl,
+                extralarge: artworkUrl,
+                mega: artworkUrl,
+            } : null,
+            albums_count: 0,
+            _source: 'apple-music',
+        };
+    });
+    return {
+        artists: {
+            items,
+            total: items.length,
+            offset: 0,
+            limit: items.length,
+        },
+    };
+}
+

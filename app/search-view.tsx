@@ -252,8 +252,7 @@ const SearchView = () => {
     }, [country]);
 
     useEffect(() => {
-        if (musicSource === 'apple-music') setSearchField('tracks');
-        if (query) onSearch(query, musicSource === 'apple-music' ? 'tracks' : searchField);
+        if (query) onSearch(query, searchField);
     }, [musicSource]);
 
     return (

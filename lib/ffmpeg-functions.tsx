@@ -73,15 +73,16 @@ export async function applyMetadata(
                 } else return prev;
             });
         await ffmpeg.FS('writeFile', 'input.' + inputExtension, new Uint8Array(trackBuffer));
+        const losslessCodecs = ['FLAC', 'WAV', 'ALAC'];
+        const bitrateArgs = !losslessCodecs.includes(settings.outputCodec) && settings.bitrate
+            ? ['-b:a', settings.bitrate + 'k']
+            : [];
+        const opusArgs = settings.outputCodec === 'OPUS' ? ['-vbr', 'on'] : [];
         await ffmpeg.run(
-            '-i',
-            'input.' + inputExtension,
-            '-c:a',
-            codecMap[settings.outputCodec].codec,
-            settings.bitrate ? '-b:a' : '',
-            settings.bitrate ? settings.bitrate + 'k' : '',
-            ['OPUS'].includes(settings.outputCodec) ? '-vbr' : '',
-            ['OPUS'].includes(settings.outputCodec) ? 'on' : '',
+            '-i', 'input.' + inputExtension,
+            '-c:a', codecMap[settings.outputCodec].codec,
+            ...bitrateArgs,
+            ...opusArgs,
             'output.' + extension
         );
         trackBuffer = await ffmpeg.FS('readFile', 'output.' + extension);

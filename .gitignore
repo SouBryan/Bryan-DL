@@ -63,3 +63,6 @@ soundcloud/cache/
 SOUNDCLOUD_PLAN.md
 soundcloud_test/
 *.wvd
+
+logs
+*.txt

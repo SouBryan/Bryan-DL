@@ -45,6 +45,12 @@ from gamdl.interface import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("apple-music-api")
 
+# Suppress verbose third-party loggers
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("gamdl").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.access").setLevel(logging.CRITICAL)  # replaced by middleware below
+
 # ── Config ──
 
 COOKIES_DIR = os.environ.get("APPLE_MUSIC_COOKIES_DIR", "/app/cookies")
@@ -541,6 +547,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Apple Music Sidecar", lifespan=lifespan)
 
 
+@app.middleware("http")
+async def access_log_middleware(request, call_next):
+    start = datetime.now(timezone.utc)
+    response = await call_next(request)
+    elapsed_ms = int((datetime.now(timezone.utc) - start).total_seconds() * 1000)
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "-").split(",")[0].strip()
+    ts = start.strftime("%d/%m %H:%M:%S")
+    logger.info(f"{client_ip} | {ts} | {request.method} {request.url.path} → {response.status_code} ({elapsed_ms}ms)")
+    return response
+
+
 # ── Endpoints ──
 
 
@@ -662,7 +679,11 @@ async def search(
         else:
             # Search all storefronts, merge results
             all_songs = []
+            all_albums = []
+            all_artists = []
             seen_isrcs = set()
+            seen_album_ids = set()
+            seen_artist_ids = set()
             for sf, account in _accounts.items():
                 if account.api is None:
                     continue
@@ -681,17 +702,34 @@ async def search(
                         if isrc:
                             seen_isrcs.add(isrc)
                         all_songs.append(song)
+                    albums = results.get("results", {}).get("albums", {}).get("data", [])
+                    for album in albums:
+                        album_id = album.get("id", "")
+                        album["_storefront"] = account.storefront
+                        if album_id in seen_album_ids:
+                            continue
+                        seen_album_ids.add(album_id)
+                        all_albums.append(album)
+                    artists = results.get("results", {}).get("artists", {}).get("data", [])
+                    for artist in artists:
+                        artist_id = artist.get("id", "")
+                        artist["_storefront"] = account.storefront
+                        if artist_id in seen_artist_ids:
+                            continue
+                        seen_artist_ids.add(artist_id)
+                        all_artists.append(artist)
                 except Exception as e:
                     logger.warning(f"Search on {sf} failed: {e}")
 
             # Return merged results in standard format
-            return {
-                "results": {
-                    "songs": {
-                        "data": all_songs[:limit],
-                    }
-                }
-            }
+            merged: dict = {"results": {}}
+            if all_songs:
+                merged["results"]["songs"] = {"data": all_songs[:limit]}
+            if all_albums:
+                merged["results"]["albums"] = {"data": all_albums[:limit]}
+            if all_artists:
+                merged["results"]["artists"] = {"data": all_artists[:limit]}
+            return merged
     except HTTPException:
         raise
     except Exception as e:
@@ -700,10 +738,11 @@ async def search(
 
 
 def _tag_results_with_storefront(results: dict, storefront: str):
-    """Add _storefront field to each song in results."""
-    songs = results.get("results", {}).get("songs", {}).get("data", [])
-    for song in songs:
-        song["_storefront"] = storefront
+    """Add _storefront field to each item in results (songs, albums, artists)."""
+    for item_type in ("songs", "albums", "artists"):
+        items = results.get("results", {}).get(item_type, {}).get("data", [])
+        for item in items:
+            item["_storefront"] = storefront
 
 
 @app.get("/lookup-isrc")
