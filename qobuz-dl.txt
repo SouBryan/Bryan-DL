@@ -1,24 +1,941 @@
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:33 | GET /api/get-music?q=ma&offset=0 https → 200 (1072ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:33 | GET /api/get-music?q=mar&offset=0 https → 200 (1013ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:34 | GET /api/get-music?q=markosa+&offset=0 https → 200 (655ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:35 | GET /api/get-music?q=markosa+jo&offset=0 https → 200 (835ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:35 | GET /api/get-music?q=markosa+joseph&offset=0 https → 200 (676ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:35 | GET /api/get-music?q=markosa+josep&offset=0 https → 200 (1021ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:36 | GET /api/get-music?q=markosa+josephi&offset=0 https → 200 (752ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:36 | GET /api/get-music?q=markosa+j&offset=0 https → 200 (2425ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:36 | GET /api/get-music?q=markosa+josephine+2020&offset=0 https → 200 (536ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:38 | GET /api/get-music?q=markosa+josephine+2020&offset=0 https → 200 (344ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:46 | GET /api/get-album?album_id=ctdto2hojwi1a https → 200 (304ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:47 | GET /api/download-music?track_id=92953693&quality=5 https → 200 (259ms) | Chrome/148 Win | ...cErP8Q BR
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:55 | GET /api/get-album?album_id=apple%3A1703161156 https → 200 (275ms) | Chrome/148 Win | ------ ??
-[apple-music] Download failed: 404
-2406:3003:2004:1ed9:4c78:a40f:9a92:2151 | 13/05 03:20:57 | GET /api/download-music?track_id=apple%3A1703161157&codec=MP3 https → 404 (2132ms) | Chrome/148 Win | ------ ??
-109.185.90.143 | 13/05 03:22:50 | GET /api/get-music?q=QZWFK2358265&offset=0 https → 200 (559ms) | Safari/26 iOS | ...XlVO6w FR
-[apple-music] Download failed: 404
-109.185.90.143 | 13/05 03:22:52 | GET /api/download-music?track_id=apple%3A1726080200&quality=6 https → 404 (1399ms) | Safari/26 iOS | ------ ??
-131.100.63.63 | 13/05 03:23:22 | GET /api/get-artist?artist_id=apple%3A1463002072 https → 200 (281ms) | Chrome/142 Win | ------ ??
-131.100.63.63 | 13/05 03:23:53 | GET /api/get-album?album_id=apple%3A1657572430 https → 200 (249ms) | Chrome/142 Win | ------ ??
-[apple-music] Download failed: 404
-131.100.63.63 | 13/05 03:23:54 | GET /api/download-music?track_id=apple%3A1657572431&quality=27 https → 404 (1071ms) | Chrome/142 Win | ------ ??
-[apple-music] Download failed: 404
-131.100.63.63 | 13/05 03:24:05 | GET /api/download-music?track_id=apple%3A1657572431&quality=27 https → 404 (1108ms) | Chrome/142 Win | ------ ??
+ubuntu@oracle-vps-definitive:~/home-server/qobuz-dl$ docker compose logs qobuz-dl
+qobuz-dl  |    ▲ Next.js 15.5.4
+qobuz-dl  |    - Local:        http://localhost:3000
+qobuz-dl  |    - Network:      http://0.0.0.0:3000
+qobuz-dl  | 
+qobuz-dl  |  ✓ Starting...
+qobuz-dl  |  ✓ Ready in 135ms
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:09:25 | GET /api/get-music?q=QZDA41961439&offset=0 https → 200 (776ms) | Chrome/148 Android | ...0GzptA BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:33 | GET /api/get-music?q=Luis+albe&offset=0 https → 200 (1103ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:33 | GET /api/get-music?q=Luis+Alberto+&offset=0 https → 200 (1046ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:34 | GET /api/get-music?q=Luis+Alberto+sp&offset=0 https → 200 (934ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:34 | GET /api/get-music?q=Luis+Alberto+Spinetta+&offset=0 https → 200 (986ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:34 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=0 https → 200 (876ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:35 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=0 https → 200 (436ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:39 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=11 https → 200 (872ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:40 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=21 https → 200 (852ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:43 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=31 https → 200 (841ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:44 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=41 https → 200 (979ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:09:46 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=51 https → 200 (944ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:09:58 | GET /api/get-music?q=QZDA41961439&offset=0 https → 200 (483ms) | Chrome/148 Android | ...3eUWRg GB
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:00 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=61 https → 200 (834ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:02 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=71 https → 200 (1485ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:07 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=81 https → 200 (781ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:08 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=91 https → 200 (858ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:08 | GET /api/get-album?album_id=irj664dax2sub https → 200 (361ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:45 | GET /api/get-music?q=Luis+Alberto+&offset=0 https → 200 (603ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:46 | GET /api/get-music?q=Luis+alve&offset=0 https → 200 (1167ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:46 | GET /api/get-music?q=Luis+Alberto+Spinetta+&offset=0 https → 200 (301ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:47 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=0 https → 200 (799ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:48 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=0 https → 200 (765ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:48 | GET /api/get-artist?artist_id=65691 https → 200 (783ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:51 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=0 https → 200 (939ms) | Chrome/148 Android | ...7VAvqQ US
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:10:53 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=0 https → 200 (362ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:01 | GET /api/get-album?album_id=0886446209272 https → 200 (444ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:05 | GET /api/download-music?track_id=36598567&quality=27 https → 200 (284ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:12 | GET /api/download-music?track_id=36598568&quality=27 https → 200 (373ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:23 | GET /api/download-music?track_id=36598569&quality=27 https → 200 (265ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:26 | GET /api/download-music?track_id=36598570&quality=27 https → 200 (394ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:26 | GET /api/download-music?track_id=36598571&quality=27 https → 200 (306ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:27 | GET /api/download-music?track_id=36598572&quality=27 https → 200 (314ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:27 | GET /api/download-music?track_id=36598573&quality=27 https → 200 (310ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:28 | GET /api/download-music?track_id=36598574&quality=27 https → 200 (303ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:28 | GET /api/download-music?track_id=36598575&quality=27 https → 200 (276ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:28 | GET /api/download-music?track_id=36598576&quality=27 https → 200 (358ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:28 | GET /api/download-music?track_id=36598577&quality=27 https → 200 (268ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:28 | GET /api/download-music?track_id=36598578&quality=27 https → 200 (291ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:28 | GET /api/download-music?track_id=36598579&quality=27 https → 200 (341ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:29 | GET /api/download-music?track_id=36598580&quality=27 https → 200 (295ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:29 | GET /api/download-music?track_id=36598581&quality=27 https → 200 (300ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:29 | GET /api/download-music?track_id=36598582&quality=27 https → 200 (323ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:29 | GET /api/download-music?track_id=36598583&quality=27 https → 200 (290ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:30 | GET /api/download-music?track_id=36598584&quality=27 https → 200 (282ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:30 | GET /api/download-music?track_id=36598585&quality=27 https → 200 (323ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:30 | GET /api/download-music?track_id=36598586&quality=27 https → 200 (266ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:30 | GET /api/download-music?track_id=36598587&quality=27 https → 200 (299ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:30 | GET /api/download-music?track_id=36598588&quality=27 https → 200 (290ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:31 | GET /api/download-music?track_id=36598589&quality=27 https → 200 (321ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:31 | GET /api/download-music?track_id=36598590&quality=27 https → 200 (401ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:31 | GET /api/download-music?track_id=36598591&quality=27 https → 200 (286ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:31 | GET /api/download-music?track_id=36598592&quality=27 https → 200 (250ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:31 | GET /api/download-music?track_id=36598593&quality=27 https → 200 (253ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:31 | GET /api/download-music?track_id=36598594&quality=27 https → 200 (274ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:32 | GET /api/download-music?track_id=36598595&quality=27 https → 200 (279ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:32 | GET /api/download-music?track_id=36598596&quality=27 https → 200 (334ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:32 | GET /api/download-music?track_id=36598597&quality=27 https → 200 (309ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:32 | GET /api/download-music?track_id=36598599&quality=27 https → 200 (262ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:32 | GET /api/download-music?track_id=36598598&quality=27 https → 200 (434ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:33 | GET /api/download-music?track_id=36598600&quality=27 https → 200 (426ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:33 | GET /api/download-music?track_id=36598601&quality=27 https → 200 (302ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:33 | GET /api/download-music?track_id=36598602&quality=27 https → 200 (273ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:33 | GET /api/download-music?track_id=36598603&quality=27 https → 200 (283ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:33 | GET /api/download-music?track_id=36598604&quality=27 https → 200 (310ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:33 | GET /api/download-music?track_id=36598605&quality=27 https → 200 (299ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:33 | GET /api/download-music?track_id=36598606&quality=27 https → 200 (270ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:34 | GET /api/download-music?track_id=36598607&quality=27 https → 200 (318ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:34 | GET /api/download-music?track_id=36598608&quality=27 https → 200 (305ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:34 | GET /api/download-music?track_id=36598609&quality=27 https → 200 (269ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:35 | GET /api/download-music?track_id=36598610&quality=27 https → 200 (415ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:35 | GET /api/download-music?track_id=36598611&quality=27 https → 200 (404ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:35 | GET /api/download-music?track_id=36598612&quality=27 https → 200 (309ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:35 | GET /api/download-music?track_id=36598613&quality=27 https → 200 (257ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:11:35 | GET /api/download-music?track_id=36598614&quality=27 https → 200 (391ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:01 | GET /api/get-music?q=Luis+alb&offset=0 https → 200 (15014ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:01 | GET /api/get-music?q=Luis+Alberto+&offset=0 https → 200 (15005ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:01 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=0 https → 200 (14240ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:01 | GET /api/get-music?q=Luis+Alberto+s&offset=0 https → 200 (15003ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:02 | GET /api/get-music?q=Luis+Alberto+Spinetta+&offset=0 https → 200 (15003ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:02 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=0 https → 200 (302ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:09 | GET /api/get-album?album_id=0886446209272 https → 200 (288ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:09 | GET /api/download-music?track_id=36598567&quality=27 https → 200 (270ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:10 | GET /api/download-music?track_id=36598568&quality=27 https → 200 (285ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:11 | GET /api/download-music?track_id=36598569&quality=27 https → 200 (297ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:11 | GET /api/download-music?track_id=36598570&quality=27 https → 200 (257ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:12 | GET /api/download-music?track_id=36598571&quality=27 https → 200 (276ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:13 | GET /api/download-music?track_id=36598572&quality=27 https → 200 (257ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:14 | GET /api/download-music?track_id=36598573&quality=27 https → 200 (306ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:14 | GET /api/download-music?track_id=36598574&quality=27 https → 200 (246ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:16 | GET /api/download-music?track_id=36598575&quality=27 https → 200 (284ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:16 | GET /api/download-music?track_id=36598576&quality=27 https → 200 (307ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:17 | GET /api/download-music?track_id=36598577&quality=27 https → 200 (289ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:18 | GET /api/download-music?track_id=36598578&quality=27 https → 200 (256ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:19 | GET /api/download-music?track_id=36598579&quality=27 https → 200 (276ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:20 | GET /api/download-music?track_id=36598580&quality=27 https → 200 (284ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:20 | GET /api/download-music?track_id=36598581&quality=27 https → 200 (304ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:22 | GET /api/download-music?track_id=36598582&quality=27 https → 200 (245ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:22 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=11 https → 200 (238ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:22 | GET /api/download-music?track_id=36598583&quality=27 https → 200 (265ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:22 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=21 https → 200 (237ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:23 | GET /api/download-music?track_id=36598584&quality=27 https → 200 (395ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:24 | GET /api/download-music?track_id=36598585&quality=27 https → 200 (257ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:25 | GET /api/download-music?track_id=36598586&quality=27 https → 200 (258ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:25 | GET /api/download-music?track_id=36598587&quality=27 https → 200 (313ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:26 | GET /api/download-music?track_id=36598588&quality=27 https → 200 (264ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:27 | GET /api/download-music?track_id=36598589&quality=27 https → 200 (249ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:28 | GET /api/download-music?track_id=36598590&quality=27 https → 200 (277ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:29 | GET /api/download-music?track_id=36598591&quality=27 https → 200 (261ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:29 | GET /api/download-music?track_id=36598592&quality=27 https → 200 (423ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:30 | GET /api/download-music?track_id=36598593&quality=27 https → 200 (267ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:31 | GET /api/download-music?track_id=36598594&quality=27 https → 200 (323ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:32 | GET /api/download-music?track_id=36598595&quality=27 https → 200 (293ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:33 | GET /api/download-music?track_id=36598596&quality=27 https → 200 (300ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:34 | GET /api/download-music?track_id=36598597&quality=27 https → 200 (330ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:34 | GET /api/download-music?track_id=36598598&quality=27 https → 200 (252ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:35 | GET /api/download-music?track_id=36598599&quality=27 https → 200 (297ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:36 | GET /api/download-music?track_id=36598600&quality=27 https → 200 (440ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:36 | GET /api/download-music?track_id=36598601&quality=27 https → 200 (287ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:37 | GET /api/download-music?track_id=36598602&quality=27 https → 200 (282ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:38 | GET /api/download-music?track_id=36598603&quality=27 https → 200 (269ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:38 | GET /api/download-music?track_id=36598604&quality=27 https → 200 (317ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:39 | GET /api/download-music?track_id=36598605&quality=27 https → 200 (282ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:40 | GET /api/download-music?track_id=36598606&quality=27 https → 200 (275ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:41 | GET /api/download-music?track_id=36598607&quality=27 https → 200 (286ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:42 | GET /api/download-music?track_id=36598608&quality=27 https → 200 (323ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:43 | GET /api/download-music?track_id=36598609&quality=27 https → 200 (248ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:44 | GET /api/download-music?track_id=36598610&quality=27 https → 200 (296ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:45 | GET /api/download-music?track_id=36598611&quality=27 https → 200 (319ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:46 | GET /api/download-music?track_id=36598612&quality=27 https → 200 (320ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:46 | GET /api/download-music?track_id=36598613&quality=27 https → 200 (264ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:47 | GET /api/download-music?track_id=36598614&quality=27 https → 200 (284ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:17:54 | GET /api/get-album?album_id=0060251767222 https → 200 (514ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:13 | GET /api/get-album?album_id=0077779824359 https → 200 (386ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:14 | GET /api/download-music?track_id=6063165&quality=27 https → 200 (269ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:14 | GET /api/download-music?track_id=6063166&quality=27 https → 200 (266ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:15 | GET /api/download-music?track_id=6063167&quality=27 https → 200 (295ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:16 | GET /api/download-music?track_id=6063168&quality=27 https → 200 (427ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:17 | GET /api/download-music?track_id=6063169&quality=27 https → 200 (258ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:18 | GET /api/download-music?track_id=6063170&quality=27 https → 200 (305ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:18 | GET /api/download-music?track_id=6063171&quality=27 https → 200 (261ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:19 | GET /api/download-music?track_id=6063172&quality=27 https → 200 (338ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:20 | GET /api/download-music?track_id=6063173&quality=27 https → 200 (265ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:21 | GET /api/download-music?track_id=6063174&quality=27 https → 200 (275ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:22 | GET /api/download-music?track_id=6063175&quality=27 https → 200 (308ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:22 | GET /api/download-music?track_id=6063176&quality=27 https → 200 (276ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:23 | GET /api/download-music?track_id=6063177&quality=27 https → 200 (319ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:24 | GET /api/download-music?track_id=6063178&quality=27 https → 200 (306ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:18:25 | GET /api/download-music?track_id=6063179&quality=27 https → 200 (274ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:03 | GET /api/get-album?album_id=0886443387348 https → 200 (439ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:14 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=31 https → 200 (231ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:15 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=41 https → 200 (250ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:20 | GET /api/get-album?album_id=nb8sf62wxa3ac https → 200 (352ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:19:30 | GET /api/get-music?q=QZNJX2223595&offset=0 https → 200 (483ms) | Chrome/148 Android | ...NcXFSw BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:31 | GET /api/get-album?album_id=0828768790526 https → 200 (390ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:31 | GET /api/download-music?track_id=3503656&quality=27 https → 200 (332ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:32 | GET /api/download-music?track_id=3503657&quality=27 https → 200 (264ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | [apple-music] Download failed: 403 — Decryption not available for track 1790771746. The Apple Music account may not have an active subscription.
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:19:33 | GET /api/download-music?track_id=apple%3A1790771746&quality=6 https → 403 (2686ms) | Chrome/148 Android | ------ ??
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:33 | GET /api/download-music?track_id=3503658&quality=27 https → 200 (318ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:35 | GET /api/download-music?track_id=3503659&quality=27 https → 200 (317ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:37 | GET /api/download-music?track_id=3503660&quality=27 https → 200 (264ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:39 | GET /api/download-music?track_id=3503661&quality=27 https → 200 (303ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:40 | GET /api/download-music?track_id=3503662&quality=27 https → 200 (335ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:41 | GET /api/download-music?track_id=3503663&quality=27 https → 200 (314ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:43 | GET /api/download-music?track_id=3503664&quality=27 https → 200 (280ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:44 | GET /api/download-music?track_id=3503665&quality=27 https → 200 (271ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:45 | GET /api/download-music?track_id=3503666&quality=27 https → 200 (309ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:48 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=51 https → 200 (274ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:19:50 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=61 https → 200 (1206ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:19:57 | GET /api/get-music?q=QZNJX2223595&offset=0 https → 200 (604ms) | Chrome/148 Android | ...XlVO6w FR
+qobuz-dl  | [apple-music] Download failed: 403 — Decryption not available for track 1790771746. The Apple Music account may not have an active subscription.
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:19:58 | GET /api/download-music?track_id=apple%3A1790771746&quality=5 https → 403 (1345ms) | Chrome/148 Android | ------ ??
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:20:03 | GET /api/get-album?album_id=vx8i6c7t2p6cb https → 200 (525ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:20:16 | GET /api/get-album?album_id=cylqaqr3j8rbb https → 200 (455ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:20:41 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=71 https → 200 (967ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:20:42 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=81 https → 200 (237ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:20:57 | GET /api/get-album?album_id=0060249888422 https → 200 (409ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:20:58 | GET /api/download-music?track_id=2441803&quality=27 https → 200 (302ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:20:59 | GET /api/download-music?track_id=2441804&quality=27 https → 200 (270ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:00 | GET /api/download-music?track_id=2441805&quality=27 https → 200 (272ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:01 | GET /api/download-music?track_id=2441806&quality=27 https → 200 (494ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:02 | GET /api/download-music?track_id=2441807&quality=27 https → 200 (300ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:03 | GET /api/download-music?track_id=2441808&quality=27 https → 200 (305ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:04 | GET /api/download-music?track_id=2441809&quality=27 https → 200 (303ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:04 | GET /api/download-music?track_id=2441810&quality=27 https → 200 (261ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:05 | GET /api/download-music?track_id=2441811&quality=27 https → 200 (282ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:06 | GET /api/download-music?track_id=2441812&quality=27 https → 200 (279ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:07 | GET /api/download-music?track_id=2441813&quality=27 https → 200 (292ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:08 | GET /api/download-music?track_id=2441814&quality=27 https → 200 (252ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:08 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=91 https → 200 (251ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:09 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=101 https → 200 (838ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:17 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=111 https → 200 (892ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:19 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=121 https → 200 (815ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:43 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=131 https → 200 (975ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:44 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=141 https → 200 (807ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:48 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=151 https → 200 (868ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2800:e2:cf80:57b:3481:1de4:87b5:5988 | 13/05 19:21:49 | GET /api/get-music?q=Luis+Alberto+Spinetta&offset=161 https → 200 (883ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:30:43 | GET /api/get-music?q=QZMEM2071351&offset=0 https → 200 (749ms) | Chrome/148 Android | ...cErP8Q BR
+qobuz-dl  | [apple-music] Download failed: 403 — Decryption not available for track 1833239969. The Apple Music account may not have an active subscription.
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:30:46 | GET /api/download-music?track_id=apple%3A1833239969&quality=6 https → 403 (1921ms) | Chrome/148 Android | ------ ??
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:30:50 | GET /api/get-music?q=QZMEM2071351&offset=0 https → 200 (552ms) | Chrome/148 Android | ...3eUWRg GB
+qobuz-dl  | [apple-music] Download failed: 403 — Decryption not available for track 1833239969. The Apple Music account may not have an active subscription.
+qobuz-dl  | 2600:387:15:6a1b::3 | 13/05 19:30:52 | GET /api/download-music?track_id=apple%3A1833239969&quality=5 https → 403 (1174ms) | Chrome/148 Android | ------ ??
+qobuz-dl  | 24.252.217.243 | 13/05 19:33:49 | GET /api/get-music?q=Remezclados&offset=45 https → 200 (1060ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:33:50 | GET /api/get-music?q=Remezclados&offset=55 https → 200 (738ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:36:55 | GET /api/get-music?q=Remezclados&offset=0 https → 200 (15001ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:01 | GET /api/get-music?q=My+&offset=0 https → 200 (11636ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:06 | GET /api/get-music?q=My+Family&offset=0 https → 200 (15005ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:06 | GET /api/get-music?q=My+Family&offset=0 https → 200 (15001ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:12 | GET /api/get-music?q=M&offset=0 https → 200 (680ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:13 | GET /api/get-music?q=Myy&offset=0 https → 200 (842ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:13 | GET /api/get-music?q=My&offset=0 https → 200 (644ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:14 | GET /api/get-music?q=My+&offset=0 https → 200 (1390ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:14 | GET /api/get-music?q=My+Famo&offset=0 https → 200 (1015ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:15 | GET /api/get-music?q=My+Fam&offset=0 https → 200 (1068ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:30 | GET /api/get-music?q=My+Family&offset=0 https → 200 (15004ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:30 | GET /api/get-music?q=My+Family&offset=0 https → 200 (15005ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:31 | GET /api/get-music?q=My+Family&offset=10 https → 200 (1022ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:33 | GET /api/get-music?q=My+Family&offset=20 https → 200 (1286ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:34 | GET /api/get-music?q=My+Family&offset=30 https → 200 (941ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:43 | GET /api/get-music?q=My+Family&offset=40 https → 200 (992ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:45 | GET /api/get-music?q=My+Family&offset=50 https → 200 (1396ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:45 | GET /api/get-music?q=My+Family&offset=0 https → 200 (15006ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:50 | GET /api/get-music?q=My+Family&offset=60 https → 200 (1325ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:51 | GET /api/get-music?q=My+Family&offset=70 https → 200 (1046ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:52 | GET /api/get-music?q=My+Family&offset=80 https → 200 (1083ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:54 | GET /api/get-music?q=My+Family&offset=90 https → 200 (1243ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:55 | GET /api/get-music?q=My+Family&offset=100 https → 200 (989ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:57 | GET /api/get-music?q=My+Family&offset=110 https → 200 (1006ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:37:58 | GET /api/get-music?q=My+Family&offset=120 https → 200 (1048ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:38:01 | GET /api/get-music?q=My+Family&offset=130 https → 200 (1074ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:38:02 | GET /api/get-music?q=My+Family&offset=140 https → 200 (1058ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:38:05 | GET /api/get-music?q=My+Family&offset=150 https → 200 (1053ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:38:07 | GET /api/get-music?q=My+Family&offset=160 https → 200 (1060ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:38:26 | GET /api/get-music?q=My+Family&offset=0 https → 200 (15002ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:38:41 | GET /api/get-music?q=My+Family&offset=0 https → 200 (15001ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | 24.252.217.243 | 13/05 19:39:03 | GET /api/get-music?q=My+Family&offset=0 https → 200 (8278ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:39:50 | GET /api/get-music?q=lo&offset=0 https → 200 (15004ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:39:53 | GET /api/get-music?q=los+&offset=0 https → 200 (15003ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:44:15 | GET /api/get-music?q=Mageuy&offset=0 https → 200 (989ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:44:16 | GET /api/get-music?q=Mage&offset=0 https → 200 (1097ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:44:16 | GET /api/get-music?q=Mag&offset=0 https → 200 (946ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:44:17 | GET /api/get-music?q=Maguey&offset=0 https → 200 (847ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | 24.252.217.243 | 13/05 19:44:17 | GET /api/get-music?q=Maguey&offset=0 https → 200 (1249ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:44:22 | GET /api/get-artist?artist_id=apple%3A297953 https → 200 (407ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:45:02 | GET /api/get-music?q=Maguey&offset=0 https → 200 (15004ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:45:04 | GET /api/get-music?q=Los&offset=0 https → 200 (15004ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:46:06 | GET /api/get-music?q=ko&offset=0 https → 200 (1022ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:46:12 | GET /api/get-music?q=m&offset=0 https → 200 (539ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:46:20 | GET /api/get-music?q=li&offset=0 https → 200 (912ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:46:21 | GET /api/get-music?q=liber&offset=0 https → 200 (1462ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:46:35 | GET /api/get-music?q=liberacion&offset=0 https → 200 (15004ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:46:35 | GET /api/get-music?q=liberacion&offset=0 https → 200 (15002ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:46:59 | GET /api/get-music?q=liberacion&offset=0 https → 200 (15003ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:47:01 | GET /api/get-music?q=liberacion&offset=0 https → 200 (13880ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | 24.252.217.243 | 13/05 19:47:03 | GET /api/get-artist?artist_id=apple%3A1977288 https → 200 (230ms) | Chrome/147 Win | ------ ??
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:47:53 | GET /api/get-music?q=liberacion&offset=0 https → 200 (15005ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:49:02 | GET /api/get-music?q=lo&offset=0 https → 200 (5857ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:49:04 | GET /api/get-music?q=lo&offset=0 https → 200 (9140ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | 24.252.217.243 | 13/05 19:49:05 | GET /api/get-music?q=lord&offset=0 https → 200 (8258ms) | Chrome/147 Win | ...7VAvqQ US
+qobuz-dl  | [get-music] Apple Music search failed: Error [TimeoutError]: The operation was aborted due to timeout
+qobuz-dl  |     at async f (.next/server/app/api/download-music/route.js:1:9279)
+qobuz-dl  |     at async l (.next/server/app/api/get-music/route.js:1:7225)
+qobuz-dl  |     at async k (.next/server/app/api/get-music/route.js:1:3046)
+qobuz-dl  |     at async g (.next/server/app/api/get-music/route.js:1:4049) {
+qobuz-dl  |   code: 23,
+qobuz-dl  |   INDEX_SIZE_ERR: 1,
+qobuz-dl  |   DOMSTRING_SIZE_ERR: 2,
+qobuz-dl  |   HIERARCHY_REQUEST_ERR: 3,
+qobuz-dl  |   WRONG_DOCUMENT_ERR: 4,
+qobuz-dl  |   INVALID_CHARACTER_ERR: 5,
+qobuz-dl  |   NO_DATA_ALLOWED_ERR: 6,
+qobuz-dl  |   NO_MODIFICATION_ALLOWED_ERR: 7,
+qobuz-dl  |   NOT_FOUND_ERR: 8,
+qobuz-dl  |   NOT_SUPPORTED_ERR: 9,
+qobuz-dl  |   INUSE_ATTRIBUTE_ERR: 10,
+qobuz-dl  |   INVALID_STATE_ERR: 11,
+qobuz-dl  |   SYNTAX_ERR: 12,
+qobuz-dl  |   INVALID_MODIFICATION_ERR: 13,
+qobuz-dl  |   NAMESPACE_ERR: 14,
+qobuz-dl  |   INVALID_ACCESS_ERR: 15,
+qobuz-dl  |   VALIDATION_ERR: 16,
+qobuz-dl  |   TYPE_MISMATCH_ERR: 17,
+qobuz-dl  |   SECURITY_ERR: 18,
+qobuz-dl  |   NETWORK_ERR: 19,
+qobuz-dl  |   ABORT_ERR: 20,
+qobuz-dl  |   URL_MISMATCH_ERR: 21,
+qobuz-dl  |   QUOTA_EXCEEDED_ERR: 22,
+qobuz-dl  |   TIMEOUT_ERR: 23,
+qobuz-dl  |   INVALID_NODE_TYPE_ERR: 24,
+qobuz-dl  |   DATA_CLONE_ERR: 25
+qobuz-dl  | }
+qobuz-dl  | 24.252.217.243 | 13/05 19:49:06 | GET /api/get-music?q=ko&offset=0 https → 200 (15004ms) | Chrome/147 Win | ...7VAvqQ US

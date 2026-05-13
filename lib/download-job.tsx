@@ -103,20 +103,15 @@ export const createDownloadJob = async (
                         } else if (e instanceof Error) {
                             errMsg = e.message;
                         }
-                        console.error('[Bryan-DL] Apple Music download error:', errMsg);
-                        try {
-                            toast({
-                                title: 'Error',
-                                description: errMsg,
-                                action: (
-                                    <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText(e instanceof Error ? (e.stack || errMsg) : errMsg)}>
-                                        Copy Stack
-                                    </ToastAction>
-                                )
-                            });
-                        } catch (toastErr) {
-                            console.error('[Bryan-DL] Toast failed:', toastErr);
-                        }
+                        toast({
+                            title: 'Error',
+                            description: errMsg,
+                            action: (
+                                <ToastAction altText='Copy Stack' onClick={() => navigator.clipboard.writeText(e instanceof Error ? (e.stack || errMsg) : errMsg)}>
+                                    Copy Stack
+                                </ToastAction>
+                            )
+                        });
                         resolve();
                     }
                 });
