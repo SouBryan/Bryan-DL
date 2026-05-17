@@ -1068,16 +1068,21 @@ async def download_track(
             logger.info(f"R2 cache hit (AAC fallback): {song_id}")
             return {"url": url, "cached": True}
 
-    # Fall back to ALAC if AAC requested but account only has wrapper (wrapper can't do AAC)
+    # AAC requested but account only has wrapper (wrapper can't do native AAC)
     if codec == "aac" and account.uses_wrapper:
-        logger.warning(f"AAC requested but account '{account.storefront}' uses wrapper — falling back to ALAC")
-        codec = "alac"
-        r2_key = f"apple/{song_id}.m4a"
-        # Re-check cache for ALAC key
-        if r2_object_exists(r2_key):
-            url = f"{R2_PUBLIC_URL}/{r2_key}"
-            logger.info(f"R2 cache hit (ALAC fallback): {song_id}")
-            return {"url": url, "cached": True}
+        # Try to find a cookie-based account that CAN do native AAC
+        cookie_key = f"{account.storefront}-cookies"
+        cookie_account = _accounts.get(cookie_key)
+        if cookie_account and cookie_account.api:
+            logger.info(f"AAC requested — switching from wrapper to cookie account ({cookie_account.storefront})")
+            account = cookie_account
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="AAC Original (256kbps) is not available. "
+                       "The current Apple Music account only supports ALAC (lossless) via the wrapper. "
+                       "Select 'AAC' codec instead to get AAC re-encoded from the lossless source.",
+            )
 
     # 3. Download + decrypt (with concurrency limiter)
     logger.info(f"R2 cache miss, downloading: {song_id} via {account.storefront} (codec={codec})")

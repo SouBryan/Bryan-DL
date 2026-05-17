@@ -59,8 +59,9 @@ export async function applyMetadata(
         (settings.outputQuality != '5' && settings.outputCodec === 'FLAC') ||
         (settings.outputQuality === '5' && settings.outputCodec === 'MP3' && settings.bitrate === 320)
     );
-    // For Apple Music (m4a input): skip rencode if output stays in m4a container (AAC, AAC_ORIGINAL, or ALAC)
-    const skipAppleRencode = inputFormat === 'm4a' && (settings.outputCodec === 'AAC' || settings.outputCodec === 'AAC_ORIGINAL' || settings.outputCodec === 'ALAC');
+    // For Apple Music (m4a input): skip rencode for AAC_ORIGINAL (native AAC) or ALAC (source=ALAC).
+    // AAC (from ALAC) still needs re-encoding ALAC→AAC via FFmpeg.
+    const skipAppleRencode = inputFormat === 'm4a' && (settings.outputCodec === 'AAC_ORIGINAL' || settings.outputCodec === 'ALAC');
     const shouldSkipRencode = skipRencode || skipAppleRencode;
     if (shouldSkipRencode && !settings.applyMetadata) return trackBuffer;
     const extension = codecMap[settings.outputCodec].extension;

@@ -64,5 +64,8 @@ SOUNDCLOUD_PLAN.md
 soundcloud_test/
 *.wvd
 
-logs
+# logs
 *.txt
+apple-music-api.txt
+qobuz-dl.txt
+apple-music-wrapper.txt
